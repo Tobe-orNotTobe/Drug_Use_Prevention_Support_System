@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects;
 
 public partial class Role
 {
-    public int RoleId { get; set; }
+	[Key]
+	public int RoleId { get; set; }
 
     public string RoleName { get; set; } = null!;
 

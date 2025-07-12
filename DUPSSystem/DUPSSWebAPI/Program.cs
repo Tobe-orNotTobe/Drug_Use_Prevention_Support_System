@@ -1,5 +1,5 @@
 using BusinessObjects;
-using DUPSSWebAPI.Extensions;
+using DUPSWebAPI.Controllers.Extensions;
 using Microsoft.AspNetCore.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
@@ -37,7 +37,6 @@ static IEdmModel GetEdmModel()
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
-builder.Services.AddSingleton<JwtService>();
 
 builder.Services
 	.AddControllers()
@@ -60,9 +59,11 @@ builder.Services.AddEndpointsApiExplorer();
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -70,7 +71,7 @@ builder.Services.AddSwaggerGen(c =>
 	{
 		Title = "Drug Use Prevention Support System API",
 		Version = "v1",
-		Description = "API for Drug Use Prevention Support System "
+		Description = "API for Drug Use Prevention Support System with Authentication & Authorization"
 	});
 
 	// Add JWT Bearer authentication to Swagger
@@ -103,7 +104,7 @@ builder.Services.AddSwaggerGen(c =>
 	c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 });
 
-// Add CORS if needed
+// Add CORS
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowAll",
@@ -124,6 +125,7 @@ if (app.Environment.IsDevelopment())
 	app.UseSwaggerUI(c =>
 	{
 		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Drug Use Prevention Support System API V1");
+		c.DefaultModelsExpandDepth(-1); // Hide models section
 	});
 }
 
@@ -133,6 +135,7 @@ app.UseCors("AllowAll");
 
 app.UseRouting();
 
+// Authentication & Authorization middleware (order is important!)
 app.UseAuthentication();
 app.UseAuthorization();
 

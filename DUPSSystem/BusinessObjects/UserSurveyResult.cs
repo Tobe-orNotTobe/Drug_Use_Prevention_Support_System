@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects;
 
 public partial class UserSurveyResult
 {
-    public int ResultId { get; set; }
+	[Key]
+	public int ResultId { get; set; }
 
     public int UserId { get; set; }
 

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Services.Interfaces;
 
-namespace DUPSSWebAPI.Controllers
+namespace DUPSWebAPI.Controllers
 {
 	[Authorize(Roles = "Admin")]
 	public class UserController : ODataController

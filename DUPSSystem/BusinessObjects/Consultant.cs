@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects;
 
 public partial class Consultant
 {
-    public int ConsultantId { get; set; }
+	[Key]
+	public int ConsultantId { get; set; }
 
     public int UserId { get; set; }
 

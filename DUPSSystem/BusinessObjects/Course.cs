@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects;
 
 public partial class Course
 {
-    public int CourseId { get; set; }
+	[Key]
+	public int CourseId { get; set; }
 
     public string Title { get; set; } = null!;
 

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObjects;
 
 public partial class CommunicationProgram
 {
-    public int ProgramId { get; set; }
+	[Key]
+	public int ProgramId { get; set; }
 
     public string Title { get; set; } = null!;
 

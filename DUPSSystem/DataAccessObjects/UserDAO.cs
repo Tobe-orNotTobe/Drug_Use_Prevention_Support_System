@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -8,6 +9,45 @@ namespace DataAccessObjects
 		{
 			using var db = new DrugPreventionDbContext();
 			return db.Users.FirstOrDefault(c => c.UserId.Equals(userId));
+		}
+
+		public static User? GetByEmail(string email)
+		{
+			using var db = new DrugPreventionDbContext();
+			return db.Users.FirstOrDefault(u => u.Email == email);
+		}
+
+		public static List<string> GetUserRoles(int userId)
+		{
+			using var db = new DrugPreventionDbContext();
+			return db.Users
+				.Where(u => u.UserId == userId)
+				.SelectMany(u => u.Roles)
+				.Select(r => r.RoleName)
+				.ToList();
+		}
+
+		public static void AssignUserRole(int userId, int roleId)
+		{
+			try
+			{
+				using var context = new DrugPreventionDbContext();
+				var user = context.Users.Include(u => u.Roles).FirstOrDefault(u => u.UserId == userId);
+				var role = context.Roles.FirstOrDefault(r => r.RoleId == roleId);
+
+				if (user != null && role != null)
+				{
+					if (!user.Roles.Any(r => r.RoleId == roleId))
+					{
+						user.Roles.Add(role);
+						context.SaveChanges();
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				throw new Exception(e.Message);
+			}
 		}
 
 		public static List<User> GetAll()
@@ -57,7 +97,6 @@ namespace DataAccessObjects
 				using var context = new DrugPreventionDbContext();
 				var s1 = context.Users.SingleOrDefault(c => c.UserId == s.UserId);
 				context.Users.Remove(s1);
-
 				context.SaveChanges();
 			}
 			catch (Exception e)

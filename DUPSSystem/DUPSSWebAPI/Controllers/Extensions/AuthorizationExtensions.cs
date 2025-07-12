@@ -1,8 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using BusinessObjects;
+using DataAccessObjects;
+using System.IdentityModel.Tokens.Jwt;
 
-namespace DUPSSWebAPI.Extensions
+namespace DUPSWebAPI.Controllers.Extensions
 {
 	public static class AuthenticationExtensions
 	{
@@ -29,7 +34,8 @@ namespace DUPSSWebAPI.Extensions
 					ValidIssuer = jwtSettings["Issuer"],
 					ValidAudience = jwtSettings["Audience"],
 					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-					RoleClaimType = "Role"
+					RoleClaimType = ClaimTypes.Role,
+					ClockSkew = TimeSpan.Zero
 				};
 			});
 
@@ -46,6 +52,39 @@ namespace DUPSSWebAPI.Extensions
 			_configuration = configuration;
 		}
 
-	}
+		public string GenerateToken(User user, List<string> roles)
+		{
+			var jwtSettings = _configuration.GetSection("JwtSettings");
+			var secretKey = jwtSettings["SecretKey"];
+			var issuer = jwtSettings["Issuer"];
+			var audience = jwtSettings["Audience"];
 
+			var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+			var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+			var claims = new List<Claim>
+			{
+				new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+				new Claim(ClaimTypes.Email, user.Email),
+				new Claim(ClaimTypes.Name, user.FullName),
+				new Claim("IsActive", user.IsActive.ToString())
+			};
+
+			// Add roles
+			foreach (var role in roles)
+			{
+				claims.Add(new Claim(ClaimTypes.Role, role));
+			}
+
+			var token = new JwtSecurityToken(
+				issuer: issuer,
+				audience: audience,
+				claims: claims,
+				expires: DateTime.UtcNow.AddHours(24), // Token expires in 24 hours
+				signingCredentials: credentials
+			);
+
+			return new JwtSecurityTokenHandler().WriteToken(token);
+		}
+	}
 }

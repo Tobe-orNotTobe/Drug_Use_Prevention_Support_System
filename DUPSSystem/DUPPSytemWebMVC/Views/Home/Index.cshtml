@@ -1,0 +1,59 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Chào mừng đến với DUPS System</h1>
+    <p class="lead">Hệ thống Hỗ trợ Phòng ngừa Sử dụng Ma túy</p>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">📚 Khóa học trực tuyến</h5>
+                <p class="card-text">Tham gia các khóa học về nhận thức và kỹ năng phòng chống ma túy.</p>
+                <a href="#" class="btn btn-primary">Khám phá</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">📋 Khảo sát đánh giá</h5>
+                <p class="card-text">Thực hiện các bài khảo sát để đánh giá mức độ nguy cơ.</p>
+                <a href="#" class="btn btn-info">Bắt đầu</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">👨‍⚕️ Tư vấn trực tuyến</h5>
+                <p class="card-text">Đặt lịch hẹn tư vấn với các chuyên gia có kinh nghiệm.</p>
+                <a href="#" class="btn btn-success">Đặt lịch</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Context.Request.Cookies["JWTToken"]))
+{
+    <div class="alert alert-info mt-4">
+        <h5>🎉 Chào mừng bạn trở lại!</h5>
+        <p class="mb-0">Bạn đã đăng nhập thành công. Hãy khám phá các tính năng của hệ thống.</p>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning mt-4">
+        <h5>📝 Đăng ký ngay hôm nay!</h5>
+        <p class="mb-0">
+            Để trải nghiệm đầy đủ các tính năng, vui lòng
+            <a asp-controller="Auth" asp-action="Register" class="alert-link">đăng ký tài khoản</a>
+            hoặc
+            <a asp-controller="Auth" asp-action="Login" class="alert-link">đăng nhập</a>
+            nếu bạn đã có tài khoản.
+        </p>
+    </div>
+}
