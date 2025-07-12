@@ -1,0 +1,6 @@
+@DUPSSWebAPI_HostAddress = http://localhost:5277
+
+GET {{DUPSSWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
