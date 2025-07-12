@@ -32,7 +32,7 @@ namespace DUPSWebApp.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> LoginAjax([FromBody] LoginAjaxRequest request)
+		public async Task<IActionResult> Login([FromBody] LoginViewModel request)
 		{
 			try
 			{
@@ -121,7 +121,7 @@ namespace DUPSWebApp.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> RegisterAjax([FromBody] RegisterAjaxRequest request)
+		public async Task<IActionResult> Register([FromBody] RegisterViewModel request)
 		{
 			try
 			{
@@ -201,26 +201,5 @@ namespace DUPSWebApp.Controllers
 			TempData["SuccessMessage"] = "Đăng xuất thành công!";
 			return RedirectToAction("Login");
 		}
-	}
-
-	// Request models for AJAX
-	public class LoginAjaxRequest
-	{
-		public string Email { get; set; } = string.Empty;
-		public string Password { get; set; } = string.Empty;
-		public bool RememberMe { get; set; }
-	}
-
-	public class RegisterAjaxRequest
-	{
-		public string Email { get; set; } = string.Empty;
-		public string Password { get; set; } = string.Empty;
-		public string ConfirmPassword { get; set; } = string.Empty;
-		public string FullName { get; set; } = string.Empty;
-		public string? DateOfBirth { get; set; }
-		public string? Gender { get; set; }
-		public string? Phone { get; set; }
-		public string? Address { get; set; }
-
 	}
 }
