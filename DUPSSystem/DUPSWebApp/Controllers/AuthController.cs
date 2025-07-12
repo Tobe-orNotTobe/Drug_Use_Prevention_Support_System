@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text;
 using DUPSWebApp.Models;
+using Microsoft.AspNetCore.Antiforgery;
 
 namespace DUPSWebApp.Controllers
 {
@@ -10,59 +11,47 @@ namespace DUPSWebApp.Controllers
 		private readonly HttpClient _httpClient;
 		private readonly IConfiguration _configuration;
 		private readonly string _apiBaseUrl;
-		private readonly ILogger<AuthController> _logger;
+		private readonly IAntiforgery _antiforgery;
 
-		public AuthController(HttpClient httpClient, IConfiguration configuration, ILogger<AuthController> logger)
+		public AuthController(HttpClient httpClient, IConfiguration configuration, IAntiforgery antiforgery)
 		{
 			_httpClient = httpClient;
 			_configuration = configuration;
-			_logger = logger;
 			_apiBaseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7008";
-			_httpClient.DefaultRequestHeaders.Add("User-Agent", "DUPSSystem.Web/1.0");
+			_antiforgery = antiforgery;
 		}
 
 		[HttpGet]
 		public IActionResult Login()
 		{
-			_logger.LogInformation("GET Login action called");
-
 			if (!string.IsNullOrEmpty(Request.Cookies["JWTToken"]))
 			{
 				return RedirectToAction("Index", "Home");
 			}
-			return View();
+			return View(new LoginViewModel());
 		}
 
 		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Login(LoginViewModel model)
+		public async Task<IActionResult> LoginAjax([FromBody] LoginAjaxRequest request)
 		{
-			_logger.LogInformation("POST Login action called with email: {Email}", model?.Email);
-
-			if (!ModelState.IsValid)
-			{
-				_logger.LogWarning("ModelState is invalid");
-				return View(model);
-			}
-
 			try
 			{
-				var requestData = new
+				if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
 				{
-					email = model.Email,
-					password = model.Password
+					return Json(new { success = false, message = "Email và mật khẩu không được để trống" });
+				}
+
+				var apiRequest = new
+				{
+					email = request.Email,
+					password = request.Password
 				};
 
-				var json = JsonSerializer.Serialize(requestData);
+				var json = JsonSerializer.Serialize(apiRequest);
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-				_logger.LogInformation("Calling API: {ApiUrl}", $"{_apiBaseUrl}/api/auth/login");
 
 				var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/auth/login", content);
 				var responseContent = await response.Content.ReadAsStringAsync();
-
-				_logger.LogInformation("API Response Status: {StatusCode}", response.StatusCode);
-				_logger.LogInformation("API Response Content: {Content}", responseContent);
 
 				if (response.IsSuccessStatusCode)
 				{
@@ -84,45 +73,154 @@ namespace DUPSWebApp.Controllers
 						Response.Cookies.Append("JWTToken", loginResponse.Token, cookieOptions);
 						Response.Cookies.Append("UserInfo", JsonSerializer.Serialize(loginResponse.User), cookieOptions);
 
-						TempData["SuccessMessage"] = "Đăng nhập thành công!";
-						return RedirectToAction("Index", "Home");
+						return Json(new
+						{
+							success = true,
+							message = "Đăng nhập thành công!",
+							redirectUrl = Url.Action("Index", "Home")
+						});
 					}
 				}
 
-				ModelState.AddModelError("", $"Lỗi từ API: {response.StatusCode} - {responseContent}");
+				var errorResponse = JsonSerializer.Deserialize<LoginResponse>(responseContent, new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true
+				});
+
+				return Json(new
+				{
+					success = false,
+					message = errorResponse?.Message ?? "Đăng nhập thất bại"
+				});
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error during login");
-				ModelState.AddModelError("", $"Lỗi: {ex.Message}");
+				return Json(new
+				{
+					success = false,
+					message = "Không thể kết nối đến server. Vui lòng thử lại."
+				});
 			}
+		}
 
-			return View(model);
+		[HttpGet]
+		public IActionResult GetAntiForgeryToken()
+		{
+			var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+			return Json(new { token = tokens.RequestToken });
 		}
 
 		[HttpGet]
 		public IActionResult Register()
 		{
-			_logger.LogInformation("GET Register action called");
-
-			// Nếu đã login rồi thì redirect về Home
 			if (!string.IsNullOrEmpty(Request.Cookies["JWTToken"]))
 			{
 				return RedirectToAction("Index", "Home");
 			}
-			return View();
+			return View(new RegisterViewModel());
 		}
 
 		[HttpPost]
+		public async Task<IActionResult> RegisterAjax([FromBody] RegisterAjaxRequest request)
+		{
+			try
+			{
+				if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.FullName))
+				{
+					return Json(new { success = false, message = "Vui lòng điền đầy đủ thông tin bắt buộc" });
+				}
+
+				if (request.Password != request.ConfirmPassword)
+				{
+					return Json(new { success = false, message = "Mật khẩu xác nhận không khớp" });
+				}
+
+				var apiRequest = new
+				{
+					email = request.Email,
+					password = request.Password,
+					confirmPassword = request.ConfirmPassword,
+					fullName = request.FullName,
+					dateOfBirth = request.DateOfBirth,
+					gender = request.Gender,
+					phone = request.Phone,
+					address = request.Address
+				};
+
+				var json = JsonSerializer.Serialize(apiRequest);
+				var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+				var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/auth/register", content);
+				var responseContent = await response.Content.ReadAsStringAsync();
+
+				if (response.IsSuccessStatusCode)
+				{
+					var registerResponse = JsonSerializer.Deserialize<RegisterResponse>(responseContent, new JsonSerializerOptions
+					{
+						PropertyNameCaseInsensitive = true
+					});
+
+					if (registerResponse?.Success == true)
+					{
+						return Json(new
+						{
+							success = true,
+							message = "Đăng ký thành công! Vui lòng đăng nhập.",
+							redirectUrl = Url.Action("Login", "Auth")
+						});
+					}
+				}
+
+				var errorResponse = JsonSerializer.Deserialize<RegisterResponse>(responseContent, new JsonSerializerOptions
+				{
+					PropertyNameCaseInsensitive = true
+				});
+
+				return Json(new
+				{
+					success = false,
+					message = errorResponse?.Message ?? "Đăng ký thất bại"
+				});
+			}
+			catch (Exception)
+			{
+				return Json(new
+				{
+					success = false,
+					message = "Không thể kết nối đến server. Vui lòng thử lại."
+				});
+			}
+		}
+
+		[HttpGet]
 		public IActionResult Logout()
 		{
-			_logger.LogInformation("Logout action called");
-
-			// Clear cookies
 			Response.Cookies.Delete("JWTToken");
 			Response.Cookies.Delete("UserInfo");
+
 			TempData["SuccessMessage"] = "Đăng xuất thành công!";
 			return RedirectToAction("Login");
 		}
+	}
+
+	// Request models for AJAX
+	public class LoginAjaxRequest
+	{
+		public string Email { get; set; } = string.Empty;
+		public string Password { get; set; } = string.Empty;
+		public bool RememberMe { get; set; }
+	}
+
+	public class RegisterAjaxRequest
+	{
+		public string Email { get; set; } = string.Empty;
+		public string Password { get; set; } = string.Empty;
+		public string ConfirmPassword { get; set; } = string.Empty;
+		public string FullName { get; set; } = string.Empty;
+		public string? DateOfBirth { get; set; }
+		public string? Gender { get; set; }
+		public string? Phone { get; set; }
+		public string? Address { get; set; }
+
 	}
 }

@@ -1,12 +1,11 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - DUPS System</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/DUPSWebApp.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
@@ -20,10 +19,10 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                            <a class="nav-link text-dark" href="/Home/Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Quyền riêng tư</a>
+                            <a class="nav-link text-dark" href="/Home/Privacy">Quyền riêng tư</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">
@@ -36,8 +35,8 @@
                             {
                                 try
                                 {
-                                    var userInfo = System.Text.Json.JsonSerializer.Deserialize<dynamic>(userInfoCookie);
-                                    userName = userInfo?.GetProperty("fullName").GetString() ?? "User";
+                                    var userInfo = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(userInfoCookie);
+                                    userName = userInfo.GetProperty("fullName").GetString() ?? "User";
                                 }
                                 catch { }
                             }
@@ -49,18 +48,16 @@
                                 <span class="navbar-text">Xin chào, @userName!</span>
                             </li>
                             <li class="nav-item">
-                                <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link nav-link">Đăng xuất</button>
-                                </form>
+                                <a href="/Auth/Logout" class="nav-link">Đăng xuất</a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Đăng nhập</a>
+                                <a class="nav-link text-dark" href="/Auth/Login">Đăng nhập</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">Đăng ký</a>
+                                <a class="nav-link text-dark" href="/Auth/Register">Đăng ký</a>
                             </li>
                         }
                     </ul>
@@ -90,7 +87,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - DUPS System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2025 - DUPS System - <a asp-area="" href="/Home/Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

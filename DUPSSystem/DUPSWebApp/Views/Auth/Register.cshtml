@@ -10,23 +10,23 @@
                 <h2 class="text-center mb-0">@ViewData["Title"]</h2>
             </div>
             <div class="card-body">
-                <form asp-controller="Auth" asp-action="Register" method="post">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <!-- Alert container -->
+                <div id="alert-container"></div>
 
+                <form id="registerForm">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Email" class="form-label"></label>
-                                <input asp-for="Email" class="form-control" placeholder="Nhập email của bạn" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <label for="Email" class="form-label">Email</label>
+                                <input type="email" id="Email" name="Email" class="form-control" placeholder="Nhập email của bạn" required />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="FullName" class="form-label"></label>
-                                <input asp-for="FullName" class="form-control" placeholder="Nhập họ tên đầy đủ" />
-                                <span asp-validation-for="FullName" class="text-danger"></span>
+                                <label for="FullName" class="form-label">Họ tên</label>
+                                <input type="text" id="FullName" name="FullName" class="form-control" placeholder="Nhập họ tên đầy đủ" required />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -34,16 +34,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Password" class="form-label"></label>
-                                <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu (ít nhất 6 ký tự)" />
-                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <label for="Password" class="form-label">Mật khẩu</label>
+                                <input type="password" id="Password" name="Password" class="form-control" placeholder="Nhập mật khẩu (ít nhất 6 ký tự)" required />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="ConfirmPassword" class="form-label"></label>
-                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" />
-                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                <label for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                                <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" required />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -51,21 +51,21 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="DateOfBirth" class="form-label"></label>
-                                <input asp-for="DateOfBirth" class="form-control" />
-                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                <label for="DateOfBirth" class="form-label">Ngày sinh</label>
+                                <input type="date" id="DateOfBirth" name="DateOfBirth" class="form-control" />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Gender" class="form-label"></label>
-                                <select asp-for="Gender" class="form-select">
+                                <label for="Gender" class="form-label">Giới tính</label>
+                                <select id="Gender" name="Gender" class="form-select">
                                     <option value="">Chọn giới tính</option>
                                     <option value="Nam">Nam</option>
                                     <option value="Nữ">Nữ</option>
                                     <option value="Khác">Khác</option>
                                 </select>
-                                <span asp-validation-for="Gender" class="text-danger"></span>
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -73,38 +73,152 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Phone" class="form-label"></label>
-                                <input asp-for="Phone" class="form-control" placeholder="Nhập số điện thoại" />
-                                <span asp-validation-for="Phone" class="text-danger"></span>
+                                <label for="Phone" class="form-label">Số điện thoại</label>
+                                <input type="tel" id="Phone" name="Phone" class="form-control" placeholder="Nhập số điện thoại" />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label asp-for="Address" class="form-label"></label>
-                                <input asp-for="Address" class="form-control" placeholder="Nhập địa chỉ" />
-                                <span asp-validation-for="Address" class="text-danger"></span>
+                                <label for="Address" class="form-label">Địa chỉ</label>
+                                <input type="text" id="Address" name="Address" class="form-control" placeholder="Nhập địa chỉ" />
+                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-success btn-lg">Đăng ký</button>
+                        <button type="submit" id="registerBtn" class="btn btn-success btn-lg">
+                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            Đăng ký
+                        </button>
                     </div>
                 </form>
             </div>
             <div class="card-footer text-center">
                 <p class="mb-0">
                     Đã có tài khoản?
-                    <a asp-controller="Auth" asp-action="Login" class="text-decoration-none">Đăng nhập ngay</a>
+                    <a href="/Auth/Login" class="text-decoration-none">Đăng nhập ngay</a>
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const spinner = registerBtn.querySelector('.spinner-border');
+        const alertContainer = document.getElementById('alert-container');
 
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Clear previous alerts and validation
+            clearAlerts();
+            clearValidation();
+
+            // Show loading
+            setLoading(true);
+
+            // Get form data
+            const formData = new FormData(form);
+            const data = {
+                email: formData.get('Email'),
+                password: formData.get('Password'),
+                confirmPassword: formData.get('ConfirmPassword'),
+                fullName: formData.get('FullName'),
+                dateOfBirth: formData.get('DateOfBirth'),
+                gender: formData.get('Gender'),
+                phone: formData.get('Phone'),
+                address: formData.get('Address')
+            };
+
+            try {
+                const response = await fetch('/Auth/RegisterAjax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': await getAntiForgeryToken()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('success', result.message);
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = result.redirectUrl || '/Auth/Login';
+                    }, 2000);
+                } else {
+                    showAlert('danger', result.message);
+                    if (result.errors) {
+                        showValidationErrors(result.errors);
+                    }
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(loading) {
+            if (loading) {
+                registerBtn.disabled = true;
+                spinner.classList.remove('d-none');
+                registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...';
+            } else {
+                registerBtn.disabled = false;
+                spinner.classList.add('d-none');
+                registerBtn.innerHTML = 'Đăng ký';
+            }
+        }
+
+        function showAlert(type, message) {
+            const alert = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            alertContainer.innerHTML = alert;
+        }
+
+        function clearAlerts() {
+            alertContainer.innerHTML = '';
+        }
+
+        function clearValidation() {
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        }
+
+        function showValidationErrors(errors) {
+            for (const [field, messages] of Object.entries(errors)) {
+                const input = document.getElementById(field);
+                if (input) {
+                    input.classList.add('is-invalid');
+                    const feedback = input.parentNode.querySelector('.invalid-feedback');
+                    if (feedback) {
+                        feedback.textContent = messages.join(', ');
+                    }
+                }
+            }
+        }
+
+        async function getAntiForgeryToken() {
+            try {
+                const response = await fetch('/Auth/GetAntiForgeryToken');
+                const data = await response.json();
+                return data.token;
+            } catch {
+                return '';
+            }
+        }
+    });
+</script>

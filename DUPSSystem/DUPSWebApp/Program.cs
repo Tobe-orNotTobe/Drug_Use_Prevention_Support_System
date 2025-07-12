@@ -4,17 +4,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Configure HttpClient for API calls
-builder.Services.AddHttpClient("ApiClient", client =>
-{
-	client.DefaultRequestHeaders.Add("User-Agent", "DUPSSystem.Web/1.0");
-	// Skip SSL validation for development
-	client.Timeout = TimeSpan.FromSeconds(30);
-}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
-{
-	ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
-});
-
 builder.Services.AddHttpClient();
+
+// Add Antiforgery service
+builder.Services.AddAntiforgery(options =>
+{
+	options.HeaderName = "RequestVerificationToken";
+});
 
 var app = builder.Build();
 
