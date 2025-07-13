@@ -1,205 +1,206 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Drug Use Prevention Support System</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/survey.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/courses.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>@ViewData["Title"] - Drug Use Prevention Support System</title>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/survey.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/courses.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-shield-alt"></i> DUPS System
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
-                                <i class="fas fa-home"></i> Trang chủ
-                            </a>
-                        </li>
-                        @if (Context.Session.GetString("UserToken") != null)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="Index">
-                                    <i class="fas fa-graduation-cap"></i> Khóa học
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="MyCourses">
-                                    <i class="fas fa-user-graduate"></i> Khóa học của tôi
-                                </a>
-                            </li>
-                            <!-- APPOINTMENT MENU -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="appointmentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-calendar-check"></i> Lịch hẹn
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="appointmentDropdown">
-                                    <li><a class="dropdown-item" href="/Appointments/Consultants"><i class="fas fa-user-md"></i> Danh sách tư vấn viên</a></li>
-                                    <li><a class="dropdown-item" href="/Appointments/MyAppointments"><i class="fas fa-calendar-check"></i> Lịch hẹn của tôi</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn đặt lịch</a></li>
-                                </ul>
-                            </li>
-                            <!-- SURVEY MENU -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="surveyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-poll"></i> Khảo sát
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="surveyDropdown">
-                                    <li><a class="dropdown-item" href="/Surveys"><i class="fas fa-list"></i> Danh sách khảo sát</a></li>
-                                    <li><a class="dropdown-item" href="/Surveys/Results"><i class="fas fa-chart-bar"></i> Kết quả của tôi</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn làm khảo sát</a></li>
-                                </ul>
-                            </li>
-                            <!-- END SURVEY MENU -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-cogs"></i> Quản lý
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-users"></i> Người dùng</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-md"></i> Tư vấn viên</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-calendar"></i> Lịch hẹn</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-poll"></i> Quản lý khảo sát</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i> Chương trình</a></li>
-                                </ul>
-                            </li>
-                        }
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (Context.Session.GetString("UserToken") != null)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-circle"></i>
-                                    @(Context.Session.GetString("UserName") ?? "User")
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <h6 class="dropdown-header">
-                                            <i class="fas fa-envelope"></i> @Context.Session.GetString("UserEmail")
-                                        </h6>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-edit"></i> Cập nhật thông tin</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-history"></i> Lịch sử hoạt động</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                                            <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
-                                                <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">
-                                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">
-                                    <i class="fas fa-user-plus"></i> Đăng ký
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
+	<header>
+		<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+			<div class="container-fluid">
+				<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+					<i class="fas fa-shield-alt"></i> DUPS System
+				</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+						aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+					<ul class="navbar-nav flex-grow-1">
+						<li class="nav-item">
+							<a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+								<i class="fas fa-home"></i> Trang chủ
+							</a>
+						</li>
+						@if (Context.Session.GetString("UserToken") != null)
+						{
+							<li class="nav-item">
+								<a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="Index">
+									<i class="fas fa-graduation-cap"></i> Khóa học
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="MyCourses">
+									<i class="fas fa-user-graduate"></i> Khóa học của tôi
+								</a>
+							</li>
+							<!-- APPOINTMENT MENU -->
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle text-dark" href="#" id="appointmentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+									<i class="fas fa-calendar-check"></i> Lịch hẹn
+								</a>
+								<ul class="dropdown-menu" aria-labelledby="appointmentDropdown">
+									<li><a class="dropdown-item" href="/Appointments/Consultants"><i class="fas fa-user-md"></i> Danh sách tư vấn viên</a></li>
+									<li><a class="dropdown-item" href="/Appointments/MyAppointments"><i class="fas fa-calendar-check"></i> Lịch hẹn của tôi</a></li>
+									<li><hr class="dropdown-divider"></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn đặt lịch</a></li>
+								</ul>
+							</li>
+							<!-- SURVEY MENU -->
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle text-dark" href="#" id="surveyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+									<i class="fas fa-poll"></i> Khảo sát
+								</a>
+								<ul class="dropdown-menu" aria-labelledby="surveyDropdown">
+									<li><a class="dropdown-item" href="/Surveys"><i class="fas fa-list"></i> Danh sách khảo sát</a></li>
+									<li><a class="dropdown-item" href="/Surveys/Results"><i class="fas fa-chart-bar"></i> Kết quả của tôi</a></li>
+									<li><hr class="dropdown-divider"></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn làm khảo sát</a></li>
+								</ul>
+							</li>
+							<!-- END SURVEY MENU -->
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+									<i class="fas fa-cogs"></i> Quản lý
+								</a>
+								<ul class="dropdown-menu">
+									<li><a class="dropdown-item" href="/Admin/Dashboard"><i class="fas fa-users"></i> Dashboard</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-users"></i> Người dùng</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-user-md"></i> Tư vấn viên</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-calendar"></i> Lịch hẹn</a></li>
+									<li><hr class="dropdown-divider"></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-poll"></i> Quản lý khảo sát</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i> Chương trình</a></li>
+								</ul>
+							</li>
+						}
+					</ul>
+					<ul class="navbar-nav">
+						@if (Context.Session.GetString("UserToken") != null)
+						{
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+									<i class="fas fa-user-circle"></i>
+									@(Context.Session.GetString("UserName") ?? "User")
+								</a>
+								<ul class="dropdown-menu dropdown-menu-end">
+									<li>
+										<h6 class="dropdown-header">
+											<i class="fas fa-envelope"></i> @Context.Session.GetString("UserEmail")
+										</h6>
+									</li>
+									<li><hr class="dropdown-divider"></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-user-edit"></i> Cập nhật thông tin</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
+									<li><a class="dropdown-item" href="#"><i class="fas fa-history"></i> Lịch sử hoạt động</a></li>
+									<li><hr class="dropdown-divider"></li>
+									<li>
+										<form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+											<button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
+												<i class="fas fa-sign-out-alt"></i> Đăng xuất
+											</button>
+										</form>
+									</li>
+								</ul>
+							</li>
+						}
+						else
+						{
+							<li class="nav-item">
+								<a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">
+									<i class="fas fa-sign-in-alt"></i> Đăng nhập
+								</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">
+									<i class="fas fa-user-plus"></i> Đăng ký
+								</a>
+							</li>
+						}
+					</ul>
+				</div>
+			</div>
+		</nav>
+	</header>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show mx-3" role="alert">
-            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+	@if (TempData["SuccessMessage"] != null)
+	{
+		<div class="alert alert-success alert-dismissible fade show mx-3" role="alert">
+			<i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+	}
 
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show mx-3" role="alert">
-            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+	@if (TempData["ErrorMessage"] != null)
+	{
+		<div class="alert alert-danger alert-dismissible fade show mx-3" role="alert">
+			<i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+	}
 
-    @if (TempData["InfoMessage"] != null)
-    {
-        <div class="alert alert-info alert-dismissible fade show mx-3" role="alert">
-            <i class="fas fa-info-circle"></i> @TempData["InfoMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+	@if (TempData["InfoMessage"] != null)
+	{
+		<div class="alert alert-info alert-dismissible fade show mx-3" role="alert">
+			<i class="fas fa-info-circle"></i> @TempData["InfoMessage"]
+			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+		</div>
+	}
 
-    <div class="container-fluid">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+	<div class="container-fluid">
+		<main role="main" class="pb-3">
+			@RenderBody()
+		</main>
+	</div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    &copy; 2025 - Drug Use Prevention Support System
-                </div>
-                <div class="col-md-6 text-end">
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Chính sách bảo mật</a> |
-                    <a href="#" class="text-decoration-none">Liên hệ hỗ trợ</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+	<footer class="border-top footer text-muted">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-6">
+					&copy; 2025 - Drug Use Prevention Support System
+				</div>
+				<div class="col-md-6 text-end">
+					<a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Chính sách bảo mật</a> |
+					<a href="#" class="text-decoration-none">Liên hệ hỗ trợ</a>
+				</div>
+			</div>
+		</div>
+	</footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="~/js/site.js" asp-append-version="true"></script>
 
-    <script>
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
+	<script>
+		// Auto-dismiss alerts after 5 seconds
+		setTimeout(function() {
+			$('.alert').fadeOut('slow');
+		}, 5000);
 
-        // Update current user ID in JavaScript for AJAX calls
-        @if (Context.Session.GetString("UserToken") != null)
-        {
-            <text>
-                    window.CURRENT_USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
-                    window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
-            </text>
-        }
-        else
-        {
-            <text>
-                    window.CURRENT_USER_ID = null;
-                    window.USER_TOKEN = null;
-            </text>
-        }
-    </script>
+		// Update current user ID in JavaScript for AJAX calls
+		@if (Context.Session.GetString("UserToken") != null)
+		{
+			<text>
+						window.CURRENT_USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
+						window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
+			</text>
+		}
+		else
+		{
+			<text>
+						window.CURRENT_USER_ID = null;
+						window.USER_TOKEN = null;
+			</text>
+		}
+	</script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

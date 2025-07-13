@@ -67,6 +67,7 @@ builder.Services.AddScoped<ISurveyResultRepository, SurveyResultRepository>();
 builder.Services.AddScoped<ISurveyAnswerRepository, SurveyAnswerRepository>();
 builder.Services.AddScoped<IConsultantRepository, ConsultantRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -79,6 +80,8 @@ builder.Services.AddScoped<ISurveyOptionService, SurveyOptionService>();
 builder.Services.AddScoped<ISurveyResultService, SurveyResultService>();
 builder.Services.AddScoped<IConsultantService, ConsultantService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
