@@ -92,75 +92,64 @@
 
     // Load survey data with questions and options
     function loadSurveyData() {
-        // TRY MULTIPLE ENDPOINTS
-        const endpoints = [
-            `https://localhost:7008/api/Surveys/${SURVEY_ID}/Details`,
-            `${API_BASE_URL}/Surveys(${SURVEY_ID})/Details`
-        ];
+        console.log('Loading survey data for ID:', SURVEY_ID);
 
-        function tryEndpoint(index) {
-            if (index >= endpoints.length) {
-                showError('Không thể tải khảo sát từ tất cả endpoints');
-                return;
-            }
-
-            $.ajax({
-                url: endpoints[index],
-                method: 'GET',
-                headers: setupAjaxHeaders(),
-                success: function (response) {
-                    console.log('Survey data loaded:', response);
-                    if (response.success && response.data) {
-                        surveyData = response.data;
-                        loadSurveyQuestions();
-                    } else {
-                        showError(response.message || 'Không thể tải khảo sát');
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error(`Error loading from endpoint ${index}:`, error);
-                    console.error('Response:', xhr.responseText);
-
-                    if (xhr.status === 401) {
-                        showError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                    } else if (index < endpoints.length - 1) {
-                        // Try next endpoint
-                        tryEndpoint(index + 1);
-                    } else {
-                        // Last endpoint failed
-                        if (xhr.status === 404) {
-                            showError('Không tìm thấy khảo sát');
-                        } else {
-                            showError('Đã xảy ra lỗi khi tải khảo sát: ' + (xhr.responseJSON?.message || error));
-                        }
-                    }
+        // Load basic survey info first
+        $.ajax({
+            url: `${API_BASE_URL}/Surveys(${SURVEY_ID})`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (survey) {
+                console.log('Survey loaded:', survey);
+                surveyData = survey;
+                loadSurveyQuestions();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading survey:', error);
+                if (xhr.status === 401) {
+                    showError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                } else if (xhr.status === 404) {
+                    showError('Không tìm thấy khảo sát');
+                } else {
+                    showError('Đã xảy ra lỗi khi tải khảo sát');
                 }
-            });
-        }
-
-        tryEndpoint(0);
+            }
+        });
     }
+
     function loadSurveyQuestions() {
-        const url = `${API_BASE_URL}/SurveyQuestions?$filter=SurveyId eq ${SURVEY_ID}&$expand=Options`;
+        console.log('Loading questions for survey:', SURVEY_ID);
+
+        // FIX: Load questions with their options using proper OData expand
+        const questionsUrl = `${API_BASE_URL}/SurveyQuestions?$filter=SurveyId eq ${SURVEY_ID}&$expand=SurveyOptions&$orderby=QuestionId`;
 
         $.ajax({
-            url: url,
+            url: questionsUrl,
             method: 'GET',
             headers: setupAjaxHeaders(),
             success: function (odataResponse) {
+                console.log('Questions response:', odataResponse);
+
                 const questions = odataResponse.value || odataResponse;
+                console.log('Questions loaded:', questions);
 
                 if (!questions || questions.length === 0) {
                     showError('Khảo sát không có câu hỏi');
                     return;
                 }
 
-                // Gán list Questions kèm Options vào surveyData
-                surveyData.Questions = questions;
+                // FIX: Assign questions to surveyData and ensure options are properly loaded
+                surveyData.Questions = questions.map(question => ({
+                    ...question,
+                    Options: question.SurveyOptions || [] // Ensure Options property exists
+                }));
+
+                console.log('Survey data with questions:', surveyData);
                 initializeSurvey();
             },
             error: function (xhr, status, error) {
                 console.error('Error loading survey questions:', error);
+                console.error('Response:', xhr.responseText);
                 showError('Đã xảy ra lỗi khi tải câu hỏi khảo sát');
             }
         });
@@ -168,6 +157,8 @@
 
     // Initialize survey display
     function initializeSurvey() {
+        console.log('Initializing survey with data:', surveyData);
+
         if (!surveyData || !surveyData.Questions || surveyData.Questions.length === 0) {
             showError('Khảo sát không có câu hỏi');
             return;
@@ -198,6 +189,15 @@
         const question = surveyData.Questions[currentQuestionIndex];
         const container = $('#questionsContainer');
 
+        console.log('Displaying question:', question);
+        console.log('Question options:', question.Options);
+
+        if (!question.Options || question.Options.length === 0) {
+            console.error('Question has no options:', question);
+            showError('Câu hỏi không có lựa chọn');
+            return;
+        }
+
         let questionHtml = `
             <div class="question-container mb-4" data-question-id="${question.QuestionId}">
                 <h5 class="mb-3">
@@ -208,7 +208,9 @@
         `;
 
         // Generate options based on question type
-        switch (question.QuestionType.toLowerCase()) {
+        const questionType = (question.QuestionType || 'SingleChoice').toLowerCase();
+
+        switch (questionType) {
             case 'singlechoice':
                 question.Options.forEach((option, index) => {
                     const isChecked = answers[currentQuestionIndex] && answers[currentQuestionIndex].optionId === option.OptionId ? 'checked' : '';
@@ -261,6 +263,26 @@
                     </div>
                 `;
                 break;
+
+            default:
+                // Default to single choice
+                question.Options.forEach((option, index) => {
+                    const isChecked = answers[currentQuestionIndex] && answers[currentQuestionIndex].optionId === option.OptionId ? 'checked' : '';
+                    questionHtml += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" 
+                                   name="question_${question.QuestionId}" 
+                                   id="option_${option.OptionId}" 
+                                   value="${option.OptionId}" 
+                                   data-score="${option.Score || 0}"
+                                   ${isChecked}>
+                            <label class="form-check-label" for="option_${option.OptionId}">
+                                ${escapeHtml(option.OptionText)}
+                            </label>
+                        </div>
+                    `;
+                });
+                break;
         }
 
         questionHtml += `
@@ -269,12 +291,13 @@
         `;
 
         container.html(questionHtml);
+        console.log('Question HTML generated and inserted');
     }
 
     // Validate current answer
     function validateCurrentAnswer() {
         const question = surveyData.Questions[currentQuestionIndex];
-        const questionType = question.QuestionType.toLowerCase();
+        const questionType = (question.QuestionType || 'SingleChoice').toLowerCase();
 
         switch (questionType) {
             case 'singlechoice':
@@ -308,7 +331,7 @@
     // Save current answer
     function saveCurrentAnswer() {
         const question = surveyData.Questions[currentQuestionIndex];
-        const questionType = question.QuestionType.toLowerCase();
+        const questionType = (question.QuestionType || 'SingleChoice').toLowerCase();
 
         let answer = {
             questionId: question.QuestionId,
@@ -346,6 +369,7 @@
         }
 
         answers[currentQuestionIndex] = answer;
+        console.log('Answer saved:', answer);
     }
 
     // Update progress bar
@@ -383,7 +407,7 @@
         answers.forEach((answer, index) => {
             if (answer) {
                 const question = surveyData.Questions[index];
-                const questionType = question.QuestionType.toLowerCase();
+                const questionType = (question.QuestionType || 'SingleChoice').toLowerCase();
 
                 if (questionType === 'multiplechoice' && answer.optionIds) {
                     // For multiple choice, create separate entries for each selected option
@@ -406,6 +430,8 @@
             }
         });
 
+        console.log('Submitting survey data:', submitData);
+
         // Show loading state
         $('#confirmSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang gửi...');
 
@@ -415,22 +441,24 @@
             headers: setupAjaxHeaders(),
             data: JSON.stringify(submitData),
             success: function (response) {
+                console.log('Submit response:', response);
                 $('#confirmSubmitModal').modal('hide');
 
-                if (response.Success) {
+                if (response.Success || response.success) {
                     showResult(response);
                 } else {
-                    showAlert('error', response.Message || 'Đã xảy ra lỗi khi gửi khảo sát');
+                    showAlert('error', response.Message || response.message || 'Đã xảy ra lỗi khi gửi khảo sát');
                 }
             },
             error: function (xhr, status, error) {
                 $('#confirmSubmitModal').modal('hide');
                 console.error('Error submitting survey:', error);
+                console.error('Response:', xhr.responseText);
 
                 if (xhr.status === 401) {
                     showAlert('error', 'Phiên đăng nhập đã hết hạn');
                 } else {
-                    const errorMessage = xhr.responseJSON?.Message || 'Đã xảy ra lỗi khi gửi khảo sát';
+                    const errorMessage = xhr.responseJSON?.Message || xhr.responseJSON?.message || 'Đã xảy ra lỗi khi gửi khảo sát';
                     showAlert('error', errorMessage);
                 }
             },
@@ -442,6 +470,9 @@
 
     // Show survey result
     function showResult(result) {
+        const totalScore = result.TotalScore || result.totalScore || 0;
+        const recommendation = result.Recommendation || result.recommendation || '';
+
         const resultContent = `
             <div class="text-center mb-4">
                 <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
@@ -453,7 +484,7 @@
                     <div class="card bg-light">
                         <div class="card-body text-center">
                             <h5 class="card-title">Tổng điểm</h5>
-                            <h2 class="text-primary">${result.TotalScore}</h2>
+                            <h2 class="text-primary">${totalScore}</h2>
                         </div>
                     </div>
                 </div>
@@ -467,10 +498,10 @@
                 </div>
             </div>
             
-            ${result.Recommendation ? `
+            ${recommendation ? `
                 <div class="alert alert-info mt-4">
                     <h6><i class="fas fa-lightbulb"></i> Khuyến nghị:</h6>
-                    <p class="mb-0">${escapeHtml(result.Recommendation)}</p>
+                    <p class="mb-0">${escapeHtml(recommendation)}</p>
                 </div>
             ` : ''}
             

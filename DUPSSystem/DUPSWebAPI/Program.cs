@@ -30,8 +30,8 @@ static IEdmModel GetEdmModel()
 	builder.EntitySet<Consultant>("Consultants");
 	builder.EntitySet<ProgramSurvey>("ProgramSurveys");
 	builder.EntitySet<Survey>("Surveys");
+	builder.EntitySet<SurveyQuestion>("SurveyQuestions").EntityType.HasMany(q => q.SurveyOptions);
 	builder.EntitySet<SurveyOption>("SurveyOptions");
-	builder.EntitySet<SurveyQuestion>("SurveyQuestions");
 	builder.EntitySet<UserProgram>("UserPrograms");
 	builder.EntitySet<UserSurveyAnswer>("UserSurveyAnswers");
 	builder.EntitySet<UserSurveyResult>("UserSurveyResults");

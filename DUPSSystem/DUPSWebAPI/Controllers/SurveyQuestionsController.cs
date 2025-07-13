@@ -18,7 +18,7 @@ namespace DUPSWebAPI.Controllers
 			_questionService = questionService;
 		}
 
-		[EnableQuery]
+		[EnableQuery(MaxExpansionDepth = 3)]
 		public IActionResult Get()
 		{
 			try
@@ -32,7 +32,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[EnableQuery]
+		[EnableQuery(MaxExpansionDepth = 3)]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -43,6 +43,22 @@ namespace DUPSWebAPI.Controllers
 					return NotFound(new { success = false, message = "Không tìm thấy câu hỏi" });
 				}
 				return Ok(question);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		// Custom endpoint to get questions by survey ID with options
+		[HttpGet("odata/SurveyQuestions/BySurvey({surveyId})")]
+		[EnableQuery(MaxExpansionDepth = 3)]
+		public IActionResult GetQuestionsBySurvey([FromRoute] int surveyId)
+		{
+			try
+			{
+				var questions = _questionService.GetQuestionsBySurveyId(surveyId).AsQueryable();
+				return Ok(questions);
 			}
 			catch (Exception ex)
 			{
