@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -7,7 +8,9 @@ namespace DataAccessObjects
 		public static Consultant GetById(int id)
 		{
 			using var db = new DrugPreventionDbContext();
-			return db.Consultants.FirstOrDefault(c => c.ConsultantId.Equals(id));
+			return db.Consultants
+				.Include(c => c.User)
+				.FirstOrDefault(c => c.ConsultantId.Equals(id));
 		}
 
 		public static List<Consultant> GetAll()
@@ -16,9 +19,62 @@ namespace DataAccessObjects
 			try
 			{
 				using var db = new DrugPreventionDbContext();
-				list = db.Consultants.ToList();
+				list = db.Consultants
+					.Include(c => c.User)
+					.ToList();
 			}
-			catch (Exception e) { }
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error in ConsultantDAO.GetAll: {e.Message}");
+			}
+			return list;
+		}
+
+		public static List<Consultant> GetAvailable()
+		{
+			var list = new List<Consultant>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.Consultants
+					.Include(c => c.User)
+					.Where(c => c.User.IsActive)
+					.ToList();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error in ConsultantDAO.GetAvailable: {e.Message}");
+			}
+			return list;
+		}
+
+		public static List<Consultant> Search(string searchTerm)
+		{
+			var list = new List<Consultant>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				if (string.IsNullOrWhiteSpace(searchTerm))
+				{
+					list = db.Consultants
+						.Include(c => c.User)
+						.ToList();
+				}
+				else
+				{
+					searchTerm = searchTerm.ToLower();
+					list = db.Consultants
+						.Include(c => c.User)
+						.Where(c => c.User.FullName.ToLower().Contains(searchTerm) ||
+								   (c.Expertise != null && c.Expertise.ToLower().Contains(searchTerm)) ||
+								   (c.Qualification != null && c.Qualification.ToLower().Contains(searchTerm)))
+						.ToList();
+				}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error in ConsultantDAO.Search: {e.Message}");
+			}
 			return list;
 		}
 
@@ -56,9 +112,11 @@ namespace DataAccessObjects
 			{
 				using var context = new DrugPreventionDbContext();
 				var s1 = context.Consultants.SingleOrDefault(c => c.ConsultantId == s.ConsultantId);
-				context.Consultants.Remove(s1);
-
-				context.SaveChanges();
+				if (s1 != null)
+				{
+					context.Consultants.Remove(s1);
+					context.SaveChanges();
+				}
 			}
 			catch (Exception e)
 			{

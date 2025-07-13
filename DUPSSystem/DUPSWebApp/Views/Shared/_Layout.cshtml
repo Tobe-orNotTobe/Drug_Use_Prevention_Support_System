@@ -6,8 +6,9 @@
     <title>@ViewData["Title"] - Drug Use Prevention Support System</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/survey.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/courses.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/surveys.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -39,6 +40,18 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="MyCourses">
                                     <i class="fas fa-user-graduate"></i> Khóa học của tôi
                                 </a>
+                            </li>
+                            <!-- APPOINTMENT MENU -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="appointmentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-calendar-check"></i> Lịch hẹn
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="appointmentDropdown">
+                                    <li><a class="dropdown-item" href="/Appointments/Consultants"><i class="fas fa-user-md"></i> Danh sách tư vấn viên</a></li>
+                                    <li><a class="dropdown-item" href="/Appointments/MyAppointments"><i class="fas fa-calendar-check"></i> Lịch hẹn của tôi</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn đặt lịch</a></li>
+                                </ul>
                             </li>
                             <!-- SURVEY MENU -->
                             <li class="nav-item dropdown">

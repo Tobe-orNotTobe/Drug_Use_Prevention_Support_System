@@ -23,11 +23,11 @@ static IEdmModel GetEdmModel()
 	builder.EntitySet<Course>("Courses");
 	builder.EntitySet<UserCourse>("UserCourses");
 	builder.EntitySet<User>("Users");
-	builder.EntitySet<Role>("Roles");
+	builder.EntitySet<Role>("Roles"); 
+	builder.EntitySet<Consultant>("Consultants").EntityType.HasMany(c => c.Appointments);
 	builder.EntitySet<Appointment>("Appointments");
 	builder.EntitySet<AuditLog>("AuditLogs");
 	builder.EntitySet<CommunicationProgram>("CommunicationPrograms");
-	builder.EntitySet<Consultant>("Consultants");
 	builder.EntitySet<ProgramSurvey>("ProgramSurveys");
 	builder.EntitySet<Survey>("Surveys");
 	builder.EntitySet<SurveyQuestion>("SurveyQuestions").EntityType.HasMany(q => q.SurveyOptions);
@@ -65,6 +65,8 @@ builder.Services.AddScoped<ISurveyQuestionRepository, SurveyQuestionRepository>(
 builder.Services.AddScoped<ISurveyOptionRepository, SurveyOptionRepository>();
 builder.Services.AddScoped<ISurveyResultRepository, SurveyResultRepository>();
 builder.Services.AddScoped<ISurveyAnswerRepository, SurveyAnswerRepository>();
+builder.Services.AddScoped<IConsultantRepository, ConsultantRepository>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -75,6 +77,8 @@ builder.Services.AddScoped<ISurveyService, SurveyService>();
 builder.Services.AddScoped<ISurveyQuestionService, SurveyQuestionService>();
 builder.Services.AddScoped<ISurveyOptionService, SurveyOptionService>();
 builder.Services.AddScoped<ISurveyResultService, SurveyResultService>();
+builder.Services.AddScoped<IConsultantService, ConsultantService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

@@ -18,6 +18,8 @@ builder.Services.AddScoped<ISurveyQuestionRepository, SurveyQuestionRepository>(
 builder.Services.AddScoped<ISurveyOptionRepository, SurveyOptionRepository>();
 builder.Services.AddScoped<ISurveyResultRepository, SurveyResultRepository>();
 builder.Services.AddScoped<ISurveyAnswerRepository, SurveyAnswerRepository>();
+builder.Services.AddScoped<IConsultantRepository, ConsultantRepository>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 
 // Register services
@@ -29,6 +31,8 @@ builder.Services.AddScoped<ISurveyService, SurveyService>();
 builder.Services.AddScoped<ISurveyQuestionService, SurveyQuestionService>();
 builder.Services.AddScoped<ISurveyOptionService, SurveyOptionService>();
 builder.Services.AddScoped<ISurveyResultService, SurveyResultService>();
+builder.Services.AddScoped<IConsultantService, ConsultantService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 // Configure HttpClient for API calls
 builder.Services.AddHttpClient();
