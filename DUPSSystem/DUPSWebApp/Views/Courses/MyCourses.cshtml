@@ -1,0 +1,143 @@
+﻿@{
+    ViewData["Title"] = "Khóa học của tôi";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-graduate mr-1"></i>
+                        Khóa học của tôi
+                    </h3>
+                    <div class="card-tools">
+                        <a href="/Courses" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Tìm khóa học
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Section -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <select class="form-control" id="statusFilter">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="active">Đang học</option>
+                                <option value="completed">Đã hoàn thành</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control" id="sortFilter">
+                                <option value="newest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="completed">Đã hoàn thành trước</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm khóa học...">
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center" style="display: none;">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- Courses Grid -->
+                    <div id="coursesGrid" class="row">
+                        <!-- Courses will be loaded here -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-graduation-cap fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Bạn chưa đăng ký khóa học nào</h4>
+                        <p class="text-muted">Hãy khám phá và đăng ký các khóa học phù hợp với bạn</p>
+                        <a href="/Courses" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Tìm khóa học
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Statistics -->
+    <div class="row mt-4">
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="totalCourses">0</h3>
+                    <p>Tổng khóa học</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-book"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="completedCourses">0</h3>
+                    <p>Đã hoàn thành</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3 id="activeCourses">0</h3>
+                    <p>Đang học</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3 id="totalHours">0</h3>
+                    <p>Tổng giờ học</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Detail Modal -->
+<div class="modal fade" id="courseDetailModal" tabindex="-1" aria-labelledby="courseDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="courseDetailModalLabel">Chi tiết khóa học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="courseDetailContent">
+                <!-- Course details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-success" id="markCompletedBtn" style="display: none;">
+                    <i class="fas fa-check"></i> Đánh dấu hoàn thành
+                </button>
+                <button type="button" class="btn btn-danger" id="unregisterBtn">
+                    <i class="fas fa-times"></i> Hủy đăng ký
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/my-courses.js"></script>
+}

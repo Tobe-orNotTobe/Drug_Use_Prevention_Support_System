@@ -15,8 +15,15 @@ namespace DUPSWebAPI.Controllers.Extensions
 		{
 			var jwtSettings = configuration.GetSection("JwtSettings");
 			var secretKey = jwtSettings["SecretKey"];
+			var issuer = jwtSettings["Issuer"];
+			var audience = jwtSettings["Audience"];
+
 			if (string.IsNullOrEmpty(secretKey))
-				throw new InvalidOperationException("Missing SecretKey in configuration");
+			{
+				secretKey = "your-super-secret-key-that-is-at-least-32-characters-long";
+				issuer = "DUPSSystem";
+				audience = "DUPSUsers";
+			}
 
 			services.AddAuthentication(options =>
 			{
@@ -25,16 +32,17 @@ namespace DUPSWebAPI.Controllers.Extensions
 			})
 			.AddJwtBearer(options =>
 			{
+				options.RequireHttpsMetadata = false; // Set to true in production
+				options.SaveToken = true;
 				options.TokenValidationParameters = new TokenValidationParameters
 				{
-					ValidateIssuer = true,
-					ValidateAudience = true,
-					ValidateLifetime = true,
 					ValidateIssuerSigningKey = true,
-					ValidIssuer = jwtSettings["Issuer"],
-					ValidAudience = jwtSettings["Audience"],
 					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-					RoleClaimType = ClaimTypes.Role,
+					ValidateIssuer = true,
+					ValidIssuer = issuer,
+					ValidateAudience = true,
+					ValidAudience = audience,
+					ValidateLifetime = true,
 					ClockSkew = TimeSpan.Zero
 				};
 			});

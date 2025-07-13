@@ -4,43 +4,76 @@
 
 <div class="text-center">
     <h1 class="display-4">Chào mừng đến với DUPS System</h1>
-    <p class="lead">Hệ thống Hỗ trợ Phòng ngừa Sử dụng Ma túy</p>
+    <p>Hệ thống hỗ trợ phòng ngừa sử dụng ma túy - Drug Use Prevention Support System</p>
 </div>
 
 <div class="row mt-5">
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body text-center">
-                <h5 class="card-title">📚 Khóa học trực tuyến</h5>
-                <p class="card-text">Tham gia các khóa học về nhận thức và kỹ năng phòng chống ma túy.</p>
-                <a href="#" class="btn btn-primary">Khám phá</a>
+                <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Khóa học đào tạo</h5>
+                <p class="card-text">Tham gia các khóa học về phòng ngừa tệ nạn xã hội, nâng cao nhận thức.</p>
+                <a href="/Courses" class="btn btn-primary">Xem khóa học</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body text-center">
-                <h5 class="card-title">📋 Khảo sát đánh giá</h5>
-                <p class="card-text">Thực hiện các bài khảo sát để đánh giá mức độ nguy cơ.</p>
-                <a href="#" class="btn btn-info">Bắt đầu</a>
+                <i class="fas fa-user-md fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Tư vấn chuyên gia</h5>
+                <p class="card-text">Được hỗ trợ và tư vấn từ các chuyên gia trong lĩnh vực phòng chống tệ nạn.</p>
+                <a href="#" class="btn btn-success">Đặt lịch tư vấn</a>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body text-center">
-                <h5 class="card-title">👨‍⚕️ Tư vấn trực tuyến</h5>
-                <p class="card-text">Đặt lịch hẹn tư vấn với các chuyên gia có kinh nghiệm.</p>
-                <a href="#" class="btn btn-success">Đặt lịch</a>
+                <i class="fas fa-poll fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Khảo sát đánh giá</h5>
+                <p class="card-text">Tham gia các khảo sát để đánh giá mức độ rủi ro và nhận được khuyến nghị phù hợp.</p>
+                <a href="#" class="btn btn-warning">Tham gia khảo sát</a>
             </div>
         </div>
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(Context.Request.Cookies["JWTToken"]))
-{
-    <div class="alert alert-info mt-4">
-        <h5>🎉 Chào mừng bạn trở lại!</h5>
-        <p class="mb-0">Bạn đã đăng nhập thành công. Hãy khám phá các tính năng của hệ thống.</p>
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-bar"></i> Thống kê hệ thống
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-primary">150+</h3>
+                            <p class="text-muted">Khóa học</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-success">2,500+</h3>
+                            <p class="text-muted">Học viên</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h3 class="text-warning">50+</h3>
+                            <p class="text-muted">Chuyên gia</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h3 class="text-info">95%</h3>
+                        <p class="text-muted">Mức độ hài lòng</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-}
+</div>

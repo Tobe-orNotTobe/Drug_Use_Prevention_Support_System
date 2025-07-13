@@ -1,205 +1,174 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+﻿using BusinessObjects.DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Text;
-using DUPSWebApp.Models;
-using Microsoft.AspNetCore.Antiforgery;
 
 namespace DUPSWebApp.Controllers
 {
 	public class AuthController : Controller
 	{
-		private readonly HttpClient _httpClient;
+		private readonly IHttpClientFactory _httpClientFactory;
 		private readonly IConfiguration _configuration;
-		private readonly string _apiBaseUrl;
-		private readonly IAntiforgery _antiforgery;
 
-		public AuthController(HttpClient httpClient, IConfiguration configuration, IAntiforgery antiforgery)
+		public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
 		{
-			_httpClient = httpClient;
+			_httpClientFactory = httpClientFactory;
 			_configuration = configuration;
-			_apiBaseUrl = _configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7008";
-			_antiforgery = antiforgery;
 		}
 
-		[HttpGet]
-		public IActionResult Login()
+		public IActionResult Login(string? returnUrl = null)
 		{
-			if (!string.IsNullOrEmpty(Request.Cookies["JWTToken"]))
+			// Check if user is already logged in
+			if (HttpContext.Session.GetString("UserToken") != null)
 			{
 				return RedirectToAction("Index", "Home");
 			}
-			return View(new LoginViewModel());
+
+			ViewBag.ReturnUrl = returnUrl;
+			return View();
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> Login([FromBody] LoginViewModel request)
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Login(LoginRequest model, string? returnUrl = null)
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+				if (!ModelState.IsValid)
 				{
-					return Json(new { success = false, message = "Email và mật khẩu không được để trống" });
+					ViewBag.ReturnUrl = returnUrl;
+					return View(model);
 				}
 
-				var apiRequest = new
-				{
-					email = request.Email,
-					password = request.Password
-				};
+				var httpClient = _httpClientFactory.CreateClient();
+				var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
 
-				var json = JsonSerializer.Serialize(apiRequest);
+				var json = JsonConvert.SerializeObject(model);
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-				var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/auth/login", content);
+				// Call API login endpoint
+				var response = await httpClient.PostAsync($"{apiBaseUrl}/api/AuthApi/login", content);
 				var responseContent = await response.Content.ReadAsStringAsync();
 
 				if (response.IsSuccessStatusCode)
 				{
-					var loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseContent, new JsonSerializerOptions
+					var loginResponse = JsonConvert.DeserializeObject<LoginResponse>(responseContent);
+
+					if (loginResponse != null && loginResponse.Success)
 					{
-						PropertyNameCaseInsensitive = true
-					});
+						// Store token and user info in session
+						HttpContext.Session.SetString("UserToken", loginResponse.Token ?? "");
+						HttpContext.Session.SetString("UserInfo", JsonConvert.SerializeObject(loginResponse.User));
+						HttpContext.Session.SetInt32("UserId", loginResponse.User?.UserId ?? 0);
+						HttpContext.Session.SetString("UserName", loginResponse.User?.FullName ?? "");
+						HttpContext.Session.SetString("UserEmail", loginResponse.User?.Email ?? "");
 
-					if (loginResponse?.Success == true && !string.IsNullOrEmpty(loginResponse.Token))
+						TempData["SuccessMessage"] = "Đăng nhập thành công!";
+
+						// Redirect to return URL or home
+						if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+						{
+							return Redirect(returnUrl);
+						}
+
+						return RedirectToAction("Index", "Home");
+					}
+					else
 					{
-						var cookieOptions = new CookieOptions
-						{
-							HttpOnly = true,
-							Secure = false,
-							SameSite = SameSiteMode.Lax,
-							Expires = DateTime.UtcNow.AddHours(24)
-						};
-
-						Response.Cookies.Append("JWTToken", loginResponse.Token, cookieOptions);
-						Response.Cookies.Append("UserInfo", JsonSerializer.Serialize(loginResponse.User), cookieOptions);
-
-						return Json(new
-						{
-							success = true,
-							message = "Đăng nhập thành công!",
-							redirectUrl = Url.Action("Index", "Home")
-						});
+						ModelState.AddModelError("", loginResponse?.Message ?? "Đăng nhập không thành công");
 					}
 				}
-
-				var errorResponse = JsonSerializer.Deserialize<LoginResponse>(responseContent, new JsonSerializerOptions
+				else
 				{
-					PropertyNameCaseInsensitive = true
-				});
-
-				return Json(new
-				{
-					success = false,
-					message = errorResponse?.Message ?? "Đăng nhập thất bại"
-				});
+					var errorResponse = JsonConvert.DeserializeObject<LoginResponse>(responseContent);
+					ModelState.AddModelError("", errorResponse?.Message ?? "Email hoặc mật khẩu không đúng");
+				}
+			}
+			catch (HttpRequestException ex)
+			{
+				ModelState.AddModelError("", "Không thể kết nối đến máy chủ API. Vui lòng kiểm tra kết nối.");
 			}
 			catch (Exception ex)
 			{
-				return Json(new
-				{
-					success = false,
-					message = "Không thể kết nối đến server. Vui lòng thử lại."
-				});
+				ModelState.AddModelError("", "Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại.");
 			}
+
+			ViewBag.ReturnUrl = returnUrl;
+			return View(model);
 		}
 
-		[HttpGet]
-		public IActionResult GetAntiForgeryToken()
-		{
-			var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
-			return Json(new { token = tokens.RequestToken });
-		}
-
-		[HttpGet]
 		public IActionResult Register()
 		{
-			if (!string.IsNullOrEmpty(Request.Cookies["JWTToken"]))
-			{
-				return RedirectToAction("Index", "Home");
-			}
-			return View(new RegisterViewModel());
+			return View();
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> Register([FromBody] RegisterViewModel request)
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Register(RegisterRequest model)
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.FullName))
+				if (!ModelState.IsValid)
 				{
-					return Json(new { success = false, message = "Vui lòng điền đầy đủ thông tin bắt buộc" });
+					return View(model);
 				}
 
-				if (request.Password != request.ConfirmPassword)
-				{
-					return Json(new { success = false, message = "Mật khẩu xác nhận không khớp" });
-				}
+				var httpClient = _httpClientFactory.CreateClient();
+				var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
 
-				var apiRequest = new
-				{
-					email = request.Email,
-					password = request.Password,
-					confirmPassword = request.ConfirmPassword,
-					fullName = request.FullName,
-					dateOfBirth = request.DateOfBirth,
-					gender = request.Gender,
-					phone = request.Phone,
-					address = request.Address
-				};
-
-				var json = JsonSerializer.Serialize(apiRequest);
+				var json = JsonConvert.SerializeObject(model);
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-				var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/auth/register", content);
+				// Call API register endpoint
+				var response = await httpClient.PostAsync($"{apiBaseUrl}/api/AuthApi/register", content);
 				var responseContent = await response.Content.ReadAsStringAsync();
 
 				if (response.IsSuccessStatusCode)
 				{
-					var registerResponse = JsonSerializer.Deserialize<RegisterResponse>(responseContent, new JsonSerializerOptions
-					{
-						PropertyNameCaseInsensitive = true
-					});
+					var registerResponse = JsonConvert.DeserializeObject<RegisterResponse>(responseContent);
 
-					if (registerResponse?.Success == true)
+					if (registerResponse != null && registerResponse.Success)
 					{
-						return Json(new
-						{
-							success = true,
-							message = "Đăng ký thành công! Vui lòng đăng nhập.",
-							redirectUrl = Url.Action("Login", "Auth")
-						});
+						TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng đăng nhập.";
+						return RedirectToAction("Login");
+					}
+					else
+					{
+						ModelState.AddModelError("", registerResponse?.Message ?? "Đăng ký không thành công");
 					}
 				}
-
-				var errorResponse = JsonSerializer.Deserialize<RegisterResponse>(responseContent, new JsonSerializerOptions
+				else
 				{
-					PropertyNameCaseInsensitive = true
-				});
-
-				return Json(new
-				{
-					success = false,
-					message = errorResponse?.Message ?? "Đăng ký thất bại"
-				});
+					var errorResponse = JsonConvert.DeserializeObject<RegisterResponse>(responseContent);
+					ModelState.AddModelError("", errorResponse?.Message ?? "Đã xảy ra lỗi trong quá trình đăng ký");
+				}
 			}
-			catch (Exception)
+			catch (HttpRequestException ex)
 			{
-				return Json(new
-				{
-					success = false,
-					message = "Không thể kết nối đến server. Vui lòng thử lại."
-				});
+				ModelState.AddModelError("", "Không thể kết nối đến máy chủ API. Vui lòng kiểm tra kết nối.");
 			}
+			catch (Exception ex)
+			{
+				ModelState.AddModelError("", "Đã xảy ra lỗi trong quá trình đăng ký. Vui lòng thử lại.");
+			}
+
+			return View(model);
 		}
 
-		[HttpGet]
+		[HttpPost]
+		[ValidateAntiForgeryToken]
 		public IActionResult Logout()
 		{
-			Response.Cookies.Delete("JWTToken");
-			Response.Cookies.Delete("UserInfo");
+			// Clear session
+			HttpContext.Session.Clear();
 
 			TempData["SuccessMessage"] = "Đăng xuất thành công!";
 			return RedirectToAction("Login");
+		}
+
+		public IActionResult AccessDenied()
+		{
+			return View();
 		}
 	}
 }

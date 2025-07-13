@@ -1,15 +1,34 @@
+using Repositories;
+using Repositories.Interfaces;
+using Services;
+using Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IUserCourseRepository, UserCourseRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+
+// Register services
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IUserCourseService, UserCourseService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 // Configure HttpClient for API calls
 builder.Services.AddHttpClient();
 
-// Add Antiforgery service
-builder.Services.AddAntiforgery(options =>
+// Add session support
+builder.Services.AddSession(options =>
 {
-	options.HeaderName = "RequestVerificationToken";
+	options.IdleTimeout = TimeSpan.FromMinutes(30);
+	options.Cookie.HttpOnly = true;
+	options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
@@ -23,10 +42,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-app.UseAuthorization();
+app.UseSession();
 
+// Standard MVC routing
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{controller=Home}/{action=Index}/{id?}");

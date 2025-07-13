@@ -1,6 +1,7 @@
 using BusinessObjects;
-using DUPSWebAPI.Controllers.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OData;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
@@ -8,26 +9,29 @@ using Repositories;
 using Repositories.Interfaces;
 using Services;
 using Services.Interfaces;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// EDM Model for OData
 static IEdmModel GetEdmModel()
 {
-	ODataConventionModelBuilder builder = new();
+	var builder = new ODataConventionModelBuilder();
 
+	builder.EntitySet<Course>("Courses");
+	builder.EntitySet<UserCourse>("UserCourses");
+	builder.EntitySet<User>("Users");
+	builder.EntitySet<Role>("Roles");
 	builder.EntitySet<Appointment>("Appointments");
 	builder.EntitySet<AuditLog>("AuditLogs");
 	builder.EntitySet<CommunicationProgram>("CommunicationPrograms");
 	builder.EntitySet<Consultant>("Consultants");
-	builder.EntitySet<Course>("Courses");
 	builder.EntitySet<ProgramSurvey>("ProgramSurveys");
-	builder.EntitySet<Role>("Roles");
 	builder.EntitySet<Survey>("Surveys");
 	builder.EntitySet<SurveyOption>("SurveyOptions");
 	builder.EntitySet<SurveyQuestion>("SurveyQuestions");
-	builder.EntitySet<User>("Users");
-	builder.EntitySet<UserCourse>("UserCourses");
 	builder.EntitySet<UserProgram>("UserPrograms");
 	builder.EntitySet<UserSurveyAnswer>("UserSurveyAnswers");
 	builder.EntitySet<UserSurveyResult>("UserSurveyResults");
@@ -35,15 +39,12 @@ static IEdmModel GetEdmModel()
 	return builder.GetEdmModel();
 }
 
-builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddAuthorization();
-
-builder.Services
-	.AddControllers()
+// Add controllers with OData
+builder.Services.AddControllers()
 	.AddJsonOptions(options =>
 	{
 		options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-		options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
+		options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 	})
 	.AddOData(options => options
 		.Select()
@@ -52,37 +53,77 @@ builder.Services
 		.Expand()
 		.Count()
 		.SetMaxTop(100)
-		.AddRouteComponents("odata", GetEdmModel())
-		.EnableQueryFeatures());
-
-builder.Services.AddEndpointsApiExplorer();
+		.AddRouteComponents("odata", GetEdmModel()));
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IUserCourseRepository, UserCourseRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserCourseService, UserCourseService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-token-signing";
+var issuer = jwtSettings["Issuer"] ?? "DUPSSystem";
+var audience = jwtSettings["Audience"] ?? "DUPSUsers";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+	.AddJwtBearer(options =>
+	{
+		options.TokenValidationParameters = new TokenValidationParameters
+		{
+			ValidateIssuerSigningKey = true,
+			IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+			ValidateIssuer = true,
+			ValidIssuer = issuer,
+			ValidateAudience = true,
+			ValidAudience = audience,
+			ValidateLifetime = true,
+			ClockSkew = TimeSpan.Zero
+		};
+	});
+
+builder.Services.AddAuthorization();
+
+// Configure Swagger - CRITICAL: This order matters
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
 	c.SwaggerDoc("v1", new OpenApiInfo
 	{
-		Title = "Drug Use Prevention Support System API",
-		Version = "v1",
-		Description = "API for Drug Use Prevention Support System with Authentication & Authorization"
+		Title = "DUPS API",
+		Version = "v1"
 	});
 
-	// Add JWT Bearer authentication to Swagger
+	// IMPORTANT: Handle OData route conflicts
+	c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
+	// Custom schema IDs to prevent naming conflicts
+	c.CustomSchemaIds(type =>
+	{
+		var name = type.Name;
+		if (type.IsGenericType)
+		{
+			var genericArgs = string.Join("", type.GetGenericArguments().Select(t => t.Name));
+			name = $"{name.Split('`')[0]}{genericArgs}";
+		}
+		return name;
+	});
+
+	// JWT Security
 	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 	{
-		Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
 		Name = "Authorization",
-		In = ParameterLocation.Header,
 		Type = SecuritySchemeType.Http,
 		Scheme = "bearer",
-		BearerFormat = "JWT"
+		BearerFormat = "JWT",
+		In = ParameterLocation.Header
 	});
 
 	c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -96,52 +137,68 @@ builder.Services.AddSwaggerGen(c =>
 					Id = "Bearer"
 				}
 			},
-			Array.Empty<string>()
+			new string[] {}
 		}
 	});
 
-	// This helps Swagger understand OData routes
-	c.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+	// Filter to exclude problematic OData operations
+	c.OperationFilter<ODataOperationFilter>();
 });
 
-// Add CORS
+// CORS
 builder.Services.AddCors(options =>
 {
-	options.AddPolicy("AllowAll",
-		builder =>
-		{
-			builder.AllowAnyOrigin()
-				   .AllowAnyMethod()
-				   .AllowAnyHeader();
-		});
+	options.AddPolicy("AllowAll", policy =>
+	{
+		policy.AllowAnyOrigin()
+			  .AllowAnyMethod()
+			  .AllowAnyHeader();
+	});
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure pipeline
 if (app.Environment.IsDevelopment())
 {
 	app.UseSwagger();
 	app.UseSwaggerUI(c =>
 	{
-		c.SwaggerEndpoint("/swagger/v1/swagger.json", "Drug Use Prevention Support System API V1");
-		c.DefaultModelsExpandDepth(-1); // Hide models section
+		c.SwaggerEndpoint("/swagger/v1/swagger.json", "DUPS API V1");
 	});
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowAll");
-
 app.UseRouting();
-
-// Authentication & Authorization middleware (order is important!)
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseEndpoints(endpoints =>
-{
-	endpoints.MapControllers();
-});
+app.MapControllers();
 
 app.Run();
+
+// Custom operation filter to handle OData conflicts
+public class ODataOperationFilter : IOperationFilter
+{
+	public void Apply(OpenApiOperation operation, OperationFilterContext context)
+	{
+		// Remove problematic OData parameters that cause Swagger issues
+		if (operation.Parameters != null)
+		{
+			var parametersToRemove = operation.Parameters
+				.Where(p => p.Name.StartsWith("$") || p.Name.Contains("odata"))
+				.ToList();
+
+			foreach (var param in parametersToRemove)
+			{
+				operation.Parameters.Remove(param);
+			}
+		}
+
+		// Clean up operation IDs to prevent conflicts
+		if (!string.IsNullOrEmpty(operation.OperationId))
+		{
+			operation.OperationId = operation.OperationId.Replace("odata.", "").Replace("$", "");
+		}
+	}
+}

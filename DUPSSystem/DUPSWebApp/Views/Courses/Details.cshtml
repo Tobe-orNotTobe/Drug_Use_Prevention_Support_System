@@ -1,0 +1,300 @@
+﻿@{
+    ViewData["Title"] = "Chi tiết khóa học";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Đang tải...</span>
+                </div>
+                <p>Đang tải thông tin khóa học...</p>
+            </div>
+
+            <!-- Course Details -->
+            <div id="courseDetails" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" id="courseTitle">Chi tiết khóa học</h3>
+                        <div class="card-tools">
+                            <a href="/Courses" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4 id="detailTitle"></h4>
+                                <p id="detailDescription" class="text-muted"></p>
+
+                                <div class="course-info mt-4">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <strong><i class="fas fa-users"></i> Đối tượng:</strong>
+                                            <span id="detailTargetAudience"></span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <strong><i class="fas fa-clock"></i> Thời lượng:</strong>
+                                            <span id="detailDuration"></span>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-sm-6">
+                                            <strong><i class="fas fa-calendar-plus"></i> Ngày tạo:</strong>
+                                            <span id="detailCreatedAt"></span>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <strong><i class="fas fa-check-circle"></i> Trạng thái:</strong>
+                                            <span id="detailStatus"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5>Đăng ký khóa học</h5>
+                                        <div id="registrationSection">
+                                            <!-- Registration status will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="errorDisplay" style="display: none;">
+                <div class="alert alert-danger">
+                    <h4><i class="icon fa fa-ban"></i> Lỗi!</h4>
+                    <span id="errorMessage"></span>
+                </div>
+                <div class="text-center">
+                    <a href="/Courses" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách khóa học
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Course Registration Modal -->
+<div class="modal fade" id="registrationModal" tabindex="-1" role="dialog" aria-labelledby="registrationModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="registrationModalLabel">Xác nhận đăng ký</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn đăng ký khóa học này không?</p>
+                <p><strong>Khóa học:</strong> <span id="modalCourseName"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmRegistrationBtn">Đăng ký</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const apiBaseUrl = '@ViewBag.ApiBaseUrl';
+            const courseId = @ViewBag.CourseId;
+            const authToken = '@ViewBag.AuthToken';
+            let currentUserId = @ViewBag.UserId;
+            let courseData = null;
+
+            // Load course details on page load
+            loadCourseDetails();
+
+            // Registration button handler
+            $(document).on('click', '#registerBtn', function() {
+                $('#modalCourseName').text(courseData.Title);
+                $('#registrationModal').modal('show');
+            });
+
+            $('#confirmRegistrationBtn').click(function() {
+                registerForCourse();
+            });
+
+            function loadCourseDetails() {
+                // OData endpoint for single course
+                $.ajax({
+                    url: `${apiBaseUrl}/odata/Courses(${courseId})`,
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    success: function(data) {
+                        courseData = data;
+                        displayCourseDetails(data);
+                        checkRegistrationStatus();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error loading course details:', error);
+                        showError('Không thể tải thông tin khóa học. Khóa học có thể không tồn tại.');
+                    }
+                });
+            }
+
+            function displayCourseDetails(course) {
+                $('#detailTitle').text(course.Title);
+                $('#detailDescription').text(course.Description || 'Không có mô tả');
+                $('#detailTargetAudience').text(course.TargetAudience || 'Tất cả');
+                $('#detailDuration').text(course.DurationMinutes ? `${course.DurationMinutes} phút` : 'Không xác định');
+                $('#detailCreatedAt').text(formatDate(course.CreatedAt));
+                $('#detailStatus').html(course.IsActive ?
+                    '<span class="badge badge-success">Đang mở</span>' :
+                    '<span class="badge badge-secondary">Đã đóng</span>'
+                );
+
+                // Update page title
+                $('#courseTitle').text(course.Title);
+                document.title = `${course.Title} - ${$('title').text()}`;
+
+                $('#loadingIndicator').hide();
+                $('#courseDetails').show();
+            }
+
+            function checkRegistrationStatus() {
+                if (currentUserId === 0) {
+                    displayRegistrationSection(false, false, 'Vui lòng đăng nhập để đăng ký khóa học.');
+                    return;
+                }
+
+                // OData function call for checking registration
+                $.ajax({
+                    url: `${apiBaseUrl}/odata/UserCourses/CheckRegistration(userId=${currentUserId},courseId=${courseId})`,
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    success: function(data) {
+                        displayRegistrationSection(data.isRegistered, courseData.IsActive);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error checking registration status:', error);
+                        displayRegistrationSection(false, courseData.IsActive, 'Không thể kiểm tra trạng thái đăng ký.');
+                    }
+                });
+            }
+
+            function displayRegistrationSection(isRegistered, isActive, errorMessage = '') {
+                const section = $('#registrationSection');
+
+                if (errorMessage) {
+                    section.html(`<p class="text-warning">${errorMessage}</p>`);
+                    return;
+                }
+
+                if (isRegistered) {
+                    section.html(`
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Bạn đã đăng ký khóa học này
+                        </div>
+                        <a href="/Courses/MyCourses" class="btn btn-info btn-sm">
+                            <i class="fas fa-list"></i> Xem khóa học của tôi
+                        </a>
+                    `);
+                } else if (isActive) {
+                    section.html(`
+                        <p class="mb-3">Khóa học này hiện đang mở đăng ký.</p>
+                        <button id="registerBtn" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Đăng ký ngay
+                        </button>
+                    `);
+                } else {
+                    section.html(`
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Khóa học hiện không mở đăng ký
+                        </div>
+                    `);
+                }
+            }
+
+            function registerForCourse() {
+                // OData Action call
+                $.ajax({
+                    url: `${apiBaseUrl}/odata/UserCourses/Register`,
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        userId: currentUserId,
+                        courseId: courseId
+                    }),
+                    success: function(response) {
+                        $('#registrationModal').modal('hide');
+                        if (response.success) {
+                            showAlert('success', response.message);
+                            checkRegistrationStatus(); // Refresh registration status
+                        } else {
+                            showAlert('warning', response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#registrationModal').modal('hide');
+                        console.error('Error registering for course:', error);
+                        handleApiError(xhr);
+                    }
+                });
+            }
+
+            function handleApiError(xhr) {
+                if (xhr.status === 401) {
+                    showAlert('warning', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                    setTimeout(function() {
+                        window.location.href = '/Auth/Login';
+                    }, 2000);
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    showAlert('danger', xhr.responseJSON.message);
+                } else {
+                    showAlert('danger', 'Không thể thực hiện thao tác. Vui lòng thử lại.');
+                }
+            }
+
+            function showError(message) {
+                $('#errorMessage').text(message);
+                $('#loadingIndicator').hide();
+                $('#errorDisplay').show();
+            }
+
+            function showAlert(type, message) {
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                `;
+
+                $('.alert').remove();
+                $('.card-body').prepend(alertHtml);
+
+                setTimeout(function() {
+                    $('.alert').fadeOut();
+                }, 5000);
+            }
+
+            function formatDate(dateString) {
+                if (!dateString) return 'Không xác định';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('vi-VN');
+            }
+        });
+    </script>
+}

@@ -1,224 +1,309 @@
-﻿@model DUPSWebApp.Models.RegisterViewModel
+﻿@model BusinessObjects.DTOs.RegisterRequest
 @{
     ViewData["Title"] = "Đăng ký";
+    Layout = "_Layout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-center mb-0">@ViewData["Title"]</h2>
-            </div>
-            <div class="card-body">
-                <!-- Alert container -->
-                <div id="alert-container"></div>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus"></i> Đăng ký tài khoản
+                    </h4>
+                    <p class="mb-0 mt-2">Tạo tài khoản mới để sử dụng hệ thống</p>
+                </div>
+                <div class="card-body">
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
 
-                <form id="registerForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="Email" class="form-label">Email</label>
-                                <input type="email" id="Email" name="Email" class="form-control" placeholder="Nhập email của bạn" required />
-                                <div class="invalid-feedback"></div>
+                    <form asp-action="Register" method="post" id="registerForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label">
+                                        <i class="fas fa-envelope"></i> Email <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="Email"
+                                           class="form-control"
+                                           placeholder="example@email.com" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="FullName" class="form-label">
+                                        <i class="fas fa-user"></i> Họ và tên <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="FullName"
+                                           class="form-control"
+                                           placeholder="Nguyễn Văn A" />
+                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="FullName" class="form-label">Họ tên</label>
-                                <input type="text" id="FullName" name="FullName" class="form-control" placeholder="Nhập họ tên đầy đủ" required />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="Password" class="form-label">Mật khẩu</label>
-                                <input type="password" id="Password" name="Password" class="form-control" placeholder="Nhập mật khẩu (ít nhất 6 ký tự)" required />
-                                <div class="invalid-feedback"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Password" class="form-label">
+                                        <i class="fas fa-lock"></i> Mật khẩu <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input asp-for="Password"
+                                               type="password"
+                                               class="form-control"
+                                               placeholder="Ít nhất 6 ký tự" />
+                                        <button class="btn btn-outline-secondary"
+                                                type="button"
+                                                id="togglePassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                    <div class="form-text">
+                                        <small>Mật khẩu phải có ít nhất 6 ký tự</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="ConfirmPassword" class="form-label">
+                                        <i class="fas fa-lock"></i> Xác nhận mật khẩu <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input asp-for="ConfirmPassword"
+                                               type="password"
+                                               class="form-control"
+                                               placeholder="Nhập lại mật khẩu" />
+                                        <button class="btn btn-outline-secondary"
+                                                type="button"
+                                                id="toggleConfirmPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
-                                <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" required />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="DateOfBirth" class="form-label">Ngày sinh</label>
-                                <input type="date" id="DateOfBirth" name="DateOfBirth" class="form-control" />
-                                <div class="invalid-feedback"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="DateOfBirth" class="form-label">
+                                        <i class="fas fa-calendar"></i> Ngày sinh
+                                    </label>
+                                    <input asp-for="DateOfBirth"
+                                           type="date"
+                                           class="form-control" />
+                                    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Gender" class="form-label">
+                                        <i class="fas fa-venus-mars"></i> Giới tính
+                                    </label>
+                                    <select asp-for="Gender" class="form-control">
+                                        <option value="">Chọn giới tính</option>
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                        <option value="Khác">Khác</option>
+                                    </select>
+                                    <span asp-validation-for="Gender" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="Gender" class="form-label">Giới tính</label>
-                                <select id="Gender" name="Gender" class="form-select">
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                    <option value="Khác">Khác</option>
-                                </select>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="Phone" class="form-label">Số điện thoại</label>
-                                <input type="tel" id="Phone" name="Phone" class="form-control" placeholder="Nhập số điện thoại" />
-                                <div class="invalid-feedback"></div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Phone" class="form-label">
+                                        <i class="fas fa-phone"></i> Số điện thoại
+                                    </label>
+                                    <input asp-for="Phone"
+                                           class="form-control"
+                                           placeholder="0123456789" />
+                                    <span asp-validation-for="Phone" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Address" class="form-label">
+                                        <i class="fas fa-map-marker-alt"></i> Địa chỉ
+                                    </label>
+                                    <input asp-for="Address"
+                                           class="form-control"
+                                           placeholder="Địa chỉ của bạn" />
+                                    <span asp-validation-for="Address" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label for="Address" class="form-label">Địa chỉ</label>
-                                <input type="text" id="Address" name="Address" class="form-control" placeholder="Nhập địa chỉ" />
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="d-grid">
-                        <button type="submit" id="registerBtn" class="btn btn-success btn-lg">
-                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                            Đăng ký
-                        </button>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    Tôi đồng ý với
+                                    <a href="#" class="text-decoration-none">Điều khoản sử dụng</a>
+                                    và
+                                    <a href="#" class="text-decoration-none">Chính sách bảo mật</a>
+                                    <span class="text-danger">*</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success" id="registerBtn">
+                                <i class="fas fa-user-plus"></i> Đăng ký
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <p class="mb-2">Đã có tài khoản?</p>
+                        <a asp-action="Login" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập ngay
+                        </a>
                     </div>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">
-                    Đã có tài khoản?
-                    <a href="/Auth/Login" class="text-decoration-none">Đăng nhập ngay</a>
-                </p>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="fas fa-shield-alt"></i>
+                        Thông tin của bạn được bảo mật an toàn
+                    </small>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('registerForm');
-        const registerBtn = document.getElementById('registerBtn');
-        const spinner = registerBtn.querySelector('.spinner-border');
-        const alertContainer = document.getElementById('alert-container');
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('#togglePassword').click(function() {
+                togglePasswordVisibility('#Password', '#togglePassword i');
+            });
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+            $('#toggleConfirmPassword').click(function() {
+                togglePasswordVisibility('#ConfirmPassword', '#toggleConfirmPassword i');
+            });
 
-            // Clear previous alerts and validation
-            clearAlerts();
-            clearValidation();
+            function togglePasswordVisibility(fieldSelector, iconSelector) {
+                const field = $(fieldSelector);
+                const icon = $(iconSelector);
 
-            // Show loading
-            setLoading(true);
-
-            // Get form data
-            const formData = new FormData(form);
-            const data = {
-                email: formData.get('Email'),
-                password: formData.get('Password'),
-                confirmPassword: formData.get('ConfirmPassword'),
-                fullName: formData.get('FullName'),
-                dateOfBirth: formData.get('DateOfBirth'),
-                gender: formData.get('Gender'),
-                phone: formData.get('Phone'),
-                address: formData.get('Address')
-            };
-
-            try {
-                const response = await fetch('/Auth/Register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': await getAntiForgeryToken()
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showAlert('success', result.message);
-                    // Redirect after 2 seconds
-                    setTimeout(() => {
-                        window.location.href = result.redirectUrl || '/Auth/Login';
-                    }, 2000);
+                if (field.attr('type') === 'password') {
+                    field.attr('type', 'text');
+                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
                 } else {
-                    showAlert('danger', result.message);
-                    if (result.errors) {
-                        showValidationErrors(result.errors);
+                    field.attr('type', 'password');
+                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            }
+
+            // Password strength indicator
+            $('#Password').on('input', function() {
+                const password = $(this).val();
+                const strength = getPasswordStrength(password);
+                showPasswordStrength(strength);
+            });
+
+            function getPasswordStrength(password) {
+                let score = 0;
+                if (password.length >= 6) score++;
+                if (password.length >= 10) score++;
+                if (/[a-z]/.test(password)) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+
+                return score;
+            }
+
+            function showPasswordStrength(score) {
+                const strengthText = ['Rất yếu', 'Yếu', 'Trung bình', 'Mạnh', 'Rất mạnh'];
+                const strengthClass = ['danger', 'warning', 'info', 'success', 'success'];
+
+                let strengthHtml = '';
+                if (score > 0) {
+                    const index = Math.min(Math.floor(score / 1.5), 4);
+                    strengthHtml = `<small class="text-${strengthClass[index]}">Độ mạnh: ${strengthText[index]}</small>`;
+                }
+
+                $('#Password').siblings('.form-text').html(strengthHtml);
+            }
+
+            // Confirm password validation
+            $('#ConfirmPassword').on('input', function() {
+                const password = $('#Password').val();
+                const confirmPassword = $(this).val();
+
+                if (confirmPassword !== '') {
+                    if (password === confirmPassword) {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                        $(this).siblings('.text-danger').text('');
+                    } else {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                        $(this).siblings('.text-danger').text('Mật khẩu xác nhận không khớp');
                     }
                 }
-            } catch (error) {
-                console.error('Register error:', error);
-                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
-            } finally {
-                setLoading(false);
-            }
+            });
+
+            // Form submission
+            $('#registerForm').submit(function(e) {
+                const password = $('#Password').val();
+                const confirmPassword = $('#ConfirmPassword').val();
+
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    $('#ConfirmPassword').addClass('is-invalid');
+                    $('#ConfirmPassword').siblings('.text-danger').text('Mật khẩu xác nhận không khớp');
+                    return false;
+                }
+
+                if (!$('#agreeTerms').is(':checked')) {
+                    e.preventDefault();
+                    alert('Vui lòng đồng ý với Điều khoản sử dụng và Chính sách bảo mật');
+                    return false;
+                }
+
+                const registerBtn = $('#registerBtn');
+                registerBtn.prop('disabled', true);
+                registerBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang đăng ký...');
+
+                // Re-enable button after 10 seconds to prevent permanent disable
+                setTimeout(function() {
+                    registerBtn.prop('disabled', false);
+                    registerBtn.html('<i class="fas fa-user-plus"></i> Đăng ký');
+                }, 10000);
+            });
+
+            // Set max date for date of birth (18 years ago)
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            $('#DateOfBirth').attr('max', maxDate.toISOString().split('T')[0]);
+
+            // Focus on first field
+            $('#Email').focus();
         });
 
-        function setLoading(loading) {
-            if (loading) {
-                registerBtn.disabled = true;
-                spinner.classList.remove('d-none');
-                registerBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...';
-            } else {
-                registerBtn.disabled = false;
-                spinner.classList.add('d-none');
-                registerBtn.innerHTML = 'Đăng ký';
-            }
-        }
-
-        function showAlert(type, message) {
-            const alert = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            alertContainer.innerHTML = alert;
-        }
-
-        function clearAlerts() {
-            alertContainer.innerHTML = '';
-        }
-
-        function clearValidation() {
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-        }
-
-        function showValidationErrors(errors) {
-            for (const [field, messages] of Object.entries(errors)) {
-                const input = document.getElementById(field);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    const feedback = input.parentNode.querySelector('.invalid-feedback');
-                    if (feedback) {
-                        feedback.textContent = messages.join(', ');
-                    }
-                }
-            }
-        }
-
-        async function getAntiForgeryToken() {
-            try {
-                const response = await fetch('/Auth/GetAntiForgeryToken');
-                const data = await response.json();
-                return data.token;
-            } catch {
-                return '';
-            }
-        }
-    });
-</script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}

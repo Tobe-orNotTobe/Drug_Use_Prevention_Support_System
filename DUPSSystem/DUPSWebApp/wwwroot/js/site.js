@@ -1,4 +1,147 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿html {
+    font - size: 14px;
+}
 
-// Write your JavaScript code.
+@media(min - width: 768px) {
+  html {
+        font - size: 16px;
+    }
+}
+
+.btn: focus, .btn: active: focus, .btn - link.nav - link: focus, .form - control: focus, .form - check - input:focus {
+    box - shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min - height: 100 %;
+}
+
+body {
+    margin - bottom: 60px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100 %;
+    white - space: nowrap;
+    line - height: 60px;
+}
+
+/* Custom styles for DUPS System */
+.navbar - brand {
+    font - weight: 600;
+    font - size: 1.5rem;
+}
+
+.card {
+    box - shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card - header {
+    background - color: #f8f9fa;
+    border - bottom: 1px solid rgba(0, 0, 0, 0.125);
+    font - weight: 600;
+}
+
+.small - box {
+    border - radius: 0.25rem;
+    position: relative;
+    display: block;
+    margin - bottom: 20px;
+    box - shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    color: #fff;
+}
+
+.small - box > .inner {
+    padding: 10px;
+}
+
+.small - box h3 {
+    font - size: 2.2rem;
+    font - weight: bold;
+    margin: 0 0 10px 0;
+    white - space: nowrap;
+    padding: 0;
+}
+
+.small - box p {
+    font - size: 1rem;
+}
+
+.small - box.icon {
+    transition: all .3s linear;
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    z - index: 0;
+    font - size: 90px;
+    color: rgba(0, 0, 0, 0.15);
+}
+
+.bg - info {
+    background - color: #17a2b8!important;
+}
+
+.bg - success {
+    background - color: #28a745!important;
+}
+
+.bg - warning {
+    background - color: #ffc107!important;
+    color: #212529!important;
+}
+
+.bg - danger {
+    background - color: #dc3545!important;
+}
+
+/* Alert animations */
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z - index: 1050;
+    min - width: 300px;
+    animation: slideInRight 0.3s ease - out;
+}
+
+@keyframes slideInRight {
+  from {
+        transform: translateX(100 %);
+        opacity: 0;
+    }
+  to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Table improvements */
+.table th {
+    font - weight: 600;
+    background - color: #f8f9fa;
+}
+
+.table - hover tbody tr:hover {
+    background - color: rgba(0, 0, 0, 0.075);
+}
+
+/* Button improvements */
+.btn {
+    font - weight: 500;
+}
+
+.btn - group - sm > .btn, .btn - sm {
+    padding: 0.25rem 0.5rem;
+    font - size: 0.875rem;
+    border - radius: 0.2rem;
+}
+
+/* Spinner */
+.spinner - border {
+    width: 3rem;
+    height: 3rem;
+}

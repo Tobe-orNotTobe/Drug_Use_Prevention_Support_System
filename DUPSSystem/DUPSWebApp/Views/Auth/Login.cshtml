@@ -1,166 +1,204 @@
-﻿@model DUPSWebApp.Models.LoginViewModel
+﻿@model BusinessObjects.DTOs.LoginRequest
 @{
     ViewData["Title"] = "Đăng nhập";
+    Layout = "_Layout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="text-center mb-0">@ViewData["Title"]</h2>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                    </h4>
+                    <p class="mb-0 mt-2">Drug Use Prevention Support System</p>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form method="post" action="/Auth/Login" id="loginForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                            <input asp-for="Email"
+                                   class="form-control"
+                                   placeholder="Nhập email của bạn"
+                                   autocomplete="username" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">
+                                <i class="fas fa-lock"></i> Mật khẩu
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Password"
+                                       type="password"
+                                       class="form-control"
+                                       placeholder="Nhập mật khẩu"
+                                       autocomplete="current-password" />
+                                <button class="btn btn-outline-secondary"
+                                        type="button"
+                                        id="togglePassword">
+                                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">
+                                    Ghi nhớ đăng nhập
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="loginBtn">
+                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <p class="mb-2">Chưa có tài khoản?</p>
+                        <a href="/Auth/Register" class="btn btn-outline-success">
+                            <i class="fas fa-user-plus"></i> Đăng ký ngay
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <a href="#" class="text-decoration-none">Quên mật khẩu?</a>
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="fas fa-shield-alt"></i>
+                        Hệ thống được bảo mật SSL
+                    </small>
+                </div>
             </div>
-            <div class="card-body">
-                <!-- Alert container -->
-                <div id="alert-container"></div>
 
-                <form id="loginForm">
-                    <div class="form-group mb-3">
-                        <label for="Email" class="form-label">Email</label>
-                        <input type="email" id="Email" name="Email" class="form-control" placeholder="Nhập email của bạn" required />
-                        <div class="invalid-feedback"></div>
+            <!-- Demo Accounts Card -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Tài khoản demo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
+                                    onclick="fillDemoAccount('admin@DrugPreventionSystem.org', '@@abc123@@')">
+                                <i class="fas fa-user-shield"></i> Admin
+                            </button>
+                        </div>
                     </div>
-
-                    <div class="form-group mb-3">
-                        <label for="Password" class="form-label">Mật khẩu</label>
-                        <input type="password" id="Password" name="Password" class="form-control" placeholder="Nhập mật khẩu" required />
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="form-check mb-3">
-                        <input type="checkbox" id="RememberMe" name="RememberMe" class="form-check-input" />
-                        <label for="RememberMe" class="form-check-label">Ghi nhớ đăng nhập</label>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" id="loginBtn" class="btn btn-primary btn-lg">
-                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                            Đăng nhập
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">
-                    Chưa có tài khoản?
-                    <a href="/Auth/Register" class="text-decoration-none">Đăng ký ngay</a>
-                </p>
+                    <small class="text-muted">Click để điền sẵn thông tin demo</small>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('loginForm');
-        const loginBtn = document.getElementById('loginBtn');
-        const spinner = loginBtn.querySelector('.spinner-border');
-        const alertContainer = document.getElementById('alert-container');
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Toggle password visibility
+            $('#togglePassword').click(function() {
+                const passwordField = $('#Password');
+                const passwordIcon = $('#togglePasswordIcon');
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Clear previous alerts and validation
-            clearAlerts();
-            clearValidation();
-
-            // Show loading
-            setLoading(true);
-
-            // Get form data
-            const formData = new FormData(form);
-            const data = {
-                email: formData.get('Email'),
-                password: formData.get('Password'),
-                rememberMe: formData.get('RememberMe') === 'on'
-            };
-
-            console.log('Sending data:', data);
-
-            try {
-                const response = await fetch('/Auth/Login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': await getAntiForgeryToken()
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                console.log('Response:', result);
-
-                if (result.success) {
-                    showAlert('success', result.message || 'Đăng nhập thành công!');
-                    // Redirect after 1 second
-                    setTimeout(() => {
-                        window.location.href = result.redirectUrl || '/';
-                    }, 1000);
+                if (passwordField.attr('type') === 'password') {
+                    passwordField.attr('type', 'text');
+                    passwordIcon.removeClass('fa-eye').addClass('fa-eye-slash');
                 } else {
-                    showAlert('danger', result.message || 'Đăng nhập thất bại');
-                    if (result.errors) {
-                        showValidationErrors(result.errors);
-                    }
+                    passwordField.attr('type', 'password');
+                    passwordIcon.removeClass('fa-eye-slash').addClass('fa-eye');
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
-            } finally {
-                setLoading(false);
+            });
+
+            // Login form submission
+            $('#loginForm').submit(function() {
+                const loginBtn = $('#loginBtn');
+                loginBtn.prop('disabled', true);
+                loginBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...');
+
+                // Re-enable button after 5 seconds to prevent permanent disable
+                setTimeout(function() {
+                    loginBtn.prop('disabled', false);
+                    loginBtn.html('<i class="fas fa-sign-in-alt"></i> Đăng nhập');
+                }, 5000);
+            });
+
+            // Remember me functionality
+            if (localStorage.getItem('rememberEmail')) {
+                $('#Email').val(localStorage.getItem('rememberEmail'));
+                $('#rememberMe').prop('checked', true);
+            }
+
+            $('#rememberMe').change(function() {
+                if ($(this).is(':checked')) {
+                    localStorage.setItem('rememberEmail', $('#Email').val());
+                } else {
+                    localStorage.removeItem('rememberEmail');
+                }
+            });
+
+            $('#Email').on('input', function() {
+                if ($('#rememberMe').is(':checked')) {
+                    localStorage.setItem('rememberEmail', $(this).val());
+                }
+            });
+
+            // Focus on first empty field
+            if ($('#Email').val() === '') {
+                $('#Email').focus();
+            } else {
+                $('#Password').focus();
             }
         });
 
-        function setLoading(loading) {
-            if (loading) {
-                loginBtn.disabled = true;
-                spinner.classList.remove('d-none');
-                loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Đang xử lý...';
-            } else {
-                loginBtn.disabled = false;
-                spinner.classList.add('d-none');
-                loginBtn.innerHTML = 'Đăng nhập';
-            }
+        // Fill demo account credentials
+        function fillDemoAccount(email, password) {
+            $('#Email').val(email);
+            $('#Password').val(password);
+            $('#Email').trigger('input'); // Trigger validation
         }
 
-        function showAlert(type, message) {
-            const alert = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            alertContainer.innerHTML = alert;
-        }
-
-        function clearAlerts() {
-            alertContainer.innerHTML = '';
-        }
-
-        function clearValidation() {
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-        }
-
-        function showValidationErrors(errors) {
-            for (const [field, messages] of Object.entries(errors)) {
-                const input = document.getElementById(field);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    const feedback = input.parentNode.querySelector('.invalid-feedback');
-                    if (feedback) {
-                        feedback.textContent = messages.join(', ');
-                    }
-                }
-            }
-        }
-
-        async function getAntiForgeryToken() {
-            try {
-                const response = await fetch('/Auth/GetAntiForgeryToken');
-                const data = await response.json();
-                return data.token;
-            } catch {
-                return '';
-            }
-        }
-    });
-</script>
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, 5000);
+    </script>
+}

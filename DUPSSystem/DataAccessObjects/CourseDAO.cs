@@ -22,6 +22,42 @@ namespace DataAccessObjects
 			return list;
 		}
 
+		public static List<Course> GetActive()
+		{
+			var list = new List<Course>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.Courses.Where(c => c.IsActive).ToList();
+			}
+			catch (Exception e) { }
+			return list;
+		}
+
+		public static List<Course> Search(string searchTerm)
+		{
+			var list = new List<Course>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				if (string.IsNullOrWhiteSpace(searchTerm))
+				{
+					list = db.Courses.ToList();
+				}
+				else
+				{
+					searchTerm = searchTerm.ToLower();
+					list = db.Courses
+						.Where(c => c.Title.ToLower().Contains(searchTerm) ||
+								   (c.Description != null && c.Description.ToLower().Contains(searchTerm)) ||
+								   (c.TargetAudience != null && c.TargetAudience.ToLower().Contains(searchTerm)))
+						.ToList();
+				}
+			}
+			catch (Exception e) { }
+			return list;
+		}
+
 		public static void Save(Course s)
 		{
 			try

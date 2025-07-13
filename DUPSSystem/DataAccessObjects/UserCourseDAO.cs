@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -7,7 +8,10 @@ namespace DataAccessObjects
 		public static UserCourse GetById(int id)
 		{
 			using var db = new DrugPreventionDbContext();
-			return db.UserCourses.FirstOrDefault(c => c.UserCourseId.Equals(id));
+			return db.UserCourses
+				.Include(uc => uc.User)
+				.Include(uc => uc.Course)
+				.FirstOrDefault(c => c.UserCourseId.Equals(id));
 		}
 
 		public static List<UserCourse> GetAll()
@@ -16,10 +20,76 @@ namespace DataAccessObjects
 			try
 			{
 				using var db = new DrugPreventionDbContext();
-				list = db.UserCourses.ToList();
+				list = db.UserCourses
+					.Include(uc => uc.User)
+					.Include(uc => uc.Course)
+					.ToList();
 			}
 			catch (Exception e) { }
 			return list;
+		}
+
+		public static List<UserCourse> GetByUserId(int userId)
+		{
+			var list = new List<UserCourse>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.UserCourses
+					.Include(uc => uc.User)
+					.Include(uc => uc.Course)
+					.Where(uc => uc.UserId == userId)
+					.OrderByDescending(uc => uc.RegisteredAt)
+					.ToList();
+			}
+			catch (Exception e) { }
+			return list;
+		}
+
+		public static List<UserCourse> GetByCourseId(int courseId)
+		{
+			var list = new List<UserCourse>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.UserCourses
+					.Include(uc => uc.User)
+					.Include(uc => uc.Course)
+					.Where(uc => uc.CourseId == courseId)
+					.OrderByDescending(uc => uc.RegisteredAt)
+					.ToList();
+			}
+			catch (Exception e) { }
+			return list;
+		}
+
+		public static bool IsUserRegisteredForCourse(int userId, int courseId)
+		{
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				return db.UserCourses.Any(uc => uc.UserId == userId && uc.CourseId == courseId);
+			}
+			catch (Exception e)
+			{
+				return false;
+			}
+		}
+
+		public static UserCourse? GetByUserAndCourse(int userId, int courseId)
+		{
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				return db.UserCourses
+					.Include(uc => uc.User)
+					.Include(uc => uc.Course)
+					.FirstOrDefault(uc => uc.UserId == userId && uc.CourseId == courseId);
+			}
+			catch (Exception e)
+			{
+				return null;
+			}
 		}
 
 		public static void Save(UserCourse s)
