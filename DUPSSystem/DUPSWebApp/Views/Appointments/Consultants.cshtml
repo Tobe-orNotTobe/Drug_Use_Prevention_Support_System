@@ -212,5 +212,9 @@
 </div>
 
 @section Scripts {
+    <script>
+        window.CURRENT_USER_ID = '@Context.Session.GetInt32("UserId")';
+        window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
+    </script>
     <script src="~/js/consultants.js"></script>
 }

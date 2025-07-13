@@ -36,6 +36,55 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[HttpPost("odata/Appointments")]
+		[Authorize]
+		public IActionResult Post([FromBody] AppointmentCreateRequest request)
+		{
+			try
+			{
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
+				}
+
+				var response = _appointmentService.CreateAppointment(request);
+				if (response.Success)
+				{
+					return Ok(response);
+				}
+				else
+				{
+					return BadRequest(response);
+				}
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		[HttpGet("odata/Appointments/user/{userId}")]
+		[Authorize]
+		public IActionResult GetUserAppointments([FromRoute] int userId)
+		{
+			try
+			{
+				var response = _appointmentService.GetUserAppointments(userId);
+				if (response.Success)
+				{
+					return Ok(response);
+				}
+				else
+				{
+					return BadRequest(response);
+				}
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
 		// GET: odata/Appointments/consultant/{consultantId}
 		[HttpGet("odata/Appointments/consultant/{consultantId}")]
 		[EnableQuery]

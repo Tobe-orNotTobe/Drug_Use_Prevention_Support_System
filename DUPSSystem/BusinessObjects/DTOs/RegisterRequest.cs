@@ -20,7 +20,7 @@ namespace BusinessObjects.DTOs
 		[StringLength(255, ErrorMessage = "Họ tên không được vượt quá 255 ký tự")]
 		public string FullName { get; set; } = null!;
 
-		public DateOnly? DateOfBirth { get; set; }
+		public DateTime? DateOfBirth { get; set; }
 
 		[StringLength(20, ErrorMessage = "Giới tính không được vượt quá 20 ký tự")]
 		public string? Gender { get; set; }
