@@ -1,11 +1,20 @@
-﻿// my-courses.js - Updated for Bootstrap 5
+﻿// my-courses.js - Fixed version
 $(document).ready(function () {
     // Configuration
-    const API_BASE_URL = 'https://localhost:7008//odata'; // Update to your API URL
-    const CURRENT_USER_ID = 2; // This should be dynamic based on logged-in user
+    const API_BASE_URL = 'https://localhost:7008/odata'; // Fixed double slash
+    let CURRENT_USER_ID = window.CURRENT_USER_ID || null;
 
     let userCourses = [];
     let filteredCourses = [];
+
+    // Check if user is logged in
+    if (!CURRENT_USER_ID || !window.USER_TOKEN) {
+        showAlert('warning', 'Bạn cần đăng nhập để xem khóa học của mình');
+        setTimeout(() => {
+            window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+        }, 2000);
+        return;
+    }
 
     // Initialize page
     init();
@@ -28,7 +37,7 @@ $(document).ready(function () {
         // Modal events
         $('#markCompletedBtn').click(function () {
             const courseId = $(this).data('course-id');
-            markCourseAsCompleted(CURRENT_USER_ID, courseId);
+            markAsCompleted(CURRENT_USER_ID, courseId);
         });
 
         $('#unregisterBtn').click(function () {
@@ -37,26 +46,51 @@ $(document).ready(function () {
         });
     }
 
+    // Setup AJAX headers with authentication
+    function setupAjaxHeaders() {
+        return {
+            'Authorization': `Bearer ${window.USER_TOKEN}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
     // Load user's registered courses
     function loadUserCourses() {
         showLoading();
 
         const odataQuery = `${API_BASE_URL}/UserCourses?$filter=UserId eq ${CURRENT_USER_ID}&$expand=Course&$orderby=RegisteredAt desc`;
 
+        console.log('Loading user courses:', odataQuery); // Debug log
+
         $.ajax({
             url: odataQuery,
             method: 'GET',
+            headers: setupAjaxHeaders(),
             success: function (response) {
                 hideLoading();
+                console.log('API Response:', response); // Debug log
+
                 userCourses = response.value || response || [];
                 filteredCourses = [...userCourses];
+
+                console.log('User courses loaded:', userCourses.length); // Debug log
+
                 displayCourses();
                 updateStatistics();
             },
             error: function (xhr, status, error) {
                 hideLoading();
                 console.error('Error loading user courses:', error);
-                showAlert('error', 'Đã xảy ra lỗi khi tải danh sách khóa học');
+                console.error('XHR:', xhr); // Debug log
+
+                if (xhr.status === 401) {
+                    showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                    setTimeout(() => {
+                        window.location.href = '/Auth/Login';
+                    }, 2000);
+                } else {
+                    showAlert('error', 'Đã xảy ra lỗi khi tải danh sách khóa học: ' + (xhr.responseJSON?.message || error));
+                }
             }
         });
     }
@@ -70,6 +104,7 @@ $(document).ready(function () {
         // Apply filters
         filteredCourses = userCourses.filter(userCourse => {
             const course = userCourse.Course;
+            if (!course) return false; // Skip if course is null
 
             // Status filter
             if (statusFilter === 'active' && userCourse.CompletedAt) return false;
@@ -125,6 +160,8 @@ $(document).ready(function () {
 
         filteredCourses.forEach(userCourse => {
             const course = userCourse.Course;
+            if (!course) return; // Skip if course is null
+
             const isCompleted = userCourse.CompletedAt != null;
             const progressPercentage = isCompleted ? 100 : Math.floor(Math.random() * 60 + 20); // Mock progress
 
@@ -214,7 +251,7 @@ $(document).ready(function () {
         const completedCourses = userCourses.filter(uc => uc.CompletedAt).length;
         const activeCourses = totalCourses - completedCourses;
         const totalMinutes = userCourses.reduce((total, uc) => {
-            return total + (uc.Course.DurationMinutes || 0);
+            return total + (uc.Course?.DurationMinutes || 0);
         }, 0);
         const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
 
@@ -227,7 +264,7 @@ $(document).ready(function () {
     // View course detail
     function viewCourseDetail(userCourseId, courseId) {
         const userCourse = userCourses.find(uc => uc.UserCourseId === userCourseId);
-        if (!userCourse) return;
+        if (!userCourse || !userCourse.Course) return;
 
         const course = userCourse.Course;
         const isCompleted = userCourse.CompletedAt != null;
@@ -307,16 +344,23 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_BASE_URL}/UserCourses/Complete`,
             method: 'POST',
-            contentType: 'application/json',
+            headers: setupAjaxHeaders(),
             data: JSON.stringify(data),
             success: function (response) {
                 showAlert('success', 'Đánh dấu hoàn thành khóa học thành công');
-                bootstrap.Modal.getInstance(document.getElementById('courseDetailModal')).hide();
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('courseDetailModal'));
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
                 loadUserCourses();
             },
             error: function (xhr, status, error) {
                 console.error('Error marking course as completed:', error);
-                showAlert('error', 'Đã xảy ra lỗi khi đánh dấu hoàn thành khóa học');
+                if (xhr.status === 401) {
+                    showAlert('error', 'Phiên đăng nhập đã hết hạn');
+                } else {
+                    showAlert('error', 'Đã xảy ra lỗi khi đánh dấu hoàn thành khóa học');
+                }
             }
         });
     }
@@ -330,14 +374,22 @@ $(document).ready(function () {
         $.ajax({
             url: `${API_BASE_URL}/UserCourses(${userCourseId})`,
             method: 'DELETE',
+            headers: setupAjaxHeaders(),
             success: function (response) {
                 showAlert('success', 'Hủy đăng ký khóa học thành công');
-                bootstrap.Modal.getInstance(document.getElementById('courseDetailModal')).hide();
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('courseDetailModal'));
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
                 loadUserCourses();
             },
             error: function (xhr, status, error) {
                 console.error('Error unregistering course:', error);
-                showAlert('error', 'Đã xảy ra lỗi khi hủy đăng ký khóa học');
+                if (xhr.status === 401) {
+                    showAlert('error', 'Phiên đăng nhập đã hết hạn');
+                } else {
+                    showAlert('error', 'Đã xảy ra lỗi khi hủy đăng ký khóa học');
+                }
             }
         });
     }
@@ -346,6 +398,7 @@ $(document).ready(function () {
     function showLoading() {
         $('#loadingSpinner').show();
         $('#coursesGrid').hide();
+        $('#emptyState').hide();
     }
 
     function hideLoading() {
@@ -362,21 +415,22 @@ $(document).ready(function () {
         }[type] || 'alert-info';
 
         const alertHtml = `
-            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                 style="top: 20px; right: 20px; z-index: 1050; min-width: 300px;" role="alert">
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
 
         // Remove existing alerts
-        $('.alert').remove();
+        $('.alert.position-fixed').remove();
 
-        // Add new alert at the top of the page
-        $('body').prepend(alertHtml);
+        // Add new alert
+        $('body').append(alertHtml);
 
         // Auto remove after 5 seconds
         setTimeout(() => {
-            $('.alert').fadeOut();
+            $('.alert.position-fixed').fadeOut();
         }, 5000);
     }
 
