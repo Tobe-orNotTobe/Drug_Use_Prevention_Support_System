@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -8,6 +9,24 @@ namespace DataAccessObjects
 		{
 			using var db = new DrugPreventionDbContext();
 			return db.SurveyOptions.FirstOrDefault(c => c.OptionId.Equals(id));
+		}
+
+		public static List<SurveyOption> GetByQuestionId(int questionId)
+		{
+			var list = new List<SurveyOption>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.SurveyOptions
+					.Where(o => o.QuestionId == questionId)
+					.OrderBy(o => o.OptionId)
+					.ToList();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error getting options by question ID: {e.Message}");
+			}
+			return list;
 		}
 
 		public static List<SurveyOption> GetAll()
@@ -57,7 +76,6 @@ namespace DataAccessObjects
 				using var context = new DrugPreventionDbContext();
 				var s1 = context.SurveyOptions.SingleOrDefault(c => c.OptionId == s.OptionId);
 				context.SurveyOptions.Remove(s1);
-
 				context.SaveChanges();
 			}
 			catch (Exception e)

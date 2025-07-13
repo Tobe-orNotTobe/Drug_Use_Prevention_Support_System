@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/courses.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/surveys.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -39,6 +40,19 @@
                                     <i class="fas fa-user-graduate"></i> Khóa học của tôi
                                 </a>
                             </li>
+                            <!-- SURVEY MENU -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="surveyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-poll"></i> Khảo sát
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="surveyDropdown">
+                                    <li><a class="dropdown-item" href="/Surveys"><i class="fas fa-list"></i> Danh sách khảo sát</a></li>
+                                    <li><a class="dropdown-item" href="/Surveys/Results"><i class="fas fa-chart-bar"></i> Kết quả của tôi</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn làm khảo sát</a></li>
+                                </ul>
+                            </li>
+                            <!-- END SURVEY MENU -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-cogs"></i> Quản lý
@@ -48,7 +62,7 @@
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-user-md"></i> Tư vấn viên</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-calendar"></i> Lịch hẹn</a></li>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#"><i class="fas fa-poll"></i> Khảo sát</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-poll"></i> Quản lý khảo sát</a></li>
                                     <li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i> Chương trình</a></li>
                                 </ul>
                             </li>
@@ -160,15 +174,15 @@
         @if (Context.Session.GetString("UserToken") != null)
         {
             <text>
-                window.CURRENT_USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
-                window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
+                    window.CURRENT_USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
+                    window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
             </text>
         }
         else
         {
             <text>
-                window.CURRENT_USER_ID = null;
-                window.USER_TOKEN = null;
+                    window.CURRENT_USER_ID = null;
+                    window.USER_TOKEN = null;
             </text>
         }
     </script>

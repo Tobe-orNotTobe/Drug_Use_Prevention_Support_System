@@ -13,12 +13,22 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IUserCourseRepository, UserCourseRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
+builder.Services.AddScoped<ISurveyQuestionRepository, SurveyQuestionRepository>();
+builder.Services.AddScoped<ISurveyOptionRepository, SurveyOptionRepository>();
+builder.Services.AddScoped<ISurveyResultRepository, SurveyResultRepository>();
+builder.Services.AddScoped<ISurveyAnswerRepository, SurveyAnswerRepository>();
+
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IUserCourseService, UserCourseService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISurveyService, SurveyService>();
+builder.Services.AddScoped<ISurveyQuestionService, SurveyQuestionService>();
+builder.Services.AddScoped<ISurveyOptionService, SurveyOptionService>();
+builder.Services.AddScoped<ISurveyResultService, SurveyResultService>();
 
 // Configure HttpClient for API calls
 builder.Services.AddHttpClient();

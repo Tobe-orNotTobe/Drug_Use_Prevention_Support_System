@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -10,13 +11,51 @@ namespace DataAccessObjects
 			return db.Surveys.FirstOrDefault(c => c.SurveyId.Equals(id));
 		}
 
+		// THÊM METHOD MỚI
+		public static Survey? GetWithQuestionsAndOptions(int id)
+		{
+			using var db = new DrugPreventionDbContext();
+			return db.Surveys
+				.Include(s => s.SurveyQuestions.OrderBy(q => q.QuestionId))
+					.ThenInclude(q => q.SurveyOptions.OrderBy(o => o.OptionId))
+				.FirstOrDefault(s => s.SurveyId == id);
+		}
+
+		// THÊM METHOD SEARCH
+		public static List<Survey> Search(string searchTerm)
+		{
+			var list = new List<Survey>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				if (string.IsNullOrWhiteSpace(searchTerm))
+				{
+					list = db.Surveys.OrderByDescending(s => s.CreatedAt).ToList();
+				}
+				else
+				{
+					searchTerm = searchTerm.ToLower();
+					list = db.Surveys
+						.Where(s => s.Name.ToLower().Contains(searchTerm) ||
+								   (s.Description != null && s.Description.ToLower().Contains(searchTerm)))
+						.OrderByDescending(s => s.CreatedAt)
+						.ToList();
+				}
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error searching surveys: {e.Message}");
+			}
+			return list;
+		}
+
 		public static List<Survey> GetAll()
 		{
 			var list = new List<Survey>();
 			try
 			{
 				using var db = new DrugPreventionDbContext();
-				list = db.Surveys.ToList();
+				list = db.Surveys.OrderByDescending(s => s.CreatedAt).ToList();
 			}
 			catch (Exception e) { }
 			return list;
@@ -57,7 +96,6 @@ namespace DataAccessObjects
 				using var context = new DrugPreventionDbContext();
 				var s1 = context.Surveys.SingleOrDefault(c => c.SurveyId == s.SurveyId);
 				context.Surveys.Remove(s1);
-
 				context.SaveChanges();
 			}
 			catch (Exception e)

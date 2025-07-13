@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -63,6 +64,54 @@ namespace DataAccessObjects
 			catch (Exception e)
 			{
 				throw new Exception(e.Message);
+			}
+		}
+
+		public static List<UserSurveyAnswer> GetByResultId(int resultId)
+		{
+			var list = new List<UserSurveyAnswer>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.UserSurveyAnswers
+					.Include(a => a.Question)
+					.Include(a => a.Option)
+					.Where(a => a.ResultId == resultId)
+					.ToList();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error getting answers by result ID: {e.Message}");
+			}
+			return list;
+		}
+
+		public static void SaveBatch(List<UserSurveyAnswer> answers)
+		{
+			try
+			{
+				using var context = new DrugPreventionDbContext();
+				context.UserSurveyAnswers.AddRange(answers);
+				context.SaveChanges();
+			}
+			catch (Exception e)
+			{
+				throw new Exception($"Error saving batch answers: {e.Message}");
+			}
+		}
+
+		public static void DeleteByResultId(int resultId)
+		{
+			try
+			{
+				using var context = new DrugPreventionDbContext();
+				var answers = context.UserSurveyAnswers.Where(a => a.ResultId == resultId);
+				context.UserSurveyAnswers.RemoveRange(answers);
+				context.SaveChanges();
+			}
+			catch (Exception e)
+			{
+				throw new Exception($"Error deleting answers: {e.Message}");
 			}
 		}
 	}

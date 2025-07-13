@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessObjects
 {
@@ -63,6 +64,41 @@ namespace DataAccessObjects
 			catch (Exception e)
 			{
 				throw new Exception(e.Message);
+			}
+		}
+
+		public static List<UserSurveyResult> GetByUserId(int userId)
+		{
+			var list = new List<UserSurveyResult>();
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				list = db.UserSurveyResults
+					.Include(r => r.Survey)
+					.Where(r => r.UserId == userId)
+					.OrderByDescending(r => r.TakenAt)
+					.ToList();
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error getting user survey results: {e.Message}");
+			}
+			return list;
+		}
+
+		public static UserSurveyResult? GetByUserAndSurvey(int userId, int surveyId)
+		{
+			try
+			{
+				using var db = new DrugPreventionDbContext();
+				return db.UserSurveyResults
+					.Include(r => r.Survey)
+					.FirstOrDefault(r => r.UserId == userId && r.SurveyId == surveyId);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine($"Error getting user survey result: {e.Message}");
+				return null;
 			}
 		}
 	}

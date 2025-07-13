@@ -1,0 +1,135 @@
+﻿@{
+    ViewData["Title"] = "Kết quả khảo sát";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        Kết quả khảo sát của tôi
+                    </h3>
+                    <div class="card-tools">
+                        <a href="/Surveys" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Làm khảo sát mới
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Section -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm theo tên khảo sát...">
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select" id="sortFilter">
+                                <option value="newest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="highest">Điểm cao nhất</option>
+                                <option value="lowest">Điểm thấp nhất</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Đang tải kết quả khảo sát...</p>
+                    </div>
+
+                    <!-- Results Grid -->
+                    <div id="resultsGrid" class="row" style="display: none;">
+                        <!-- Results will be loaded here -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-chart-bar fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Bạn chưa hoàn thành khảo sát nào</h4>
+                        <p class="text-muted">Hãy thực hiện các khảo sát để xem kết quả tại đây</p>
+                        <a href="/Surveys" class="btn btn-primary">
+                            <i class="fas fa-poll"></i> Làm khảo sát ngay
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row mt-4">
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-info text-white rounded">
+                <div class="inner p-3">
+                    <h3 id="totalResults">0</h3>
+                    <p>Tổng kết quả</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-poll"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success text-white rounded">
+                <div class="inner p-3">
+                    <h3 id="averageScore">0</h3>
+                    <p>Điểm trung bình</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning text-white rounded">
+                <div class="inner p-3">
+                    <h3 id="highestScore">0</h3>
+                    <p>Điểm cao nhất</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger text-white rounded">
+                <div class="inner p-3">
+                    <h3 id="latestScore">0</h3>
+                    <p>Điểm gần nhất</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Result Detail Modal -->
+<div class="modal fade" id="resultDetailModal" tabindex="-1" aria-labelledby="resultDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultDetailModalLabel">Chi tiết kết quả khảo sát</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="resultDetailContent">
+                <!-- Result details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="retakeSurveyBtn" style="display: none;">
+                    <i class="fas fa-redo"></i> Làm lại khảo sát
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/survey-results.js"></script>
+}
