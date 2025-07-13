@@ -1,4 +1,6 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
@@ -19,6 +21,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery(MaxExpansionDepth = 3)]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get()
 		{
 			try
@@ -33,6 +36,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery(MaxExpansionDepth = 3)]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -50,30 +54,19 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		// Custom endpoint to get questions by survey ID with options
-		[HttpGet("odata/SurveyQuestions/BySurvey({surveyId})")]
-		[EnableQuery(MaxExpansionDepth = 3)]
-		public IActionResult GetQuestionsBySurvey([FromRoute] int surveyId)
-		{
-			try
-			{
-				var questions = _questionService.GetQuestionsBySurveyId(surveyId).AsQueryable();
-				return Ok(questions);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Post([FromBody] SurveyQuestion question)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo câu hỏi khảo sát" });
+				}
+
 				if (!ModelState.IsValid)
 				{
-					return BadRequest(ModelState);
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
 				_questionService.SaveQuestion(question);
@@ -85,15 +78,20 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<SurveyQuestion> delta)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa câu hỏi khảo sát" });
+				}
+
 				var question = _questionService.GetQuestionById(key);
 				if (question == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy câu hỏi" });
 				}
 
 				delta.Patch(question);
@@ -107,7 +105,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.SeniorRoles)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -115,7 +113,7 @@ namespace DUPSWebAPI.Controllers
 				var question = _questionService.GetQuestionById(key);
 				if (question == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy câu hỏi" });
 				}
 
 				_questionService.DeleteQuestion(question);

@@ -1,76 +1,179 @@
-﻿@{
+﻿@using BusinessObjects.Constants
+@using BusinessObjects.Extensions
+@{
     ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Chào mừng đến với DUPS System</h1>
-    <p>Hệ thống hỗ trợ phòng ngừa sử dụng ma túy - Drug Use Prevention Support System</p>
-</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Chào mừng đến với Drug Use Prevention Support System</h1>
 
-<div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
-                <h5 class="card-title">Khóa học đào tạo</h5>
-                <p class="card-text">Tham gia các khóa học về phòng ngừa tệ nạn xã hội, nâng cao nhận thức.</p>
-                <a href="/Courses" class="btn btn-primary">Xem khóa học</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-user-md fa-3x text-success mb-3"></i>
-                <h5 class="card-title">Tư vấn chuyên gia</h5>
-                <p class="card-text">Được hỗ trợ và tư vấn từ các chuyên gia trong lĩnh vực phòng chống tệ nạn.</p>
-                <a href="#" class="btn btn-success">Đặt lịch tư vấn</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-poll fa-3x text-warning mb-3"></i>
-                <h5 class="card-title">Khảo sát đánh giá</h5>
-                <p class="card-text">Tham gia các khảo sát để đánh giá mức độ rủi ro và nhận được khuyến nghị phù hợp.</p>
-                <a href="#" class="btn btn-warning">Tham gia khảo sát</a>
-            </div>
-        </div>
-    </div>
-</div>
+            <!-- Everyone can see this -->
+            <p>Hệ thống hỗ trợ phòng ngừa sử dụng ma túy</p>
 
-<div class="row mt-5">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-chart-bar"></i> Thống kê hệ thống
-                </h3>
+            <!-- Guest users - show login/register -->
+            @if (!User.IsAuthenticated())
+            {
+                <div class="alert alert-info">
+                    <h4><i class="fas fa-info-circle"></i> Bạn chưa đăng nhập</h4>
+                    <p>Để sử dụng đầy đủ các tính năng của hệ thống, vui lòng đăng nhập hoặc đăng ký tài khoản.</p>
+                    <a asp-controller="Auth" asp-action="Login" class="btn btn-primary me-2">
+                        <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                    </a>
+                    <a asp-controller="Auth" asp-action="Register" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus"></i> Đăng ký
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- Authenticated users -->
+                <div class="alert alert-success">
+                    <h4><i class="fas fa-user-check"></i> Xin chào, @User.GetUserFullName()!</h4>
+                    <p>Chào mừng bạn trở lại. Vai trò: <strong>@User.GetHighestRole()</strong></p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Feature Cards - conditional based on permissions -->
+    <div class="row mt-4">
+        <!-- Courses - Everyone can see -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-graduation-cap"></i> Khóa học</h5>
+                    <p class="card-text">Tham gia các khóa học về phòng ngừa ma túy</p>
+                    <a asp-controller="Courses" asp-action="Index" class="btn btn-primary">
+                        Xem khóa học
+                    </a>
+                    <!-- Only authenticated users can register -->
+                    <div asp-authorize="@Roles.AuthenticatedRoles" class="mt-2">
+                        <a asp-controller="Courses" asp-action="MyCourses" class="btn btn-outline-primary btn-sm">
+                            Khóa học của tôi
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <div class="border-end">
-                            <h3 class="text-primary">150+</h3>
-                            <p class="text-muted">Khóa học</p>
+        </div>
+
+        <!-- Surveys - Everyone can see, authenticated can take -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-poll"></i> Khảo sát</h5>
+                    <p class="card-text">Đánh giá mức độ rủi ro và nhận tư vấn</p>
+                    <a asp-controller="Surveys" asp-action="Index" class="btn btn-primary">
+                        Xem khảo sát
+                    </a>
+                    <!-- Only authenticated users can take surveys -->
+                    <div asp-authorize="@Roles.AuthenticatedRoles" class="mt-2">
+                        <a asp-controller="Surveys" asp-action="Results" class="btn btn-outline-primary btn-sm">
+                            Kết quả của tôi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments - Everyone can see consultants, authenticated can book -->
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-calendar-check"></i> Tư vấn</h5>
+                    <p class="card-text">Đặt lịch hẹn với các chuyên gia tư vấn</p>
+                    <a asp-controller="Appointments" asp-action="Consultants" class="btn btn-primary">
+                        Xem tư vấn viên
+                    </a>
+                    <!-- Only authenticated users can book appointments -->
+                    <div asp-authorize="@Roles.AuthenticatedRoles" class="mt-2">
+                        <a asp-controller="Appointments" asp-action="MyAppointments" class="btn btn-outline-primary btn-sm">
+                            Lịch hẹn của tôi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Section - Only for Staff+ -->
+    <div asp-authorize="@Roles.ManagementRoles" class="row mt-4">
+        <div class="col-md-12">
+            <h3><i class="fas fa-cogs"></i> Quản lý hệ thống</h3>
+            <div class="row">
+                <div asp-require-permission="manage-courses" class="col-md-3 mb-3">
+                    <div class="card border-success">
+                        <div class="card-body">
+                            <h6 class="card-title">Quản lý khóa học</h6>
+                            <a asp-controller="Courses" asp-action="Manage" class="btn btn-success btn-sm">
+                                Quản lý
+                            </a>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border-end">
-                            <h3 class="text-success">2,500+</h3>
-                            <p class="text-muted">Học viên</p>
+                </div>
+
+                <div asp-require-permission="manage-surveys" class="col-md-3 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title">Quản lý khảo sát</h6>
+                            <a asp-controller="Surveys" asp-action="Manage" class="btn btn-warning btn-sm">
+                                Quản lý
+                            </a>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="border-end">
-                            <h3 class="text-warning">50+</h3>
-                            <p class="text-muted">Chuyên gia</p>
+                </div>
+
+                <div asp-require-permission="manage-consultants" class="col-md-3 mb-3">
+                    <div class="card border-info">
+                        <div class="card-body">
+                            <h6 class="card-title">Quản lý tư vấn viên</h6>
+                            <a asp-controller="Consultants" asp-action="Manage" class="btn btn-info btn-sm">
+                                Quản lý
+                            </a>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <h3 class="text-info">95%</h3>
-                        <p class="text-muted">Mức độ hài lòng</p>
+                </div>
+
+                <div asp-require-permission="view-reports" class="col-md-3 mb-3">
+                    <div class="card border-secondary">
+                        <div class="card-body">
+                            <h6 class="card-title">Báo cáo</h6>
+                            <a asp-controller="Home" asp-action="Reports" class="btn btn-secondary btn-sm">
+                                Xem báo cáo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Section - Only for Admin -->
+    <div asp-authorize="@Roles.AdminOnly" class="row mt-4">
+        <div class="col-md-12">
+            <h3><i class="fas fa-crown"></i> Quản trị hệ thống</h3>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <h6 class="card-title">Quản lý người dùng</h6>
+                            <p class="card-text small">Thêm, sửa, xóa người dùng và phân quyền</p>
+                            <a asp-controller="Users" asp-action="Index" class="btn btn-danger btn-sm">
+                                Quản lý người dùng
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3Kết quả của tôi
+                    <div class="card border-dark">
+                        <div class="card-body">
+                            <h6 class="card-title">Cấu hình hệ thống</h6>
+                            <p class="card-text small">Cài đặt và cấu hình hệ thống</p>
+                            <a asp-controller="Home" asp-action="SystemManagement" class="btn btn-dark btn-sm">
+                                Cấu hình
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

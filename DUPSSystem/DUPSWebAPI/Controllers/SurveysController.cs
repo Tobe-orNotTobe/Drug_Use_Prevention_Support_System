@@ -1,4 +1,6 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
@@ -19,6 +21,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery(PageSize = 20)]
+		[AllowAnonymous]
 		public IActionResult Get()
 		{
 			try
@@ -33,6 +36,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[AllowAnonymous]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -50,66 +54,19 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		// FIX: Đổi route để tránh conflict
-		[HttpGet]
-		[Route("odata/Surveys({key})/Details")]
-		public IActionResult GetSurveyDetails([FromRoute] int key)
-		{
-			try
-			{
-				var surveyDetails = _surveyService.GetSurveyWithDetails(key);
-				if (surveyDetails == null)
-				{
-					return NotFound(new { success = false, message = "Không tìm thấy khảo sát" });
-				}
-
-				return Ok(new
-				{
-					success = true,
-					message = "Lấy chi tiết khảo sát thành công",
-					data = surveyDetails
-				});
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// THÊM ENDPOINT ĐƠN GIẢN HỢP
-		[HttpGet]
-		[Route("api/Surveys/{id}/Details")]
-		public IActionResult GetSurveyDetailsSimple(int id)
-		{
-			try
-			{
-				var surveyDetails = _surveyService.GetSurveyWithDetails(id);
-				if (surveyDetails == null)
-				{
-					return NotFound(new { success = false, message = "Không tìm thấy khảo sát" });
-				}
-
-				return Ok(new
-				{
-					success = true,
-					message = "Lấy chi tiết khảo sát thành công",
-					data = surveyDetails
-				});
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Post([FromBody] Survey survey)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo khảo sát" });
+				}
+
 				if (!ModelState.IsValid)
 				{
-					return BadRequest(ModelState);
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
 				_surveyService.SaveSurvey(survey);
@@ -121,15 +78,20 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<Survey> delta)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa khảo sát" });
+				}
+
 				var survey = _surveyService.GetSurveyById(key);
 				if (survey == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy khảo sát" });
 				}
 
 				delta.Patch(survey);
@@ -143,7 +105,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.SeniorRoles)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -151,26 +113,11 @@ namespace DUPSWebAPI.Controllers
 				var survey = _surveyService.GetSurveyById(key);
 				if (survey == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy khảo sát" });
 				}
 
 				_surveyService.DeleteSurvey(survey);
 				return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		[HttpGet("odata/Surveys/Search")]
-		[EnableQuery]
-		public IActionResult Search([FromQuery] string term = "")
-		{
-			try
-			{
-				var surveys = _surveyService.SearchSurveys(term).AsQueryable();
-				return Ok(surveys);
 			}
 			catch (Exception ex)
 			{

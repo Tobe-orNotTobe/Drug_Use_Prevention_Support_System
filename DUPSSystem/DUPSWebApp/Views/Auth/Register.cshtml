@@ -1,309 +1,163 @@
-﻿@model BusinessObjects.DTOs.RegisterRequest
+﻿@model DUPSWebApp.Models.RegisterViewModel
 @{
-    ViewData["Title"] = "Đăng ký";
-    Layout = "_Layout";
+    ViewData["Title"] = "Đăng ký tài khoản";
 }
+<li>
+    <a class="dropdown-item" asp-controller="Users" asp-action="Index">
+        <i class="fas fa-users"></i> Quản lý người dùng
+    </a>
+</li>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-user-plus"></i> Đăng ký tài khoản
-                    </h4>
-                    <p class="mb-0 mt-2">Tạo tài khoản mới để sử dụng hệ thống</p>
-                </div>
-                <div class="card-body">
-                    @if (ViewData.ModelState.ErrorCount > 0)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                            {
-                                <div>@error.ErrorMessage</div>
-                            }
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    }
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h2 class="text-center mb-0">
+                    <i class="fas fa-user-plus"></i> @ViewData["Title"]
+                </h2>
+            </div>
+            <div class="card-body">
+                @using (Html.BeginForm("Register", "Auth", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                {
+                    @Html.AntiForgeryToken()
+                    
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
-                    <form asp-action="Register" method="post" id="registerForm">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Email" class="form-label">
-                                        <i class="fas fa-envelope"></i> Email <span class="text-danger">*</span>
-                                    </label>
-                                    <input asp-for="Email"
-                                           class="form-control"
-                                           placeholder="example@email.com" />
-                                    <span asp-validation-for="Email" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="FullName" class="form-label">
-                                        <i class="fas fa-user"></i> Họ và tên <span class="text-danger">*</span>
-                                    </label>
-                                    <input asp-for="FullName"
-                                           class="form-control"
-                                           placeholder="Nguyễn Văn A" />
-                                    <span asp-validation-for="FullName" class="text-danger"></span>
-                                </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.Email, new { @class = "form-label" })
+                                <i class="fas fa-envelope"></i> <span class="text-danger">*</span>
+                                @Html.TextBoxFor(m => m.Email, new { 
+                                    @class = "form-control", 
+                                    placeholder = "email@example.com",
+                                    required = "required"
+                                })
+                                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Password" class="form-label">
-                                        <i class="fas fa-lock"></i> Mật khẩu <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input asp-for="Password"
-                                               type="password"
-                                               class="form-control"
-                                               placeholder="Ít nhất 6 ký tự" />
-                                        <button class="btn btn-outline-secondary"
-                                                type="button"
-                                                id="togglePassword">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                    <div class="form-text">
-                                        <small>Mật khẩu phải có ít nhất 6 ký tự</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="ConfirmPassword" class="form-label">
-                                        <i class="fas fa-lock"></i> Xác nhận mật khẩu <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="input-group">
-                                        <input asp-for="ConfirmPassword"
-                                               type="password"
-                                               class="form-control"
-                                               placeholder="Nhập lại mật khẩu" />
-                                        <button class="btn btn-outline-secondary"
-                                                type="button"
-                                                id="toggleConfirmPassword">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.FullName, new { @class = "form-label" })
+                                <i class="fas fa-user"></i> <span class="text-danger">*</span>
+                                @Html.TextBoxFor(m => m.FullName, new { 
+                                    @class = "form-control", 
+                                    placeholder = "Nhập họ và tên",
+                                    required = "required"
+                                })
+                                @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger" })
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="DateOfBirth" class="form-label">
-                                        <i class="fas fa-calendar"></i> Ngày sinh
-                                    </label>
-                                    <input asp-for="DateOfBirth"
-                                           type="date"
-                                           class="form-control" />
-                                    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Gender" class="form-label">
-                                        <i class="fas fa-venus-mars"></i> Giới tính
-                                    </label>
-                                    <select asp-for="Gender" class="form-control">
-                                        <option value="">Chọn giới tính</option>
-                                        <option value="Nam">Nam</option>
-                                        <option value="Nữ">Nữ</option>
-                                        <option value="Khác">Khác</option>
-                                    </select>
-                                    <span asp-validation-for="Gender" class="text-danger"></span>
-                                </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.Password, new { @class = "form-label" })
+                                <i class="fas fa-lock"></i> <span class="text-danger">*</span>
+                                @Html.PasswordFor(m => m.Password, new { 
+                                    @class = "form-control", 
+                                    placeholder = "Tối thiểu 6 ký tự",
+                                    required = "required",
+                                    minlength = "6"
+                                })
+                                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Phone" class="form-label">
-                                        <i class="fas fa-phone"></i> Số điện thoại
-                                    </label>
-                                    <input asp-for="Phone"
-                                           class="form-control"
-                                           placeholder="0123456789" />
-                                    <span asp-validation-for="Phone" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label asp-for="Address" class="form-label">
-                                        <i class="fas fa-map-marker-alt"></i> Địa chỉ
-                                    </label>
-                                    <input asp-for="Address"
-                                           class="form-control"
-                                           placeholder="Địa chỉ của bạn" />
-                                    <span asp-validation-for="Address" class="text-danger"></span>
-                                </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label" })
+                                <i class="fas fa-lock"></i> <span class="text-danger">*</span>
+                                @Html.PasswordFor(m => m.ConfirmPassword, new { 
+                                    @class = "form-control", 
+                                    placeholder = "Nhập lại mật khẩu",
+                                    required = "required"
+                                })
+                                @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger" })
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
-                                <label class="form-check-label" for="agreeTerms">
-                                    Tôi đồng ý với
-                                    <a href="#" class="text-decoration-none">Điều khoản sử dụng</a>
-                                    và
-                                    <a href="#" class="text-decoration-none">Chính sách bảo mật</a>
-                                    <span class="text-danger">*</span>
-                                </label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.Phone, new { @class = "form-label" })
+                                <i class="fas fa-phone"></i>
+                                @Html.TextBoxFor(m => m.Phone, new { 
+                                    @class = "form-control", 
+                                    placeholder = "0123456789"
+                                })
+                                @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "text-danger" })
                             </div>
                         </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success" id="registerBtn">
-                                <i class="fas fa-user-plus"></i> Đăng ký
-                            </button>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.Gender, new { @class = "form-label" })
+                                <i class="fas fa-venus-mars"></i>
+                                @Html.DropDownListFor(m => m.Gender, new SelectList(new[]
+                                {
+                                    new { Value = "", Text = "-- Chọn giới tính --" },
+                                    new { Value = "Nam", Text = "Nam" },
+                                    new { Value = "Nữ", Text = "Nữ" },
+                                    new { Value = "Khác", Text = "Khác" }
+                                }, "Value", "Text"), new { @class = "form-select" })
+                                @Html.ValidationMessageFor(m => m.Gender, "", new { @class = "text-danger" })
+                            </div>
                         </div>
-                    </form>
+                    </div>
 
-                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.DateOfBirth, new { @class = "form-label" })
+                                <i class="fas fa-calendar"></i>
+                                @Html.TextBoxFor(m => m.DateOfBirth, new { 
+                                    @class = "form-control", 
+                                    type = "date"
+                                })
+                                @Html.ValidationMessageFor(m => m.DateOfBirth, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                @Html.LabelFor(m => m.Address, new { @class = "form-label" })
+                                <i class="fas fa-map-marker-alt"></i>
+                                @Html.TextBoxFor(m => m.Address, new { 
+                                    @class = "form-control", 
+                                    placeholder = "Địa chỉ của bạn"
+                                })
+                                @Html.ValidationMessageFor(m => m.Address, "", new { @class = "text-danger" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-user-plus"></i> Đăng ký tài khoản
+                        </button>
+                    </div>
 
                     <div class="text-center">
-                        <p class="mb-2">Đã có tài khoản?</p>
-                        <a asp-action="Login" class="btn btn-outline-primary">
-                            <i class="fas fa-sign-in-alt"></i> Đăng nhập ngay
-                        </a>
+                        <small class="text-muted">
+                            Bằng việc đăng ký, bạn đồng ý với 
+                            <a href="#" class="text-decoration-none">Điều khoản sử dụng</a> 
+                            và 
+                            @Html.ActionLink("Chính sách bảo mật", "Privacy", "Home", null, new { @class = "text-decoration-none" })
+                        </small>
                     </div>
-                </div>
-                <div class="card-footer text-center text-muted">
-                    <small>
-                        <i class="fas fa-shield-alt"></i>
-                        Thông tin của bạn được bảo mật an toàn
-                    </small>
-                </div>
+                }
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">
+                    Đã có tài khoản?
+                    @Html.ActionLink("Đăng nhập ngay", "Login", "Auth", null, new { @class = "text-decoration-none fw-bold" })
+                </p>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Toggle password visibility
-            $('#togglePassword').click(function() {
-                togglePasswordVisibility('#Password', '#togglePassword i');
-            });
-
-            $('#toggleConfirmPassword').click(function() {
-                togglePasswordVisibility('#ConfirmPassword', '#toggleConfirmPassword i');
-            });
-
-            function togglePasswordVisibility(fieldSelector, iconSelector) {
-                const field = $(fieldSelector);
-                const icon = $(iconSelector);
-
-                if (field.attr('type') === 'password') {
-                    field.attr('type', 'text');
-                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
-                } else {
-                    field.attr('type', 'password');
-                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
-                }
-            }
-
-            // Password strength indicator
-            $('#Password').on('input', function() {
-                const password = $(this).val();
-                const strength = getPasswordStrength(password);
-                showPasswordStrength(strength);
-            });
-
-            function getPasswordStrength(password) {
-                let score = 0;
-                if (password.length >= 6) score++;
-                if (password.length >= 10) score++;
-                if (/[a-z]/.test(password)) score++;
-                if (/[A-Z]/.test(password)) score++;
-                if (/[0-9]/.test(password)) score++;
-                if (/[^A-Za-z0-9]/.test(password)) score++;
-
-                return score;
-            }
-
-            function showPasswordStrength(score) {
-                const strengthText = ['Rất yếu', 'Yếu', 'Trung bình', 'Mạnh', 'Rất mạnh'];
-                const strengthClass = ['danger', 'warning', 'info', 'success', 'success'];
-
-                let strengthHtml = '';
-                if (score > 0) {
-                    const index = Math.min(Math.floor(score / 1.5), 4);
-                    strengthHtml = `<small class="text-${strengthClass[index]}">Độ mạnh: ${strengthText[index]}</small>`;
-                }
-
-                $('#Password').siblings('.form-text').html(strengthHtml);
-            }
-
-            // Confirm password validation
-            $('#ConfirmPassword').on('input', function() {
-                const password = $('#Password').val();
-                const confirmPassword = $(this).val();
-
-                if (confirmPassword !== '') {
-                    if (password === confirmPassword) {
-                        $(this).removeClass('is-invalid').addClass('is-valid');
-                        $(this).siblings('.text-danger').text('');
-                    } else {
-                        $(this).removeClass('is-valid').addClass('is-invalid');
-                        $(this).siblings('.text-danger').text('Mật khẩu xác nhận không khớp');
-                    }
-                }
-            });
-
-            // Form submission
-            $('#registerForm').submit(function(e) {
-                const password = $('#Password').val();
-                const confirmPassword = $('#ConfirmPassword').val();
-
-                if (password !== confirmPassword) {
-                    e.preventDefault();
-                    $('#ConfirmPassword').addClass('is-invalid');
-                    $('#ConfirmPassword').siblings('.text-danger').text('Mật khẩu xác nhận không khớp');
-                    return false;
-                }
-
-                if (!$('#agreeTerms').is(':checked')) {
-                    e.preventDefault();
-                    alert('Vui lòng đồng ý với Điều khoản sử dụng và Chính sách bảo mật');
-                    return false;
-                }
-
-                const registerBtn = $('#registerBtn');
-                registerBtn.prop('disabled', true);
-                registerBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang đăng ký...');
-
-                // Re-enable button after 10 seconds to prevent permanent disable
-                setTimeout(function() {
-                    registerBtn.prop('disabled', false);
-                    registerBtn.html('<i class="fas fa-user-plus"></i> Đăng ký');
-                }, 10000);
-            });
-
-            // Set max date for date of birth (18 years ago)
-            const today = new Date();
-            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-            $('#DateOfBirth').attr('max', maxDate.toISOString().split('T')[0]);
-
-            // Focus on first field
-            $('#Email').focus();
-        });
-
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
-    </script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 }

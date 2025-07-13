@@ -19,15 +19,9 @@ public partial class DrugPreventionDbContext : DbContext
 
 	public virtual DbSet<Appointment> Appointments { get; set; }
 
-	public virtual DbSet<AuditLog> AuditLogs { get; set; }
-
-	public virtual DbSet<CommunicationProgram> CommunicationPrograms { get; set; }
-
 	public virtual DbSet<Consultant> Consultants { get; set; }
 
 	public virtual DbSet<Course> Courses { get; set; }
-
-	public virtual DbSet<ProgramSurvey> ProgramSurveys { get; set; }
 
 	public virtual DbSet<Role> Roles { get; set; }
 
@@ -40,8 +34,6 @@ public partial class DrugPreventionDbContext : DbContext
 	public virtual DbSet<User> Users { get; set; }
 
 	public virtual DbSet<UserCourse> UserCourses { get; set; }
-
-	public virtual DbSet<UserProgram> UserPrograms { get; set; }
 
 	public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
@@ -82,27 +74,6 @@ public partial class DrugPreventionDbContext : DbContext
 				.HasConstraintName("FK__Appointme__UserI__4F7CD00D");
 		});
 
-		modelBuilder.Entity<AuditLog>(entity =>
-		{
-			entity.HasKey(e => e.LogId).HasName("PK__AuditLog__5E5486489C654B69");
-
-			entity.Property(e => e.Action).HasMaxLength(255);
-			entity.Property(e => e.LogDate).HasDefaultValueSql("(getdate())");
-			entity.Property(e => e.TableName).HasMaxLength(255);
-
-			entity.HasOne(d => d.User).WithMany(p => p.AuditLogs)
-				.HasForeignKey(d => d.UserId)
-				.HasConstraintName("FK__AuditLogs__UserI__5FB337D6");
-		});
-
-		modelBuilder.Entity<CommunicationProgram>(entity =>
-		{
-			entity.HasKey(e => e.ProgramId).HasName("PK__Communic__75256058808ACE51");
-
-			entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-			entity.Property(e => e.Title).HasMaxLength(255);
-		});
-
 		modelBuilder.Entity<Consultant>(entity =>
 		{
 			entity.HasKey(e => e.ConsultantId).HasName("PK__Consulta__E5B83F59080B905B");
@@ -124,23 +95,6 @@ public partial class DrugPreventionDbContext : DbContext
 			entity.Property(e => e.IsActive).HasDefaultValue(true);
 			entity.Property(e => e.TargetAudience).HasMaxLength(50);
 			entity.Property(e => e.Title).HasMaxLength(255);
-		});
-
-		modelBuilder.Entity<ProgramSurvey>(entity =>
-		{
-			entity.HasKey(e => e.ProgramSurveyId).HasName("PK__ProgramS__A9FC9B0ECD72E6DB");
-
-			entity.Property(e => e.SurveyType).HasMaxLength(50);
-
-			entity.HasOne(d => d.Program).WithMany(p => p.ProgramSurveys)
-				.HasForeignKey(d => d.ProgramId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK__ProgramSu__Progr__5AEE82B9");
-
-			entity.HasOne(d => d.Survey).WithMany(p => p.ProgramSurveys)
-				.HasForeignKey(d => d.SurveyId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK__ProgramSu__Surve__5BE2A6F2");
 		});
 
 		modelBuilder.Entity<Role>(entity =>
@@ -230,23 +184,6 @@ public partial class DrugPreventionDbContext : DbContext
 				.HasForeignKey(d => d.UserId)
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK__UserCours__UserI__34C8D9D1");
-		});
-
-		modelBuilder.Entity<UserProgram>(entity =>
-		{
-			entity.HasKey(e => e.UserProgramId).HasName("PK__UserProg__2DA04025C5272DEF");
-
-			entity.Property(e => e.JoinedAt).HasDefaultValueSql("(getdate())");
-
-			entity.HasOne(d => d.Program).WithMany(p => p.UserPrograms)
-				.HasForeignKey(d => d.ProgramId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK__UserProgr__Progr__5812160E");
-
-			entity.HasOne(d => d.User).WithMany(p => p.UserPrograms)
-				.HasForeignKey(d => d.UserId)
-				.OnDelete(DeleteBehavior.ClientSetNull)
-				.HasConstraintName("FK__UserProgr__UserI__571DF1D5");
 		});
 
 		modelBuilder.Entity<UserSurveyAnswer>(entity =>

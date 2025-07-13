@@ -26,13 +26,9 @@ static IEdmModel GetEdmModel()
 	builder.EntitySet<Role>("Roles"); 
 	builder.EntitySet<Consultant>("Consultants").EntityType.HasMany(c => c.Appointments);
 	builder.EntitySet<Appointment>("Appointments");
-	builder.EntitySet<AuditLog>("AuditLogs");
-	builder.EntitySet<CommunicationProgram>("CommunicationPrograms");
-	builder.EntitySet<ProgramSurvey>("ProgramSurveys");
 	builder.EntitySet<Survey>("Surveys");
 	builder.EntitySet<SurveyQuestion>("SurveyQuestions").EntityType.HasMany(q => q.SurveyOptions);
 	builder.EntitySet<SurveyOption>("SurveyOptions");
-	builder.EntitySet<UserProgram>("UserPrograms");
 	builder.EntitySet<UserSurveyAnswer>("UserSurveyAnswers");
 	builder.EntitySet<UserSurveyResult>("UserSurveyResults");
 

@@ -1,4 +1,6 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
@@ -19,6 +21,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get()
 		{
 			try
@@ -33,6 +36,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -50,14 +54,19 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Post([FromBody] SurveyOption option)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo tùy chọn khảo sát" });
+				}
+
 				if (!ModelState.IsValid)
 				{
-					return BadRequest(ModelState);
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
 				_optionService.SaveOption(option);
@@ -69,15 +78,20 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager,Staff")]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<SurveyOption> delta)
 		{
 			try
 			{
+				if (!User.CanManageSurveys())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa tùy chọn khảo sát" });
+				}
+
 				var option = _optionService.GetOptionById(key);
 				if (option == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy tùy chọn" });
 				}
 
 				delta.Patch(option);
@@ -91,7 +105,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.SeniorRoles)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -99,7 +113,7 @@ namespace DUPSWebAPI.Controllers
 				var option = _optionService.GetOptionById(key);
 				if (option == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy tùy chọn" });
 				}
 
 				_optionService.DeleteOption(option);

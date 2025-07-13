@@ -1,10 +1,14 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
 using BusinessObjects.DTOs;
+using BusinessObjects.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
+using Services;
 using Services.Interfaces;
 
 namespace DUPSWebAPI.Controllers
@@ -19,12 +23,23 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get()
 		{
 			try
 			{
 				var userCourses = _userCourseService.GetAllUserCourses().AsQueryable();
-				return Ok(userCourses);
+
+				if (User.CanViewAllReports())
+				{
+					return Ok(userCourses);
+				}
+				else
+				{
+					var userId = User.GetUserId();
+					var filtered = userCourses.Where(uc => uc.UserId == userId);
+					return Ok(filtered);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -33,6 +48,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -42,6 +58,12 @@ namespace DUPSWebAPI.Controllers
 				{
 					return NotFound(new { success = false, message = "Không tìm thấy đăng ký khóa học" });
 				}
+
+				if (!User.IsOwnerOrCanViewAll(userCourse.UserId))
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền xem thông tin này" });
+				}
+
 				return Ok(userCourse);
 			}
 			catch (Exception ex)
@@ -50,25 +72,26 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Post([FromBody] CourseRegistrationRequest request)
 		{
 			try
 			{
+				if (!User.CanRegisterCourses())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền đăng ký khóa học" });
+				}
+
+				// Force UserId to be current user (security)
+				request.UserId = User.GetUserId();
+
 				if (!ModelState.IsValid)
 				{
-					return BadRequest(ModelState);
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
 				var result = _userCourseService.RegisterUserForCourse(request);
-
-				if (result.Success)
-				{
-					return Created("", new { success = true, message = result.Message, data = new { UserCourseId = result.UserCourseId } });
-				}
-				else
-				{
-					return BadRequest(new { success = false, message = result.Message });
-				}
+				return Created(result);
 			}
 			catch (Exception ex)
 			{
@@ -76,6 +99,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -83,7 +107,13 @@ namespace DUPSWebAPI.Controllers
 				var userCourse = _userCourseService.GetUserCourseById(key);
 				if (userCourse == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy đăng ký khóa học" });
+				}
+
+				// Check permission to delete
+				if (!User.IsOwnerOrCanViewAll(userCourse.UserId))
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền hủy đăng ký này" });
 				}
 
 				_userCourseService.DeleteUserCourse(userCourse);
@@ -95,24 +125,5 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[HttpPost("odata/UserCourses/Complete")]
-		public IActionResult MarkAsCompleted([FromBody] CourseRegistrationRequest request)
-		{
-			try
-			{
-				if (!ModelState.IsValid)
-				{
-					return BadRequest(ModelState);
-				}
-
-				_userCourseService.MarkCourseAsCompleted(request.UserId, request.CourseId);
-
-				return Ok(new { success = true, message = "Đánh dấu hoàn thành khóa học thành công" });
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
 	}
 }

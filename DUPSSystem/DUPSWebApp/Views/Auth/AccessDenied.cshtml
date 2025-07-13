@@ -1,0 +1,45 @@
+﻿@using BusinessObjects.Extensions
+@{
+    ViewData["Title"] = "Truy cập bị từ chối";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="text-center mb-0">
+                    <i class="fas fa-ban"></i> @ViewData["Title"]
+                </h3>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <h4 class="text-danger">Không có quyền truy cập</h4>
+                <p class="text-muted">
+                    @(ViewBag.Message ?? "Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên nếu bạn cho rằng đây là lỗi.")
+                </p>
+
+                <div class="mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-2">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+
+                    @if (User.IsAuthenticated())
+                    {
+                        <a asp-controller="Home" asp-action="Dashboard" class="btn btn-outline-primary">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

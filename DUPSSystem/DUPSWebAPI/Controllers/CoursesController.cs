@@ -1,5 +1,8 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
 using BusinessObjects.DTOs;
+using BusinessObjects.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Formatter;
@@ -19,6 +22,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery(PageSize = 20)]
+		[AllowAnonymous]
 		public IActionResult Get()
 		{
 			try
@@ -33,6 +37,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[EnableQuery]
+		[AllowAnonymous]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -50,19 +55,22 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Post([FromBody] Course course)
 		{
 			try
 			{
-				if (!ModelState.IsValid)
+				if (!User.CanManageCourses())
 				{
-					return BadRequest(ModelState);
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo khóa học" });
 				}
 
-				course.CreatedAt = DateTime.UtcNow;
-				course.IsActive = true;
-				_courseService.SaveCourse(course);
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
+				}
 
+				_courseService.SaveCourse(course);
 				return Created(course);
 			}
 			catch (Exception ex)
@@ -71,18 +79,23 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<Course> delta)
 		{
 			try
 			{
+				if (!User.CanManageCourses())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa khóa học" });
+				}
+
 				var course = _courseService.GetCourseById(key);
 				if (course == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy khóa học" });
 				}
 
 				delta.Patch(course);
-				course.UpdatedAt = DateTime.UtcNow;
 				_courseService.UpdateCourse(course);
 
 				return Updated(course);
@@ -93,6 +106,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		[Authorize(Roles = Roles.AdminOnly)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -100,7 +114,7 @@ namespace DUPSWebAPI.Controllers
 				var course = _courseService.GetCourseById(key);
 				if (course == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy khóa học" });
 				}
 
 				_courseService.DeleteCourse(course);
@@ -108,22 +122,7 @@ namespace DUPSWebAPI.Controllers
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		[HttpGet("odata/Courses/Active")]
-		[EnableQuery]
-		public IActionResult GetActiveCourses()
-		{
-			try
-			{
-				var courses = _courseService.GetActiveCourses().AsQueryable();
-				return Ok(courses);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
+				return BadRequest(new { success = false, message = "Xóa khóa học thất bại" });
 			}
 		}
 	}

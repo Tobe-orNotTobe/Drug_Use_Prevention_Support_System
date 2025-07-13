@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
@@ -8,7 +9,7 @@ using Services.Interfaces;
 
 namespace DUPSWebAPI.Controllers
 {
-	[Authorize(Roles = "Admin")]
+	[Authorize(Roles = Roles.AdminOnly)]
 	public class UserController : ODataController
 	{
 		private readonly IUserService _service;

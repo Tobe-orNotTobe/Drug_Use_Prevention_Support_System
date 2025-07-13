@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Repositories;
 using Repositories.Interfaces;
 using Services;
@@ -48,6 +49,21 @@ builder.Services.AddSession(options =>
 	options.Cookie.IsEssential = true;
 });
 
+// Authentication & Authorization
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+	.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+	{
+		options.LoginPath = "/Auth/Login";
+		options.AccessDeniedPath = "/Auth/AccessDenied";
+		options.ExpireTimeSpan = TimeSpan.FromHours(24);
+		options.SlidingExpiration = true;
+		options.Cookie.HttpOnly = true;
+		options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+		options.Cookie.SameSite = SameSiteMode.Lax;
+	});
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -61,6 +77,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Standard MVC routing
 app.MapControllerRoute(

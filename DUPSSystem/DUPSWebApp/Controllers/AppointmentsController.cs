@@ -1,68 +1,59 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DUPSWebApp.Controllers
 {
-	public class AppointmentsController : Controller
+	public class AppointmentsController : BaseController
 	{
-		public IActionResult Index()
-		{
-			// Check if user is logged in
-			if (HttpContext.Session.GetString("UserToken") == null)
-			{
-				TempData["ErrorMessage"] = "Bạn cần đăng nhập để xem lịch hẹn";
-				return RedirectToAction("Login", "Auth");
-			}
-
-			return View();
-		}
-
 		public IActionResult Consultants()
 		{
-			// Check if user is logged in
-			if (HttpContext.Session.GetString("UserToken") == null)
-			{
-				TempData["ErrorMessage"] = "Bạn cần đăng nhập để xem danh sách tư vấn viên";
-				return RedirectToAction("Login", "Auth");
-			}
-
+			SetViewBagPermissions();
 			return View();
 		}
 
-		public IActionResult Book(int consultantId)
-		{
-			// Check if user is logged in
-			if (HttpContext.Session.GetString("UserToken") == null)
-			{
-				TempData["ErrorMessage"] = "Bạn cần đăng nhập để đặt lịch hẹn";
-				return RedirectToAction("Login", "Auth");
-			}
-
-			ViewBag.ConsultantId = consultantId;
-			return View();
-		}
-
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult MyAppointments()
 		{
-			// Check if user is logged in
-			if (HttpContext.Session.GetString("UserToken") == null)
+			if (!User.CanViewOwnAppointments())
 			{
-				TempData["ErrorMessage"] = "Bạn cần đăng nhập để xem lịch hẹn của bạn";
-				return RedirectToAction("Login", "Auth");
+				return ForbiddenRedirect("Bạn không có quyền xem lịch hẹn");
 			}
 
+			SetViewBagPermissions();
 			return View();
 		}
 
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Details(int id)
 		{
-			// Check if user is logged in
-			if (HttpContext.Session.GetString("UserToken") == null)
+			ViewBag.AppointmentId = id;
+			SetViewBagPermissions();
+			return View();
+		}
+
+		[Authorize(Roles = Roles.ManagementRoles)]
+		public IActionResult Manage()
+		{
+			if (!User.CanManageAppointments())
 			{
-				TempData["ErrorMessage"] = "Bạn cần đăng nhập để xem chi tiết lịch hẹn";
-				return RedirectToAction("Login", "Auth");
+				return ForbiddenRedirect("Bạn không có quyền quản lý lịch hẹn");
 			}
 
-			ViewBag.AppointmentId = id;
+			SetViewBagPermissions();
+			return View();
+		}
+
+		[Authorize(Roles = Roles.ConsultantRoles)]
+		public IActionResult ConsultantAppointments()
+		{
+			if (!User.IsConsultant() && !User.CanViewAllAppointments())
+			{
+				return ForbiddenRedirect("Bạn không có quyền xem lịch hẹn tư vấn");
+			}
+
+			SetViewBagPermissions();
 			return View();
 		}
 	}

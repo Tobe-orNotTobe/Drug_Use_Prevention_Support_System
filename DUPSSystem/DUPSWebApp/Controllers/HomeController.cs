@@ -1,19 +1,67 @@
+﻿using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace DUPSWebApp.Controllers
 {
-	public class HomeController : Controller
+	public class HomeController : BaseController
 	{
-		private readonly ILogger<HomeController> _logger;
-
-		public HomeController(ILogger<HomeController> logger)
-		{
-			_logger = logger;
-		}
-
 		public IActionResult Index()
 		{
+			SetViewBagPermissions();
+			return View();
+		}
+
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Dashboard()
+		{
+			if (!User.CanViewDashboard())
+			{
+				return ForbiddenRedirect("Bạn không có quyền truy cập Dashboard");
+			}
+
+			SetViewBagPermissions();
+
+			// Redirect to role-specific dashboard
+			if (User.IsAdmin())
+			{
+				return View("AdminDashboard");
+			}
+			else if (User.IsManager())
+			{
+				return View("ManagerDashboard");
+			}
+			else if (User.IsStaff())
+			{
+				return View("StaffDashboard");
+			}
+			else if (User.IsConsultant())
+			{
+				return View("ConsultantDashboard");
+			}	
+			else
+			{
+				return View("UserDashboard");
+			}
+		}
+
+		[Authorize(Roles = Roles.SeniorRoles)]
+		public IActionResult Reports()
+		{
+			if (!User.CanViewReports())
+			{
+				return ForbiddenRedirect("Bạn không có quyền xem báo cáo");
+			}
+
+			SetViewBagPermissions();
+			return View();
+		}
+
+		[Authorize(Roles = Roles.AdminOnly)]
+		public IActionResult SystemManagement()
+		{
+			SetViewBagPermissions();
 			return View();
 		}
 
@@ -21,17 +69,5 @@ namespace DUPSWebApp.Controllers
 		{
 			return View();
 		}
-
-		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-		public IActionResult Error()
-		{
-			return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-		}
-	}
-
-	public class ErrorViewModel
-	{
-		public string? RequestId { get; set; }
-		public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 	}
 }

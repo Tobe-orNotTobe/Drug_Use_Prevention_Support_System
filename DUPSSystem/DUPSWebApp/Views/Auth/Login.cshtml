@@ -1,204 +1,109 @@
-﻿@model BusinessObjects.DTOs.LoginRequest
+﻿@model DUPSWebApp.Models.LoginViewModel
 @{
     ViewData["Title"] = "Đăng nhập";
     Layout = "_Layout";
 }
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4 class="mb-0">
-                        <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                    </h4>
-                    <p class="mb-0 mt-2">Drug Use Prevention Support System</p>
-                </div>
-                <div class="card-body">
-                    @if (TempData["SuccessMessage"] != null)
-                    {
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    }
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="text-center mb-0">
+                    <i class="fas fa-sign-in-alt"></i> @ViewData["Title"]
+                </h2>
+            </div>
+            <div class="card-body">
+                <form asp-controller="Auth" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-                    @if (ViewData.ModelState.ErrorCount > 0)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                            {
-                                <div>@error.ErrorMessage</div>
-                            }
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    }
+                    <div class="form-group mb-3">
+                        <label asp-for="Email" class="form-label">
+                            <i class="fas fa-envelope"></i> @Html.DisplayNameFor(m => m.Email)
+                        </label>
+                        <input asp-for="Email" class="form-control" placeholder="Nhập địa chỉ email" autofocus />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
 
-                    <form method="post" action="/Auth/Login" id="loginForm">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-
-                        <div class="mb-3">
-                            <label asp-for="Email" class="form-label">
-                                <i class="fas fa-envelope"></i> Email
-                            </label>
-                            <input asp-for="Email"
-                                   class="form-control"
-                                   placeholder="Nhập email của bạn"
-                                   autocomplete="username" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Password" class="form-label">
-                                <i class="fas fa-lock"></i> Mật khẩu
-                            </label>
-                            <div class="input-group">
-                                <input asp-for="Password"
-                                       type="password"
-                                       class="form-control"
-                                       placeholder="Nhập mật khẩu"
-                                       autocomplete="current-password" />
-                                <button class="btn btn-outline-secondary"
-                                        type="button"
-                                        id="togglePassword">
-                                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
-                                </button>
-                            </div>
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="rememberMe">
-                                <label class="form-check-label" for="rememberMe">
-                                    Ghi nhớ đăng nhập
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary" id="loginBtn">
-                                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                    <div class="form-group mb-3">
+                        <label asp-for="Password" class="form-label">
+                            <i class="fas fa-lock"></i> @Html.DisplayNameFor(m => m.Password)
+                        </label>
+                        <div class="input-group">
+                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" />
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                    </form>
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
 
-                    <hr>
+                    <div class="form-check mb-3">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">
+                            @Html.DisplayNameFor(m => m.RememberMe)
+                        </label>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </button>
+                    </div>
 
                     <div class="text-center">
-                        <p class="mb-2">Chưa có tài khoản?</p>
-                        <a href="/Auth/Register" class="btn btn-outline-success">
-                            <i class="fas fa-user-plus"></i> Đăng ký ngay
-                        </a>
+                        <a href="#" class="text-decoration-none small">Quên mật khẩu?</a>
                     </div>
+                </form>
 
-                    <div class="text-center mt-3">
+                <!-- Demo accounts for testing -->
+                @if (ViewContext.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+                {
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6><i class="fas fa-info-circle"></i> Tài khoản demo:</h6>
                         <small class="text-muted">
-                            <a href="#" class="text-decoration-none">Quên mật khẩu?</a>
+                            <strong>Admin:</strong> admin@DrugPreventionSystem.org / @@abc123@@<br />
+                            <strong>Manager:</strong> manager@test.com / 123456<br />
+                            <strong>Staff:</strong> staff@test.com / 123456<br />
+                            <strong>Member:</strong> member@test.com / 123456
                         </small>
                     </div>
-                </div>
-                <div class="card-footer text-center text-muted">
-                    <small>
-                        <i class="fas fa-shield-alt"></i>
-                        Hệ thống được bảo mật SSL
-                    </small>
-                </div>
+                }
             </div>
-
-            <!-- Demo Accounts Card -->
-            <div class="card mt-3">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Tài khoản demo
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="button" class="btn btn-sm btn-outline-primary w-100 mb-2"
-                                    onclick="fillDemoAccount('admin@DrugPreventionSystem.org', '@@abc123@@')">
-                                <i class="fas fa-user-shield"></i> Admin
-                            </button>
-                        </div>
-                    </div>
-                    <small class="text-muted">Click để điền sẵn thông tin demo</small>
-                </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">
+                    Chưa có tài khoản?
+                    <a asp-controller="Auth" asp-action="Register" class="text-decoration-none fw-bold">
+                        Đăng ký ngay
+                    </a>
+                </p>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
     <script>
-        $(document).ready(function() {
-            // Toggle password visibility
-            $('#togglePassword').click(function() {
-                const passwordField = $('#Password');
-                const passwordIcon = $('#togglePasswordIcon');
-
-                if (passwordField.attr('type') === 'password') {
-                    passwordField.attr('type', 'text');
-                    passwordIcon.removeClass('fa-eye').addClass('fa-eye-slash');
-                } else {
-                    passwordField.attr('type', 'password');
-                    passwordIcon.removeClass('fa-eye-slash').addClass('fa-eye');
-                }
-            });
-
-            // Login form submission
-            $('#loginForm').submit(function() {
-                const loginBtn = $('#loginBtn');
-                loginBtn.prop('disabled', true);
-                loginBtn.html('<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...');
-
-                // Re-enable button after 5 seconds to prevent permanent disable
-                setTimeout(function() {
-                    loginBtn.prop('disabled', false);
-                    loginBtn.html('<i class="fas fa-sign-in-alt"></i> Đăng nhập');
-                }, 5000);
-            });
-
-            // Remember me functionality
-            if (localStorage.getItem('rememberEmail')) {
-                $('#Email').val(localStorage.getItem('rememberEmail'));
-                $('#rememberMe').prop('checked', true);
-            }
-
-            $('#rememberMe').change(function() {
-                if ($(this).is(':checked')) {
-                    localStorage.setItem('rememberEmail', $('#Email').val());
-                } else {
-                    localStorage.removeItem('rememberEmail');
-                }
-            });
-
-            $('#Email').on('input', function() {
-                if ($('#rememberMe').is(':checked')) {
-                    localStorage.setItem('rememberEmail', $(this).val());
-                }
-            });
-
-            // Focus on first empty field
-            if ($('#Email').val() === '') {
-                $('#Email').focus();
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('Password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
             } else {
-                $('#Password').focus();
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
             }
         });
-
-        // Fill demo account credentials
-        function fillDemoAccount(email, password) {
-            $('#Email').val(email);
-            $('#Password').val(password);
-            $('#Email').trigger('input'); // Trigger validation
-        }
-
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
-        }, 5000);
     </script>
 }

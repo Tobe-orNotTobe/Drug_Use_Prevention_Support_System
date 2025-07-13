@@ -1,5 +1,7 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
 using BusinessObjects.DTOs;
+using BusinessObjects.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
@@ -22,13 +24,28 @@ namespace DUPSWebAPI.Controllers
 
 		// GET: odata/Appointments
 		[EnableQuery(PageSize = 20)]
-		[Authorize]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get()
 		{
 			try
 			{
 				var appointments = _appointmentService.GetAppointments().AsQueryable();
-				return Ok(appointments);
+				var currentUserId = User.GetUserId();
+
+				if (User.CanViewAllAppointments())
+				{
+					return Ok(appointments);
+				}
+				else if (User.IsConsultant())
+				{
+					var filtered = appointments.Where(a => a.ConsultantId == currentUserId);
+					return Ok(filtered);
+				}
+				else
+				{
+					var filtered = appointments.Where(a => a.UserId == currentUserId);
+					return Ok(filtered);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -36,26 +53,52 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[HttpPost("odata/Appointments")]
-		[Authorize]
+		[EnableQuery]
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Get([FromODataUri] int key)
+		{
+			try
+			{
+				var appointment = _appointmentService.GetAppointments().FirstOrDefault(a => a.AppointmentId == key);
+				if (appointment == null)
+				{
+					return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn" });
+				}
+
+				// Kiểm tra quyền xem
+				if (!User.CanViewAppointment(appointment.UserId, appointment.ConsultantId))
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền xem lịch hẹn này" });
+				}
+
+				return Ok(appointment);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Post([FromBody] AppointmentCreateRequest request)
 		{
 			try
 			{
+				if (!User.CanBookAppointments())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền đặt lịch hẹn" });
+				}
+
 				if (!ModelState.IsValid)
 				{
 					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
+				// Auto-assign UserId từ JWT
+				request.UserId = User.GetUserId();
+
 				var response = _appointmentService.CreateAppointment(request);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
+				return response.Success ? Created(response) : BadRequest(response);
 			}
 			catch (Exception ex)
 			{
@@ -63,149 +106,30 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[HttpGet("odata/Appointments/user/{userId}")]
-		[Authorize]
-		public IActionResult GetUserAppointments([FromRoute] int userId)
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Put([FromODataUri] int key, [FromBody] Appointment appointment)
 		{
 			try
 			{
-				var response = _appointmentService.GetUserAppointments(userId);
-				if (response.Success)
+				var existing = _appointmentService.GetAppointments().FirstOrDefault(a => a.AppointmentId == key);
+				if (existing == null)
 				{
-					return Ok(response);
+					return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn" });
 				}
-				else
+
+				// Kiểm tra quyền sửa
+				if (!User.IsOwnerOrCanViewAll(existing.UserId) && !User.CanManageAppointments())
 				{
-					return BadRequest(response);
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa lịch hẹn này" });
 				}
+
+				// Logic update...
+				return Updated(appointment);
 			}
 			catch (Exception ex)
 			{
 				return BadRequest(new { success = false, message = ex.Message });
 			}
 		}
-
-		// GET: odata/Appointments/consultant/{consultantId}
-		[HttpGet("odata/Appointments/consultant/{consultantId}")]
-		[EnableQuery]
-		[Authorize(Roles = "Admin,Manager,Consultant")]
-		public IActionResult GetConsultantAppointments([FromRoute] int consultantId)
-		{
-			try
-			{
-				var response = _appointmentService.GetConsultantAppointments(consultantId);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// GET: odata/Appointments/status/{status}
-		[HttpGet("odata/Appointments/status/{status}")]
-		[EnableQuery]
-		[Authorize(Roles = "Admin,Manager,Consultant")]
-		public IActionResult GetAppointmentsByStatus([FromRoute] string status)
-		{
-			try
-			{
-				var response = _appointmentService.GetAppointmentsByStatus(status);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// POST: odata/Appointments/{id}/cancel
-		[HttpPost("odata/Appointments({id})/cancel")]
-		[Authorize]
-		public IActionResult CancelAppointment([FromRoute] int id, [FromBody] CancelAppointmentRequest request)
-		{
-			try
-			{
-				var response = _appointmentService.CancelAppointment(id, request.UserId);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// POST: odata/Appointments/{id}/confirm
-		[HttpPost("odata/Appointments({id})/confirm")]
-		[Authorize(Roles = "Admin,Manager,Consultant")]
-		public IActionResult ConfirmAppointment([FromRoute] int id)
-		{
-			try
-			{
-				var response = _appointmentService.ConfirmAppointment(id);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// POST: odata/Appointments/{id}/complete
-		[HttpPost("odata/Appointments({id})/complete")]
-		[Authorize(Roles = "Admin,Manager,Consultant")]
-		public IActionResult CompleteAppointment([FromRoute] int id)
-		{
-			try
-			{
-				var response = _appointmentService.CompleteAppointment(id);
-				if (response.Success)
-				{
-					return Ok(response);
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-	}
-
-	// Helper DTOs for specific actions
-	public class CancelAppointmentRequest
-	{
-		public int UserId { get; set; }
 	}
 }

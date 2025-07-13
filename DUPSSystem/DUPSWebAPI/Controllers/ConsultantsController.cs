@@ -1,4 +1,6 @@
 ﻿using BusinessObjects;
+using BusinessObjects.Constants;
+using BusinessObjects.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Deltas;
@@ -20,6 +22,7 @@ namespace DUPSWebAPI.Controllers
 
 		// GET: odata/Consultants
 		[EnableQuery(PageSize = 20)]
+		[AllowAnonymous]
 		public IActionResult Get()
 		{
 			try
@@ -35,6 +38,7 @@ namespace DUPSWebAPI.Controllers
 
 		// GET: odata/Consultants(5)
 		[EnableQuery]
+		[AllowAnonymous]
 		public IActionResult Get([FromODataUri] int key)
 		{
 			try
@@ -53,14 +57,19 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		// POST: odata/Consultants
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.SeniorRoles)]
 		public IActionResult Post([FromBody] Consultant consultant)
 		{
 			try
 			{
+				if (!User.CanManageConsultants())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo tư vấn viên" });
+				}
+
 				if (!ModelState.IsValid)
 				{
-					return BadRequest(ModelState);
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
 				}
 
 				_consultantService.SaveConsultant(consultant);
@@ -73,7 +82,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		// PATCH: odata/Consultants(5)
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.ConsultantRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<Consultant> delta)
 		{
 			try
@@ -81,7 +90,15 @@ namespace DUPSWebAPI.Controllers
 				var consultant = _consultantService.GetConsultant(key);
 				if (consultant == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy tư vấn viên" });
+				}
+
+				var currentUserId = User.GetUserId();
+
+				// Chỉ Manager+ hoặc consultant chính mình mới sửa được
+				if (!User.CanManageConsultants() && consultant.UserId != currentUserId)
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa thông tin tư vấn viên này" });
 				}
 
 				delta.Patch(consultant);
@@ -127,7 +144,7 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		// DELETE: odata/Consultants(5)
-		[Authorize(Roles = "Admin,Manager")]
+		[Authorize(Roles = Roles.AdminOnly)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try
@@ -135,57 +152,11 @@ namespace DUPSWebAPI.Controllers
 				var consultant = _consultantService.GetConsultant(key);
 				if (consultant == null)
 				{
-					return NotFound();
+					return NotFound(new { success = false, message = "Không tìm thấy tư vấn viên" });
 				}
 
 				_consultantService.DeleteConsultant(consultant);
 				return NoContent();
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// GET: odata/Consultants/Available
-		[HttpGet("odata/Consultants/Available")]
-		[EnableQuery]
-		public IActionResult GetAvailable()
-		{
-			try
-			{
-				var response = _consultantService.GetAvailableConsultants();
-				if (response.Success)
-				{
-					return Ok(response.Data.AsQueryable());
-				}
-				else
-				{
-					return BadRequest(response);
-				}
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { success = false, message = ex.Message });
-			}
-		}
-
-		// GET: odata/Consultants/Search
-		[HttpGet("odata/Consultants/Search")]
-		[EnableQuery]
-		public IActionResult Search([FromQuery] string term = "")
-		{
-			try
-			{
-				var response = _consultantService.SearchConsultants(term);
-				if (response.Success)
-				{
-					return Ok(response.Data.AsQueryable());
-				}
-				else
-				{
-					return BadRequest(response);
-				}
 			}
 			catch (Exception ex)
 			{

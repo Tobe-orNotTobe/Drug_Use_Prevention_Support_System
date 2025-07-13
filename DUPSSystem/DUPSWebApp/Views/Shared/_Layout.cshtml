@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using BusinessObjects.Constants
+@using BusinessObjects.Extensions
+@using System.Security.Claims
+<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
@@ -13,121 +16,228 @@
 </head>
 <body>
 	<header>
-		<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-			<div class="container-fluid">
-				<a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-					<i class="fas fa-shield-alt"></i> DUPS System
-				</a>
-				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-						aria-expanded="false" aria-label="Toggle navigation">
-					<span class="navbar-toggler-icon"></span>
-				</button>
-				<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-					<ul class="navbar-nav flex-grow-1">
-						<li class="nav-item">
-							<a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
-								<i class="fas fa-home"></i> Trang chủ
-							</a>
-						</li>
-						@if (Context.Session.GetString("UserToken") != null)
-						{
-							<li class="nav-item">
-								<a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="Index">
-									<i class="fas fa-graduation-cap"></i> Khóa học
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-dark" asp-area="" asp-controller="Courses" asp-action="MyCourses">
-									<i class="fas fa-user-graduate"></i> Khóa học của tôi
-								</a>
-							</li>
-							<!-- APPOINTMENT MENU -->
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle text-dark" href="#" id="appointmentDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-									<i class="fas fa-calendar-check"></i> Lịch hẹn
-								</a>
-								<ul class="dropdown-menu" aria-labelledby="appointmentDropdown">
-									<li><a class="dropdown-item" href="/Appointments/Consultants"><i class="fas fa-user-md"></i> Danh sách tư vấn viên</a></li>
-									<li><a class="dropdown-item" href="/Appointments/MyAppointments"><i class="fas fa-calendar-check"></i> Lịch hẹn của tôi</a></li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn đặt lịch</a></li>
-								</ul>
-							</li>
-							<!-- SURVEY MENU -->
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle text-dark" href="#" id="surveyDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-									<i class="fas fa-poll"></i> Khảo sát
-								</a>
-								<ul class="dropdown-menu" aria-labelledby="surveyDropdown">
-									<li><a class="dropdown-item" href="/Surveys"><i class="fas fa-list"></i> Danh sách khảo sát</a></li>
-									<li><a class="dropdown-item" href="/Surveys/Results"><i class="fas fa-chart-bar"></i> Kết quả của tôi</a></li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-info-circle"></i> Hướng dẫn làm khảo sát</a></li>
-								</ul>
-							</li>
-							<!-- END SURVEY MENU -->
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-									<i class="fas fa-cogs"></i> Quản lý
-								</a>
-								<ul class="dropdown-menu">
-									<li><a class="dropdown-item" href="/Admin/Dashboard"><i class="fas fa-users"></i> Dashboard</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-users"></i> Người dùng</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-user-md"></i> Tư vấn viên</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-calendar"></i> Lịch hẹn</a></li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-poll"></i> Quản lý khảo sát</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-bullhorn"></i> Chương trình</a></li>
-								</ul>
-							</li>
-						}
-					</ul>
-					<ul class="navbar-nav">
-						@if (Context.Session.GetString("UserToken") != null)
-						{
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-									<i class="fas fa-user-circle"></i>
-									@(Context.Session.GetString("UserName") ?? "User")
-								</a>
-								<ul class="dropdown-menu dropdown-menu-end">
-									<li>
-										<h6 class="dropdown-header">
-											<i class="fas fa-envelope"></i> @Context.Session.GetString("UserEmail")
-										</h6>
-									</li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-user-edit"></i> Cập nhật thông tin</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-key"></i> Đổi mật khẩu</a></li>
-									<li><a class="dropdown-item" href="#"><i class="fas fa-history"></i> Lịch sử hoạt động</a></li>
-									<li><hr class="dropdown-divider"></li>
-									<li>
-										<form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-											<button type="submit" class="dropdown-item text-danger" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
-												<i class="fas fa-sign-out-alt"></i> Đăng xuất
-											</button>
-										</form>
-									</li>
-								</ul>
-							</li>
-						}
-						else
-						{
-							<li class="nav-item">
-								<a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">
-									<i class="fas fa-sign-in-alt"></i> Đăng nhập
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">
-									<i class="fas fa-user-plus"></i> Đăng ký
-								</a>
-							</li>
-						}
-					</ul>
-				</div>
-			</div>
-		</nav>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-shield-alt"></i> DUPS System
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <!-- Home -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home"></i> Trang chủ
+                            </a>
+                        </li>
+
+                        <!-- Courses - Everyone can view -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Courses" asp-action="Index">
+                                <i class="fas fa-graduation-cap"></i> Khóa học
+                            </a>
+                        </li>
+
+                        <!-- Surveys - Everyone can view -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Surveys" asp-action="Index">
+                                <i class="fas fa-poll"></i> Khảo sát
+                            </a>
+                        </li>
+
+                        <!-- Consultants - Everyone can view -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Consultants" asp-action="Index">
+                                <i class="fas fa-user-md"></i> Tư vấn viên
+                            </a>
+                        </li>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <!-- My Items - Authenticated users -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="myItemsDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> Của tôi
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="myItemsDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Courses" asp-action="MyCourses">
+                                            <i class="fas fa-graduation-cap"></i> Khóa học của tôi
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Surveys" asp-action="Results">
+                                            <i class="fas fa-poll"></i> Kết quả khảo sát
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Appointments" asp-action="MyAppointments">
+                                            <i class="fas fa-calendar-check"></i> Lịch hẹn của tôi
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- Management Dropdown - Staff+ only -->
+                            @if (User.IsInRole(Roles.Staff) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Admin))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="managementDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cogs"></i> Quản lý
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="managementDropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Courses" asp-action="Manage">
+                                                <i class="fas fa-graduation-cap"></i> Quản lý khóa học
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Surveys" asp-action="Manage">
+                                                <i class="fas fa-poll"></i> Quản lý khảo sát
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Appointments" asp-action="Manage">
+                                                <i class="fas fa-calendar-alt"></i> Quản lý lịch hẹn
+                                            </a>
+                                        </li>
+                                        @if (User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Admin))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item" asp-controller="Consultants" asp-action="Manage">
+                                                    <i class="fas fa-user-md"></i> Quản lý tư vấn viên
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Consultant Menu - Consultant role only -->
+                            @if (User.IsInRole(Roles.Consultant))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="consultantDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user-md"></i> Tư vấn
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="consultantDropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Appointments" asp-action="ConsultantAppointments">
+                                                <i class="fas fa-calendar-check"></i> Lịch hẹn tư vấn
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Consultants" asp-action="Profile">
+                                                <i class="fas fa-user-circle"></i> Hồ sơ tư vấn
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+
+                            <!-- Reports - Manager+ only -->
+                            @if (User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Admin))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Home" asp-action="Reports">
+                                        <i class="fas fa-chart-bar"></i> Báo cáo
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Admin Menu - Admin only -->
+                            @if (User.IsInRole(Roles.Admin))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button"
+                                       data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-crown"></i> Quản trị
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                                <i class="fas fa-users"></i> Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Users" asp-action="Index">
+                                                <i class="fas fa-users"></i> Quản lý người dùng
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <!-- User Info & Authentication -->
+                    <ul class="navbar-nav">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle"></i>
+                                    @(User.Identity.Name ?? "User")
+                                    @{
+                                        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ?? "Member";
+                                    }
+                                    <span class="badge bg-light text-dark ms-1">@userRole</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <h6 class="dropdown-header">
+                                            <i class="fas fa-info-circle"></i> @(Context.Session.GetString("UserEmail") ?? User.Identity.Name)
+                                        </h6>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Auth" asp-action="Profile">
+                                            <i class="fas fa-user-edit"></i> Thông tin cá nhân
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="fas fa-cog"></i> Cài đặt
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger"
+                                                    onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
+                                                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Auth" asp-action="Register">
+                                    <i class="fas fa-user-plus"></i> Đăng ký
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
 	</header>
 
 	@if (TempData["SuccessMessage"] != null)
@@ -178,28 +288,58 @@
 	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 	<script src="~/js/site.js" asp-append-version="true"></script>
 
-	<script>
-		// Auto-dismiss alerts after 5 seconds
-		setTimeout(function() {
-			$('.alert').fadeOut('slow');
-		}, 5000);
+    <script>
+        // Ultra simple version using ViewBag from BaseController
+        window.USER_INFO = {
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                    id: @(Context.Session.GetInt32("UserId") ?? 0),
+                    email: '@Html.Raw(Context.Session.GetString("UserEmail") ?? "")',
+                    name: '@Html.Raw(Context.Session.GetString("UserName") ?? "")',
+                    token: '@Html.Raw(Context.Session.GetString("UserToken") ?? "")',
+                    authenticated: true,
+                    isAdmin: @(User.IsInRole("Admin") ? "true" : "false"),
+                    isManager: @(User.IsInRole("Manager") ? "true" : "false"),
+                    isStaff: @(User.IsInRole("Staff") ? "true" : "false"),
+                    isConsultant: @(User.IsInRole("Consultant") ? "true" : "false"),
+                    isMember: @(User.IsInRole("Member") ? "true" : "false")
+            </text>
+        }
+        else
+        {
+            <text>
+                    id: null,
+                    email: '',
+                    name: '',
+                    token: '',
+                    authenticated: false,
+                    isAdmin: false,
+                    isManager: false,
+                    isStaff: false,
+                    isConsultant: false,
+                    isMember: false
+            </text>
+        }
+        };
 
-		// Update current user ID in JavaScript for AJAX calls
-		@if (Context.Session.GetString("UserToken") != null)
-		{
-			<text>
-						window.CURRENT_USER_ID = @(Context.Session.GetInt32("UserId") ?? 0);
-						window.USER_TOKEN = '@Context.Session.GetString("UserToken")';
-			</text>
-		}
-		else
-		{
-			<text>
-						window.CURRENT_USER_ID = null;
-						window.USER_TOKEN = null;
-			</text>
-		}
-	</script>
+        // Helper functions
+        function canManageCourses() {
+            return window.USER_INFO.isStaff || window.USER_INFO.isManager || window.USER_INFO.isAdmin;
+        }
+
+        function canManageUsers() {
+            return window.USER_INFO.isAdmin;
+        }
+
+        function canViewReports() {
+            return window.USER_INFO.isManager || window.USER_INFO.isAdmin;
+        }
+
+        function isAuthenticated() {
+            return window.USER_INFO.authenticated;
+        }
+    </script>
 
 	@await RenderSectionAsync("Scripts", required: false)
 </body>

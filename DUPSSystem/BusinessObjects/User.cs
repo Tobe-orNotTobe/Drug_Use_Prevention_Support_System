@@ -31,13 +31,9 @@ public partial class User
 
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
-    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
-
     public virtual ICollection<Consultant> Consultants { get; set; } = new List<Consultant>();
 
     public virtual ICollection<UserCourse> UserCourses { get; set; } = new List<UserCourse>();
-
-    public virtual ICollection<UserProgram> UserPrograms { get; set; } = new List<UserProgram>();
 
     public virtual ICollection<UserSurveyResult> UserSurveyResults { get; set; } = new List<UserSurveyResult>();
 

@@ -15,8 +15,6 @@ public partial class Survey
 
     public DateTime CreatedAt { get; set; }
 
-    public virtual ICollection<ProgramSurvey> ProgramSurveys { get; set; } = new List<ProgramSurvey>();
-
     public virtual ICollection<SurveyQuestion> SurveyQuestions { get; set; } = new List<SurveyQuestion>();
 
     public virtual ICollection<UserSurveyResult> UserSurveyResults { get; set; } = new List<UserSurveyResult>();
