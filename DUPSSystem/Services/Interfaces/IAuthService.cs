@@ -12,5 +12,9 @@ namespace Services.Interfaces
 		bool VerifyPassword(string password, string hashedPassword);
 		string GenerateJwtToken(User user, List<string> roles);
 
+		Task<UserProfileDto> GetProfileAsync(int userId);
+		Task<BaseResponse> UpdateProfileAsync(int userId, UpdateProfileRequest request);
+		Task<BaseResponse> ChangePasswordAsync(int userId, ChangePasswordRequest request);
+
 	}
 }

@@ -1,74 +1,149 @@
-﻿using BusinessObjects.Constants;
-using BusinessObjects.Extensions;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace DUPSWebApp.Controllers
 {
 	public class BaseController : Controller
 	{
-		protected void SetViewBagPermissions()
+		protected string CurrentUserRole => HttpContext.Session.GetString("Role") ?? "Guest";
+		protected int CurrentUserId => int.TryParse(HttpContext.Session.GetString("UserId"), out int id) ? id : 0;
+		protected string CurrentUserEmail => HttpContext.Session.GetString("Email") ?? "";
+		protected string CurrentUserName => HttpContext.Session.GetString("FullName") ?? "";
+
+		protected bool IsGuest => CurrentUserRole == "Guest";
+		protected bool IsMember => CurrentUserRole == "Member";
+		protected bool IsStaff => CurrentUserRole == "Staff";
+		protected bool IsConsultant => CurrentUserRole == "Consultant";
+		protected bool IsManager => CurrentUserRole == "Manager";
+		protected bool IsAdmin => CurrentUserRole == "Admin";
+
+		protected bool HasRole(params string[] roles)
 		{
-			// Role information
-			ViewBag.IsAuthenticated = User.Identity?.IsAuthenticated ?? false;
-			ViewBag.UserRole = User.GetHighestRole();
-			ViewBag.IsGuest = User.IsGuest();
-			ViewBag.IsMember = User.IsMember();
-			ViewBag.IsStaff = User.IsStaff();
-			ViewBag.IsConsultant = User.IsConsultant();
-			ViewBag.IsManager = User.IsManager();
-			ViewBag.IsAdmin = User.IsAdmin();
-
-			// Permission flags
-			ViewBag.CanViewCourses = User.CanViewCourses();
-			ViewBag.CanRegisterCourses = User.CanRegisterCourses();
-			ViewBag.CanManageCourses = User.CanManageCourses();
-
-			ViewBag.CanTakeSurveys = User.CanTakeSurveys();
-			ViewBag.CanManageSurveys = User.CanManageSurveys();
-
-			ViewBag.CanBookAppointments = User.CanBookAppointments();
-			ViewBag.CanViewOwnAppointments = User.CanViewOwnAppointments();
-			ViewBag.CanViewAllAppointments = User.CanViewAllAppointments();
-			ViewBag.CanManageAppointments = User.CanManageAppointments();
-
-			ViewBag.CanViewDashboard = User.CanViewDashboard();
-			ViewBag.CanViewReports = User.CanViewReports();
-			ViewBag.CanViewAllReports = User.CanViewAllReports();
-
-			ViewBag.CanManageUsers = User.CanManageUsers();
-			ViewBag.CanManageConsultants = User.CanManageConsultants();
-			ViewBag.CanManagePrograms = User.CanManagePrograms();
-
-			// User information
-			ViewBag.CurrentUserId = User.GetUserId();
-			ViewBag.CurrentUserEmail = User.GetUserEmail();
-			ViewBag.CurrentUserFullName = User.GetUserFullName();
+			return roles.Contains(CurrentUserRole);
 		}
 
-		protected IActionResult ForbiddenRedirect(string message = "Bạn không có quyền truy cập trang này")
+		protected bool CanViewCourses() => true; 
+		protected bool CanManageCourses() => HasRole("Staff", "Manager", "Admin");
+		protected bool CanRegisterCourses() => HasRole("Member", "Staff", "Consultant", "Manager", "Admin");
+
+		protected bool CanTakeSurveys() => HasRole("Member", "Staff", "Consultant", "Manager", "Admin");
+		protected bool CanManageSurveys() => HasRole("Staff", "Manager", "Admin");
+
+		protected bool CanBookAppointments() => HasRole("Member", "Staff", "Consultant", "Manager", "Admin");
+		protected bool CanViewAllAppointments() => HasRole("Staff", "Manager", "Admin");
+		protected bool CanManageAppointments() => HasRole("Staff", "Manager", "Admin");
+
+		protected bool CanManageConsultants() => HasRole("Manager", "Admin");
+		protected bool CanManageUsers() => IsAdmin;
+		protected bool CanViewDashboard() => HasRole("Manager", "Admin");
+
+		public IActionResult CheckAuthorization(params string[] allowedRoles)
 		{
-			TempData["ErrorMessage"] = message;
-			return RedirectToAction("Index", "Home");
+			if (IsGuest && !allowedRoles.Contains("Guest"))
+			{
+				return RedirectToAction("Login", "Auth");
+			}
+
+			if (!allowedRoles.Contains(CurrentUserRole))
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+
+			return null;
 		}
 
-		protected void SetSuccessMessage(string message)
+		protected bool HasAuthorization(params string[] allowedRoles)
 		{
-			TempData["SuccessMessage"] = message;
+			if (IsGuest && !allowedRoles.Contains("Guest"))
+			{
+				return false;
+			}
+
+			return allowedRoles.Contains(CurrentUserRole);
 		}
 
-		protected void SetErrorMessage(string message)
+		public override void OnActionExecuting(ActionExecutingContext context)
 		{
-			TempData["ErrorMessage"] = message;
+			ViewBag.CurrentUserRole = CurrentUserRole;
+			ViewBag.CurrentUserName = CurrentUserName;
+			ViewBag.CurrentUserEmail = CurrentUserEmail;
+			ViewBag.IsAuthenticated = !IsGuest;
+			ViewBag.AuthToken = HttpContext.Session.GetString("Token") ?? "";
+
+			base.OnActionExecuting(context);
+		}
+	}
+
+	public class RoleAuthorizationAttribute : ActionFilterAttribute
+	{
+		private readonly string[] _allowedRoles;
+
+		public RoleAuthorizationAttribute(params string[] allowedRoles)
+		{
+			_allowedRoles = allowedRoles;
 		}
 
-		protected void SetInfoMessage(string message)
+		public override void OnActionExecuting(ActionExecutingContext context)
 		{
-			TempData["InfoMessage"] = message;
+			var controller = context.Controller as BaseController;
+			if (controller != null)
+			{
+				var authResult = controller.CheckAuthorization(_allowedRoles);
+				if (authResult != null)
+				{
+					context.Result = authResult;
+					return;
+				}
+			}
+			else
+			{
+				var currentRole = context.HttpContext.Session.GetString("Role") ?? "Guest";
+
+				if (currentRole == "Guest" && !_allowedRoles.Contains("Guest"))
+				{
+					context.Result = new RedirectToActionResult("Login", "Auth", null);
+					return;
+				}
+
+				if (!_allowedRoles.Contains(currentRole))
+				{
+					context.Result = new RedirectToActionResult("AccessDenied", "Home", null);
+					return;
+				}
+			}
+
+			base.OnActionExecuting(context);
+		}
+	}
+
+	public class RequireRoleAttribute : ActionFilterAttribute
+	{
+		private readonly string[] _allowedRoles;
+
+		public RequireRoleAttribute(params string[] allowedRoles)
+		{
+			_allowedRoles = allowedRoles;
 		}
 
-		protected void SetWarningMessage(string message)
+		public override void OnActionExecuting(ActionExecutingContext context)
 		{
-			TempData["WarningMessage"] = message;
+			var currentRole = context.HttpContext.Session.GetString("Role") ?? "Guest";
+
+			if (currentRole == "Guest" && !_allowedRoles.Contains("Guest"))
+			{
+				context.Result = new RedirectToActionResult("Login", "Auth", null);
+				return;
+			}
+
+			if (!_allowedRoles.Contains(currentRole))
+			{
+				context.Result = new RedirectToActionResult("AccessDenied", "Home", null);
+				return;
+			}
+
+			base.OnActionExecuting(context);
 		}
 	}
 }

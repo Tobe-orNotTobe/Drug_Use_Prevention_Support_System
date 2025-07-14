@@ -26,6 +26,34 @@ namespace DataAccessObjects
 				.Select(r => r.RoleName)
 				.ToList();
 		}
+		public static void UpdateProfile(int userId, string fullName, string phone, string address, DateTime? dateOfBirth, string gender)
+		{
+			using var context = new DrugPreventionDbContext();
+			var user = context.Users.FirstOrDefault(u => u.UserId == userId);
+			if (user != null)
+			{
+				user.FullName = fullName;
+				user.Phone = phone;
+				user.Address = address;
+				user.DateOfBirth = dateOfBirth;
+				user.Gender = gender;
+				user.UpdatedAt = DateTime.Now;
+				user.IsActive = true;
+				context.SaveChanges();
+			}
+		}
+
+		public static void UpdatePassword(int userId, string newPassword)
+		{
+			using var context = new DrugPreventionDbContext();
+			var user = context.Users.FirstOrDefault(u => u.UserId == userId);
+			if (user != null)
+			{
+				user.PasswordHash = newPassword;
+				user.UpdatedAt = DateTime.Now;
+				context.SaveChanges();
+			}
+		}
 
 		public static void AssignUserRole(int userId, int roleId)
 		{

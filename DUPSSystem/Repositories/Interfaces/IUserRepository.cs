@@ -12,4 +12,8 @@ namespace Repositories.Interfaces
 		void UpdateAccount(User s);
 		void DeleteAccount(User s);
 		void AssignUserRole(int userId, int roleId);
-	}}
+
+		void UpdateProfile(int userId, string fullName, string phone, string address, DateTime? dateOfBirth, string gender);
+		void UpdatePassword(int userId, string newPasswordHash);
+	}
+}

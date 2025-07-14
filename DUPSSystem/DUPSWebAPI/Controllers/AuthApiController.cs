@@ -151,5 +151,111 @@ namespace DUPSWebAPI.Controllers
 				});
 			}
 		}
+
+		[HttpGet("profile/{userId}")]
+		public async Task<IActionResult> GetProfile(int userId)
+		{
+			try
+			{
+				var profile = await _authService.GetProfileAsync(userId);
+
+				if (profile != null)
+				{
+					return Ok(new
+					{
+						success = true,
+						message = "Lấy thông tin hồ sơ thành công",
+						data = profile
+					});
+				}
+				else
+				{
+					return NotFound(new
+					{
+						success = false,
+						message = "Không tìm thấy hồ sơ người dùng"
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new
+				{
+					success = false,
+					message = "Đã xảy ra lỗi khi lấy hồ sơ người dùng"
+				});
+			}
+		}
+
+		[HttpPut("profile")]
+		public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+		{
+			try
+			{
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new BaseResponse
+					{
+						Success = false,
+						Message = "Dữ liệu không hợp lệ"
+					});
+				}
+
+				var result = await _authService.UpdateProfileAsync(request.UserId, request);
+
+				if (result.Success)
+				{
+					return Ok(result);
+				}
+				else
+				{
+					return BadRequest(result);
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new BaseResponse
+				{
+					Success = false,
+					Message = "Đã xảy ra lỗi khi cập nhật hồ sơ"
+				});
+			}
+		}
+
+		[HttpPut("change-password")]
+		public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+		{
+			try
+			{
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new BaseResponse
+					{
+						Success = false,
+						Message = "Dữ liệu không hợp lệ"
+					});
+				}
+
+				var result = await _authService.ChangePasswordAsync(request.UserId, request);
+
+				if (result.Success)
+				{
+					return Ok(result);
+				}
+				else
+				{
+					return BadRequest(result);
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new BaseResponse
+				{
+					Success = false,
+					Message = "Đã xảy ra lỗi khi đổi mật khẩu"
+				});
+			}
+		}
+
 	}
 }

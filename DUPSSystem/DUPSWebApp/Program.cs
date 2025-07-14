@@ -1,68 +1,63 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Repositories;
-using Repositories.Interfaces;
-using Services;
-using Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Register repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ICourseRepository, CourseRepository>();
-builder.Services.AddScoped<IUserCourseRepository, UserCourseRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
-builder.Services.AddScoped<ISurveyQuestionRepository, SurveyQuestionRepository>();
-builder.Services.AddScoped<ISurveyOptionRepository, SurveyOptionRepository>();
-builder.Services.AddScoped<ISurveyResultRepository, SurveyResultRepository>();
-builder.Services.AddScoped<ISurveyAnswerRepository, SurveyAnswerRepository>();
-builder.Services.AddScoped<IConsultantRepository, ConsultantRepository>();
-builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
-
-
-// Register services
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ICourseService, CourseService>();
-builder.Services.AddScoped<IUserCourseService, UserCourseService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ISurveyService, SurveyService>();
-builder.Services.AddScoped<ISurveyQuestionService, SurveyQuestionService>();
-builder.Services.AddScoped<ISurveyOptionService, SurveyOptionService>();
-builder.Services.AddScoped<ISurveyResultService, SurveyResultService>();
-builder.Services.AddScoped<IConsultantService, ConsultantService>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IExcelExportService, ExcelExportService>();
-
-// Configure HttpClient for API calls
+// Add HttpClient for API calls
 builder.Services.AddHttpClient();
 
-// Add session support
+// Add Session support
 builder.Services.AddSession(options =>
 {
-	options.IdleTimeout = TimeSpan.FromMinutes(30);
+	options.IdleTimeout = TimeSpan.FromMinutes(30); // 30 minutes timeout
 	options.Cookie.HttpOnly = true;
 	options.Cookie.IsEssential = true;
+	options.Cookie.Name = "DUPS.Session";
 });
 
-// Authentication & Authorization
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-	.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-	{
-		options.LoginPath = "/Auth/Login";
-		options.AccessDeniedPath = "/Auth/AccessDenied";
-		options.ExpireTimeSpan = TimeSpan.FromHours(24);
-		options.SlidingExpiration = true;
-		options.Cookie.HttpOnly = true;
-		options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-		options.Cookie.SameSite = SameSiteMode.Lax;
-	});
+// Add Memory Cache
+builder.Services.AddMemoryCache();
 
-builder.Services.AddAuthorization();
+// Add configuration for API settings
+builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Add Authentication (optional, for direct token validation if needed)
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? "your-super-secret-key-that-is-at-least-32-characters-long-for-jwt-token-signing";
+
+builder.Services.AddAuthentication(options =>
+{
+	options.DefaultScheme = "Cookies";
+})
+.AddCookie("Cookies", options =>
+{
+	options.LoginPath = "/Auth/Login";
+	options.LogoutPath = "/Auth/Logout";
+	options.AccessDeniedPath = "/Home/AccessDenied";
+	options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+	options.SlidingExpiration = true;
+})
+.AddJwtBearer(options =>
+{
+	options.TokenValidationParameters = new TokenValidationParameters
+	{
+		ValidateIssuerSigningKey = true,
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+		ValidateIssuer = true,
+		ValidIssuer = jwtSettings["Issuer"] ?? "DUPSSystem",
+		ValidateAudience = true,
+		ValidAudience = jwtSettings["Audience"] ?? "DUPSUsers",
+		ValidateLifetime = true,
+		ClockSkew = TimeSpan.Zero
+	};
+});
 
 var app = builder.Build();
 
@@ -75,14 +70,55 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
 app.UseRouting();
+
+// Add Session middleware
 app.UseSession();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Standard MVC routing
+// Add custom middleware for session-based authentication
+app.Use(async (context, next) =>
+{
+	// Skip for login/register pages and static files
+	var path = context.Request.Path.Value?.ToLower();
+	if (path?.Contains("/auth/") == true ||
+		path?.Contains("/home/accessdenied") == true ||
+		path?.Contains("/css/") == true ||
+		path?.Contains("/js/") == true ||
+		path?.Contains("/lib/") == true ||
+		path?.Contains("/images/") == true)
+	{
+		await next();
+		return;
+	}
+
+	// Check if user has valid session
+	var token = context.Session.GetString("Token");
+	var role = context.Session.GetString("Role");
+
+	if (!string.IsNullOrEmpty(token) && !string.IsNullOrEmpty(role))
+	{
+		// Set items in HttpContext for controllers to use
+		context.Items["Token"] = token;
+		context.Items["Role"] = role;
+		context.Items["UserId"] = context.Session.GetString("UserId");
+		context.Items["Email"] = context.Session.GetString("Email");
+		context.Items["FullName"] = context.Session.GetString("FullName");
+	}
+
+	await next();
+});
+
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+public class ApiSettings
+{
+	public string BaseUrl { get; set; } = "https://localhost:7008";
+}

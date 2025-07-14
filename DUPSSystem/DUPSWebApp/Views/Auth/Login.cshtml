@@ -1,109 +1,66 @@
-﻿@model DUPSWebApp.Models.LoginViewModel
-@{
+﻿@{
     ViewData["Title"] = "Đăng nhập";
-    Layout = "_Layout";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-4">
         <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h2 class="text-center mb-0">
-                    <i class="fas fa-sign-in-alt"></i> @ViewData["Title"]
-                </h2>
+            <div class="card-header bg-primary text-white text-center">
+                <h4><i class="fas fa-sign-in-alt"></i> Đăng nhập hệ thống</h4>
             </div>
             <div class="card-body">
-                <form asp-controller="Auth" asp-action="Login" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-                    
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-                    <div class="form-group mb-3">
-                        <label asp-for="Email" class="form-label">
-                            <i class="fas fa-envelope"></i> @Html.DisplayNameFor(m => m.Email)
-                        </label>
-                        <input asp-for="Email" class="form-control" placeholder="Nhập địa chỉ email" autofocus />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   placeholder="Nhập email của bạn" required>
+                        </div>
+                        <div class="invalid-feedback" id="email-error"></div>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="Password" class="form-label">
-                            <i class="fas fa-lock"></i> @Html.DisplayNameFor(m => m.Password)
-                        </label>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" />
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Nhập mật khẩu" required>
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <div class="invalid-feedback" id="password-error"></div>
                     </div>
 
-                    <div class="form-check mb-3">
-                        <input asp-for="RememberMe" class="form-check-input" />
-                        <label asp-for="RememberMe" class="form-check-label">
-                            @Html.DisplayNameFor(m => m.RememberMe)
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Ghi nhớ đăng nhập
                         </label>
                     </div>
 
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="loginBtn">
                             <i class="fas fa-sign-in-alt"></i> Đăng nhập
                         </button>
                     </div>
-
-                    <div class="text-center">
-                        <a href="#" class="text-decoration-none small">Quên mật khẩu?</a>
-                    </div>
                 </form>
 
-                <!-- Demo accounts for testing -->
-                @if (ViewContext.HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
-                {
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6><i class="fas fa-info-circle"></i> Tài khoản demo:</h6>
-                        <small class="text-muted">
-                            <strong>Admin:</strong> admin@DrugPreventionSystem.org / @@abc123@@<br />
-                            <strong>Manager:</strong> manager@test.com / 123456<br />
-                            <strong>Staff:</strong> staff@test.com / 123456<br />
-                            <strong>Member:</strong> member@test.com / 123456
-                        </small>
-                    </div>
-                }
-            </div>
-            <div class="card-footer text-center">
-                <p class="mb-0">
-                    Chưa có tài khoản?
-                    <a asp-controller="Auth" asp-action="Register" class="text-decoration-none fw-bold">
-                        Đăng ký ngay
+                <hr>
+
+                <div class="text-center">
+                    <p class="mb-2">Chưa có tài khoản?</p>
+                    <a href="@Url.Action("Register", "Auth")" class="btn btn-outline-success">
+                        <i class="fas fa-user-plus"></i> Đăng ký ngay
                     </a>
-                </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-    
-    <script>
-        // Toggle password visibility
-        document.getElementById('togglePassword').addEventListener('click', function() {
-            const passwordInput = document.getElementById('Password');
-            const icon = this.querySelector('i');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
-    </script>
+    <script src="~/js/auth.js"></script>
 }

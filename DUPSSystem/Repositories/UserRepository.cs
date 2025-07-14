@@ -23,5 +23,10 @@ namespace Repositories
 
 		public void AssignUserRole(int userId, int roleId) => UserDAO.AssignUserRole(userId, roleId);
 
+		public void UpdateProfile(int userId, string fullName, string phone, string address, DateTime? dateOfBirth, string gender)
+		=> UserDAO.UpdateProfile(userId, fullName, phone, address, dateOfBirth, gender);
+
+		public void UpdatePassword(int userId, string newPassword)
+		=> UserDAO.UpdatePassword(userId, newPassword);
 	}
 }

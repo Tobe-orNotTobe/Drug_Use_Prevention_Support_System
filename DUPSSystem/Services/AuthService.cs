@@ -214,5 +214,98 @@ namespace Services
 
 			return new JwtSecurityTokenHandler().WriteToken(token);
 		}
+
+		public async Task<UserProfileDto> GetProfileAsync(int userId)
+		{
+			var user = _userRepository.GetAccountById(userId);
+
+			if (user == null)
+			{
+				return null;
+			}
+
+			var dto = new UserProfileDto
+			{
+				Id = user.UserId,
+				FullName = user.FullName,
+				Email = user.Email,
+				Phone = user.Phone,
+				DateOfBirth = user.DateOfBirth,
+				Gender = user.Gender,
+				Address = user.Address
+			};
+
+			return dto;
+		}
+	
+		public async Task<BaseResponse> UpdateProfileAsync(int userId, UpdateProfileRequest request)
+		{
+			var user = _userRepository.GetAccountById(userId);
+
+			if (user == null)
+			{
+				return new BaseResponse
+				{
+					Success = false,
+					Message = "Người dùng không tồn tại"
+				};
+			}
+
+			_userRepository.UpdateProfile(
+				userId,
+				request.FullName,
+				request.Phone,
+				request.Address,
+				request.DateOfBirth,
+				request.Gender
+			);
+
+			return new BaseResponse
+			{
+				Success = true,
+				Message = "Cập nhật hồ sơ thành công"
+			};
+		}
+
+		public async Task<BaseResponse> ChangePasswordAsync(int userId, ChangePasswordRequest request)
+		{
+			var user = _userRepository.GetAccountById(userId);
+
+			if (user == null)
+			{
+				return new BaseResponse
+				{
+					Success = false,
+					Message = "Người dùng không tồn tại"
+				};
+			}
+
+			if (user.PasswordHash != request.CurrentPassword)
+			{
+				return new BaseResponse
+				{
+					Success = false,
+					Message = "Mật khẩu hiện tại không đúng"
+				};
+			}
+
+			if (request.NewPassword != request.ConfirmPassword)
+			{
+				return new BaseResponse
+				{
+					Success = false,
+					Message = "Mật khẩu xác nhận không khớp"
+				};
+			}
+
+			_userRepository.UpdatePassword(userId, request.NewPassword);
+
+			return new BaseResponse
+			{
+				Success = true,
+				Message = "Đổi mật khẩu thành công"
+			};
+		}
+
 	}
 }

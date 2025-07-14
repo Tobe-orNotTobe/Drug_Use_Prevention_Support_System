@@ -1,7 +1,4 @@
-﻿using BusinessObjects.Constants;
-using BusinessObjects.Extensions;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace DUPSWebApp.Controllers
 {
@@ -9,65 +6,49 @@ namespace DUPSWebApp.Controllers
 	{
 		public IActionResult Index()
 		{
-			SetViewBagPermissions();
+			ViewBag.WelcomeMessage = GetWelcomeMessage();
 			return View();
 		}
 
-		[Authorize(Roles = Roles.AuthenticatedRoles)]
-		public IActionResult Dashboard()
+		public IActionResult About()
 		{
-			if (!User.CanViewDashboard())
-			{
-				return ForbiddenRedirect("Bạn không có quyền truy cập Dashboard");
-			}
-
-			SetViewBagPermissions();
-
-			// Redirect to role-specific dashboard
-			if (User.IsAdmin())
-			{
-				return View("AdminDashboard");
-			}
-			else if (User.IsManager())
-			{
-				return View("ManagerDashboard");
-			}
-			else if (User.IsStaff())
-			{
-				return View("StaffDashboard");
-			}
-			else if (User.IsConsultant())
-			{
-				return View("ConsultantDashboard");
-			}	
-			else
-			{
-				return View("UserDashboard");
-			}
-		}
-
-		[Authorize(Roles = Roles.SeniorRoles)]
-		public IActionResult Reports()
-		{
-			if (!User.CanViewReports())
-			{
-				return ForbiddenRedirect("Bạn không có quyền xem báo cáo");
-			}
-
-			SetViewBagPermissions();
 			return View();
 		}
 
-		[Authorize(Roles = Roles.AdminOnly)]
-		public IActionResult SystemManagement()
+		public IActionResult Contact()
 		{
-			SetViewBagPermissions();
 			return View();
 		}
 
 		public IActionResult Privacy()
 		{
 			return View();
+		}
+
+		public IActionResult AccessDenied()
+		{
+			ViewBag.CurrentRole = CurrentUserRole;
+			ViewBag.UserName = CurrentUserName;
+			return View();
+		}
+
+		[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+		public IActionResult Error()
+		{
+			return View();
+		}
+
+		private string GetWelcomeMessage()
+		{
+			return CurrentUserRole switch
+			{
+				"Admin" => $"Chào mừng Quản trị viên {CurrentUserName}! Bạn có toàn quyền quản lý hệ thống.",
+				"Manager" => $"Chào mừng Quản lý {CurrentUserName}! Bạn có thể quản lý tư vấn viên và xem báo cáo.",
+				"Staff" => $"Chào mừng Nhân viên {CurrentUserName}! Bạn có thể quản lý khóa học và khảo sát.",
+				"Consultant" => $"Chào mừng Tư vấn viên {CurrentUserName}! Bạn có thể quản lý lịch hẹn của mình.",
+				"Member" => $"Chào mừng {CurrentUserName}! Hãy khám phá các khóa học và dịch vụ tư vấn.",
+				_ => "Chào mừng bạn đến với Hệ thống Hỗ trợ Phòng ngừa Sử dụng Ma túy!"
+			};
 		}
 	}
 }

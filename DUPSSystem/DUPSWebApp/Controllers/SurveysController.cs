@@ -1,7 +1,4 @@
-﻿using BusinessObjects.Constants;
-using BusinessObjects.Extensions;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace DUPSWebApp.Controllers
 {
@@ -9,84 +6,32 @@ namespace DUPSWebApp.Controllers
 	{
 		public IActionResult Index()
 		{
-			SetViewBagPermissions();
 			return View();
 		}
 
-		[Authorize(Roles = Roles.AuthenticatedRoles)]
-		public IActionResult Take(int id)
+		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		public IActionResult Take(int surveyId)
 		{
-			if (!User.CanTakeSurveys())
+			if (!CanTakeSurveys())
 			{
-				return ForbiddenRedirect("Bạn không có quyền làm khảo sát");
+				return RedirectToAction("AccessDenied", "Home");
 			}
-
-			ViewBag.SurveyId = id;
-			SetViewBagPermissions();
 			return View();
 		}
 
-		[Authorize(Roles = Roles.AuthenticatedRoles)]
-		public IActionResult Results()
+		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		public IActionResult MyResults()
 		{
-			SetViewBagPermissions();
 			return View();
 		}
 
-		public IActionResult Details(int id)
-		{
-			ViewBag.SurveyId = id;
-			SetViewBagPermissions();
-			return View();
-		}
-
-		[Authorize(Roles = Roles.ManagementRoles)]
+		[RoleAuthorization("Staff", "Manager", "Admin")]
 		public IActionResult Manage()
 		{
-			if (!User.CanManageSurveys())
+			if (!CanManageSurveys())
 			{
-				return ForbiddenRedirect("Bạn không có quyền quản lý khảo sát");
+				return RedirectToAction("AccessDenied", "Home");
 			}
-
-			SetViewBagPermissions();
-			return View();
-		}
-
-		[Authorize(Roles = Roles.ManagementRoles)]
-		public IActionResult Create()
-		{
-			if (!User.CanManageSurveys())
-			{
-				return ForbiddenRedirect("Bạn không có quyền tạo khảo sát");
-			}
-
-			SetViewBagPermissions();
-			return View();
-		}
-
-		// Only Staff+ can edit surveys
-		[Authorize(Roles = Roles.ManagementRoles)]
-		public IActionResult Edit(int id)
-		{
-			if (!User.CanManageSurveys())
-			{
-				return ForbiddenRedirect("Bạn không có quyền sửa khảo sát");
-			}
-
-			ViewBag.SurveyId = id;
-			SetViewBagPermissions();
-			return View();
-		}
-
-		[Authorize(Roles = Roles.SeniorRoles)]
-		public IActionResult AllResults()
-		{
-			if (!User.CanViewReports())
-			{
-				return ForbiddenRedirect("Bạn không có quyền xem tất cả kết quả khảo sát");
-			}
-
-			SetViewBagPermissions();
 			return View();
 		}
 	}

@@ -1,187 +1,186 @@
-﻿@using BusinessObjects.Constants
-@using BusinessObjects.Extensions
-@using System.Security.Claims
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="vi">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>@ViewData["Title"] - Drug Use Prevention Support System</title>
-	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/survey.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/courses.css" asp-append-version="true" />
-	<link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DUPS System</title>
+    <meta name="auth-token" content="@ViewBag.AuthToken" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
-	<header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-shield-alt"></i> DUPS System
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="@Url.Action("Index", "Home")">
+                    <i class="fas fa-shield-heart"></i> DUPS System
                 </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <!-- Home -->
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <!-- Home - Everyone can see -->
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <a class="nav-link" href="@Url.Action("Index", "Home")">
                                 <i class="fas fa-home"></i> Trang chủ
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Courses" asp-action="Index">
+                        @{
+                            var role = ViewBag.CurrentUserRole as string ?? "Guest";
+                            var isAuthenticated = ViewBag.IsAuthenticated as bool? ?? false;
+                        }
+
+                        <!-- Courses - Everyone can view -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-graduation-cap"></i> Khóa học
                             </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Surveys" asp-action="Index">
-                                <i class="fas fa-poll"></i> Khảo sát
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Appointments" asp-action="Consultants">
-                                <i class="fas fa-user-tie"></i> Tư vấn viên
-                            </a>
-                        </li>
-
-                        <!-- Consultant Menu -->
-                        <li asp-authorize="@Roles.ConsultantRoles" class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="consultantMenuDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-stethoscope"></i> Tư vấn
-                            </a>
                             <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Appointments" asp-action="ConsultantAppointments">
-                                        <i class="fas fa-calendar-check"></i> Lịch hẹn tư vấn
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Consultants" asp-action="Profile">
-                                        <i class="fas fa-user-tie"></i> Hồ sơ tư vấn viên
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Courses")">Danh sách khóa học</a></li>
+                                @if (isAuthenticated && role != "Guest")
+                                {
+                                    <li><a class="dropdown-item" href="@Url.Action("MyCourses", "Courses")">Khóa học của tôi</a></li>
+                                }
+                                @if (role == "Staff" || role == "Manager" || role == "Admin")
+                                {
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Manage", "Courses")">Quản lý khóa học</a></li>
+                                }
                             </ul>
                         </li>
 
-                        <!-- Management Menu - Staff+ -->
-                        <li asp-authorize="@Roles.ManagementRoles" class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="managementMenuDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cogs"></i> Quản lý
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Courses" asp-action="Manage" asp-require-permission="manage-courses">
-                                        <i class="fas fa-graduation-cap"></i> Quản lý khóa học
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Surveys" asp-action="Manage" asp-require-permission="manage-surveys">
-                                        <i class="fas fa-poll"></i> Quản lý khảo sát
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Appointments" asp-action="Manage">
-                                        <i class="fas fa-calendar-alt"></i> Quản lý lịch hẹn
-                                    </a>
-                                </li>
-
-                                <li asp-authorize="@Roles.SeniorRoles"><hr class="dropdown-divider"></li>
-
-                                <li asp-authorize="@Roles.SeniorRoles">
-                                    <a class="dropdown-item" asp-controller="Consultants" asp-action="Manage" asp-require-permission="manage-consultants">
-                                        <i class="fas fa-user-tie"></i> Quản lý tư vấn viên
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <!-- Admin Menu -->
-                        <li asp-authorize="@Roles.AdminOnly" class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-warning" href="#" id="adminMenuDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-crown"></i> Admin
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard" asp-require-permission="view-dashboard">
-                                        <i class="fas fa-users"></i> Dashboard
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Admin" asp-action="UserManager" asp-require-permission="manage-users">
-                                        <i class="fas fa-users"></i> Quản lý người dùng
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <!-- User Authentication -->
-                    <ul class="navbar-nav">
-                        @if (User.Identity.IsAuthenticated)
+                        <!-- Surveys -->
+                        @if (isAuthenticated && role != "Guest")
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="userAccountDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-user-circle"></i> @User.GetUserFullName()
-                                    <span class="badge bg-secondary ms-1">@User.GetHighestRole()</span>
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-poll"></i> Khảo sát
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Auth" asp-action="Profile">
-                                            <i class="fas fa-user-edit"></i> Thông tin cá nhân
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Courses" asp-action="MyCourses" asp-require-permission="register-courses">
-                                            <i class="fas fa-graduation-cap"></i> Khóa học của tôi
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Surveys" asp-action="Results" asp-require-permission="take-surveys">
-                                            <i class="fas fa-chart-line"></i> Kết quả khảo sát
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Appointments" asp-action="MyAppointments" asp-require-permission="book-appointments">
-                                            <i class="fas fa-calendar-alt"></i> Lịch hẹn của tôi
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-
-                                    <li>
-                                        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-sign-out-alt"></i> Đăng xuất
-                                            </button>
-                                        </form>
-                                    </li>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Surveys")">Danh sách khảo sát</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("MyResults", "Surveys")">Kết quả của tôi</a></li>
+                                    @if (role == "Staff" || role == "Manager" || role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("Manage", "Surveys")">Quản lý khảo sát</a></li>
+                                    }
                                 </ul>
                             </li>
                         }
-                        else
+
+                        <!-- Appointments -->
+                        @if (isAuthenticated && role != "Guest")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-calendar-check"></i> Lịch hẹn
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (role == "Member" || role == "Staff" || role == "Manager" || role == "Admin")
+                                    {
+                                        <li><a class="dropdown-item" href="@Url.Action("Book", "Appointments")">Đặt lịch hẹn</a></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("MyAppointments", "Appointments")">Lịch hẹn của tôi</a></li>
+                                    }
+                                    @if (role == "Consultant")
+                                    {
+                                        <li><a class="dropdown-item" href="@Url.Action("MySchedule", "Appointments")">Lịch làm việc</a></li>
+                                    }
+                                    @if (role == "Staff" || role == "Manager" || role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("Manage", "Appointments")">Quản lý lịch hẹn</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- Consultants -->
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-md"></i> Tư vấn viên
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Consultants")">Danh sách tư vấn viên</a></li>
+                                    @if (role == "Manager" || role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("Manage", "Consultants")">Quản lý tư vấn viên</a></li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- Management Menu - Only for Admin/Manager -->
+                        @if (role == "Manager" || role == "Admin")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> Quản lý
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (role == "Admin")
+                                    {
+                                        <li><a class="dropdown-item" href="@Url.Action("Users", "Admin")">Quản lý người dùng</a></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("Roles", "Admin")">Quản lý vai trò</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li><a class="dropdown-item" href="@Url.Action("Dashboard", "Reports")">Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Reports")">Báo cáo</a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- User Menu -->
+                    <ul class="navbar-nav">
+                        @if (!isAuthenticated || role == "Guest")
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Auth" asp-action="Login">
+                                <a class="nav-link" href="@Url.Action("Login", "Auth")">
                                     <i class="fas fa-sign-in-alt"></i> Đăng nhập
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Auth" asp-action="Register">
+                                <a class="nav-link" href="@Url.Action("Register", "Auth")">
                                     <i class="fas fa-user-plus"></i> Đăng ký
                                 </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> @ViewBag.CurrentUserName
+                                    <span class="badge bg-secondary ms-1">@role</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Profile", "Account")">
+                                            <i class="fas fa-user-edit"></i> Hồ sơ
+                                        </a>
+                                    </li>
+                                    @if (role == "Consultant")
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("ConsultantProfile", "Account")">
+                                                <i class="fas fa-id-card"></i> Hồ sơ tư vấn viên
+                                            </a>
+                                        </li>
+                                    }
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="logout()">
+                                            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
                     </ul>
@@ -190,107 +189,91 @@
         </nav>
     </header>
 
-	@if (TempData["SuccessMessage"] != null)
-	{
-		<div class="alert alert-success alert-dismissible fade show mx-3" role="alert">
-			<i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
-	}
+    <div class="container-fluid" style="margin-top: 76px;">
+        <main role="main" class="pb-3">
+            <!-- Notification Area -->
+            <div id="notification-area" class="mt-3"></div>
 
-	@if (TempData["ErrorMessage"] != null)
-	{
-		<div class="alert alert-danger alert-dismissible fade show mx-3" role="alert">
-			<i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
-	}
+            @RenderBody()
+        </main>
+    </div>
 
-	@if (TempData["InfoMessage"] != null)
-	{
-		<div class="alert alert-info alert-dismissible fade show mx-3" role="alert">
-			<i class="fas fa-info-circle"></i> @TempData["InfoMessage"]
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
-	}
+    <footer class="border-top footer text-muted bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    &copy; 2024 - Drug Use Prevention Support System. All rights reserved.
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-	<div class="container-fluid">
-		<main role="main" class="pb-3">
-			@RenderBody()
-		</main>
-	</div>
-
-	<footer class="border-top footer text-muted">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-6">
-					&copy; 2025 - Drug Use Prevention Support System
-				</div>
-				<div class="col-md-6 text-end">
-					<a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">Chính sách bảo mật</a> |
-					<a href="#" class="text-decoration-none">Liên hệ hỗ trợ</a>
-				</div>
-			</div>
-		</div>
-	</footer>
-
-	<script src="~/lib/jquery/dist/jquery.min.js"></script>
-	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-	<script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-        // Ultra simple version using ViewBag from BaseController
-        window.USER_INFO = {
-        @if (User.Identity.IsAuthenticated)
-        {
-            <text>
-                    id: @(Context.Session.GetInt32("UserId") ?? 0),
-                    email: '@Html.Raw(Context.Session.GetString("UserEmail") ?? "")',
-                    name: '@Html.Raw(Context.Session.GetString("UserName") ?? "")',
-                    token: '@Html.Raw(Context.Session.GetString("UserToken") ?? "")',
-                    authenticated: true,
-                    isAdmin: @(User.IsInRole("Admin") ? "true" : "false"),
-                    isManager: @(User.IsInRole("Manager") ? "true" : "false"),
-                    isStaff: @(User.IsInRole("Staff") ? "true" : "false"),
-                    isConsultant: @(User.IsInRole("Consultant") ? "true" : "false"),
-                    isMember: @(User.IsInRole("Member") ? "true" : "false")
-            </text>
-        }
-        else
-        {
-            <text>
-                    id: null,
-                    email: '',
-                    name: '',
-                    token: '',
-                    authenticated: false,
-                    isAdmin: false,
-                    isManager: false,
-                    isStaff: false,
-                    isConsultant: false,
-                    isMember: false
-            </text>
-        }
-        };
-
-        // Helper functions
-        function canManageCourses() {
-            return window.USER_INFO.isStaff || window.USER_INFO.isManager || window.USER_INFO.isAdmin;
+        // Global logout function
+        function logout() {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                $.post('@Url.Action("Logout", "Auth")', function() {
+                    window.location.href = '@Url.Action("Index", "Home")';
+                });
+            }
         }
 
-        function canManageUsers() {
-            return window.USER_INFO.isAdmin;
+        // Global notification function
+        function showNotification(message, type = 'info') {
+            const alertClass = type === 'error' ? 'alert-danger' :
+                              type === 'success' ? 'alert-success' :
+                              type === 'warning' ? 'alert-warning' : 'alert-info';
+
+            const notification = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            $('#notification-area').html(notification);
+
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                $('.alert').alert('close');
+            }, 5000);
         }
 
-        function canViewReports() {
-            return window.USER_INFO.isManager || window.USER_INFO.isAdmin;
-        }
+        // Handle AJAX errors globally
+        $(document).ajaxError(function(event, xhr, settings, thrownError) {
+            if (xhr.status === 401) {
+                showNotification('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'warning');
+                setTimeout(() => {
+                    window.location.href = '@Url.Action("Login", "Auth")';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                showNotification('Bạn không có quyền thực hiện thao tác này.', 'error');
+            }
+        });
 
-        function isAuthenticated() {
-            return window.USER_INFO.authenticated;
-        }
+        // Set authorization header for all AJAX requests
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                // For MVC, we'll set this via a meta tag or data attribute
+                var token = $('meta[name="auth-token"]').attr('content');
+                if (!token) {
+                    // Alternative: get from session via ViewBag
+                    token = '@ViewBag.AuthToken';
+                }
+                if (token && token !== '') {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                }
+            }
+        });
     </script>
 
-	@await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
