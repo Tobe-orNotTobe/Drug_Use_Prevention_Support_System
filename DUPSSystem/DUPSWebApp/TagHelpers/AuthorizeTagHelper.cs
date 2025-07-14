@@ -10,6 +10,7 @@ namespace DUPSWebApp.TagHelpers
 	[HtmlTargetElement("section", Attributes = "asp-authorize")]
 	[HtmlTargetElement("a", Attributes = "asp-authorize")]
 	[HtmlTargetElement("button", Attributes = "asp-authorize")]
+	[HtmlTargetElement("li", Attributes = "asp-authorize")]
 	public class AuthorizeTagHelper : TagHelper
 	{
 		[ViewContext]
@@ -22,14 +23,23 @@ namespace DUPSWebApp.TagHelpers
 		[HtmlAttributeName("asp-require-permission")]
 		public string Permission { get; set; }
 
+		[HtmlAttributeName("asp-hide-if-guest")]
+		public bool HideIfGuest { get; set; }
+
 		public override void Process(TagHelperContext context, TagHelperOutput output)
 		{
 			var user = ViewContext.HttpContext.User;
 
 			bool isAuthorized = true;
 
+			// Hide if guest and HideIfGuest is true
+			if (HideIfGuest && user.IsGuest())
+			{
+				isAuthorized = false;
+			}
+
 			// Check roles
-			if (!string.IsNullOrEmpty(Roles))
+			if (!string.IsNullOrEmpty(Roles) && isAuthorized)
 			{
 				var roles = Roles.Split(',').Select(r => r.Trim()).ToArray();
 				isAuthorized = user.IsInAnyRole(roles);
@@ -44,10 +54,15 @@ namespace DUPSWebApp.TagHelpers
 					"manage-surveys" => user.CanManageSurveys(),
 					"manage-users" => user.CanManageUsers(),
 					"manage-consultants" => user.CanManageConsultants(),
+					"manage-appointments" => user.CanManageAppointments(),
 					"view-reports" => user.CanViewReports(),
+					"view-all-reports" => user.CanViewAllReports(),
 					"register-courses" => user.CanRegisterCourses(),
 					"take-surveys" => user.CanTakeSurveys(),
 					"book-appointments" => user.CanBookAppointments(),
+					"view-dashboard" => user.CanViewDashboard(),
+					"view-own-appointments" => user.CanViewOwnAppointments(),
+					"view-all-appointments" => user.CanViewAllAppointments(),
 					_ => true
 				};
 			}

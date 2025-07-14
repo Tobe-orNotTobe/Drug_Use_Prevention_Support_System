@@ -1,39 +1,50 @@
-﻿@{
-    ViewData["Title"] = "Danh sách khảo sát";
+﻿@using BusinessObjects.Constants
+@using BusinessObjects.Extensions
+@{
+    ViewData["Title"] = "Khảo sát đánh giá";
 }
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-12">
+        <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">
-                        <i class="fas fa-poll me-1"></i>
-                        Danh sách khảo sát
+                        <i class="fas fa-poll"></i> Khảo sát đánh giá rủi ro
                     </h3>
-                    <div class="card-tools">
-                        <a href="/Surveys/Results" class="btn btn-success">
-                            <i class="fas fa-chart-bar"></i> Kết quả của tôi
+                    <!-- Only Staff+ can create surveys -->
+                    <div asp-authorize="@Roles.ManagementRoles">
+                        <a asp-controller="Surveys" asp-action="Create" class="btn btn-success" asp-require-permission="manage-surveys">
+                            <i class="fas fa-plus"></i> Tạo khảo sát mới
                         </a>
                     </div>
                 </div>
+
                 <div class="card-body">
-                    <!-- Search Section -->
+                    <!-- Filters -->
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm khảo sát...">
-                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
+                        <div class="col-md-4">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm khảo sát...">
                         </div>
-                        <div class="col-md-6">
-                            <select class="form-select" id="sortFilter">
-                                <option value="newest">Mới nhất</option>
-                                <option value="oldest">Cũ nhất</option>
-                                <option value="name">Theo tên A-Z</option>
+                        <div class="col-md-3">
+                            <select id="typeFilter" class="form-select">
+                                <option value="">Tất cả loại khảo sát</option>
+                                <option value="ASSIST">ASSIST</option>
+                                <option value="CRAFFT">CRAFFT</option>
+                                <option value="Custom">Tùy chỉnh</option>
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="searchBtn" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Tìm kiếm
+                            </button>
                         </div>
                     </div>
 
@@ -42,95 +53,128 @@
                         <div class="spinner-border" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Đang tải danh sách khảo sát...</p>
                     </div>
 
-                    <!-- Surveys Grid -->
-                    <div id="surveysGrid" class="row">
-                        <!-- Surveys will be loaded here -->
+                    <!-- Surveys Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tiêu đề</th>
+                                    <th>Loại</th>
+                                    <th>Số câu hỏi</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="surveysTableBody">
+                                <!-- Data will be loaded here via AJAX -->
+                            </tbody>
+                        </table>
                     </div>
 
-                    <!-- Empty State -->
-                    <div id="emptyState" class="text-center py-5" style="display: none;">
-                        <i class="fas fa-poll fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">Không có khảo sát nào</h4>
-                        <p class="text-muted">Hiện tại chưa có khảo sát nào để thực hiện</p>
+                    <!-- Pagination -->
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Pagination will be generated here -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User's Survey Results - Only for authenticated users -->
+    <div asp-authorize="@Roles.AuthenticatedRoles" class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-line"></i> Kết quả khảo sát của tôi
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Khảo sát</th>
+                                    <th>Ngày thực hiện</th>
+                                    <th>Điểm số</th>
+                                    <th>Mức độ rủi ro</th>
+                                    <th>Khuyến nghị</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userSurveyResultsTableBody">
+                                <!-- User survey results will be loaded here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Survey Statistics -->
-    <div class="row mt-4">
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-info text-white rounded">
-                <div class="inner p-3">
-                    <h3 id="totalSurveys">0</h3>
-                    <p>Tổng khảo sát</p>
+    <!-- Management Reports - Only for Manager+ -->
+    <div asp-authorize="@Roles.SeniorRoles" class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-bar"></i> Báo cáo khảo sát tổng quan
+                    </h3>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-poll"></i>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5>Tổng số khảo sát</h5>
+                                    <h3 id="totalSurveys">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5>Đã hoàn thành</h5>
+                                    <h3 id="completedSurveys">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5>Rủi ro cao</h5>
+                                    <h3 id="highRiskSurveys">-</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a asp-controller="Surveys" asp-action="AllResults" class="btn btn-info" asp-require-permission="view-reports">
+                            <i class="fas fa-chart-bar"></i> Xem báo cáo chi tiết
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success text-white rounded">
-                <div class="inner p-3">
-                    <h3 id="completedSurveys">0</h3>
-                    <p>Đã hoàn thành</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning text-white rounded">
-                <div class="inner p-3">
-                    <h3 id="availableSurveys">0</h3>
-                    <p>Có thể thực hiện</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-play-circle"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger text-white rounded">
-                <div class="inner p-3">
-                    <h3 id="avgScore">0</h3>
-                    <p>Điểm trung bình</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-star"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Survey Detail Modal -->
-<div class="modal fade" id="surveyDetailModal" tabindex="-1" aria-labelledby="surveyDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="surveyDetailModalLabel">Chi tiết khảo sát</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="surveyDetailContent">
-                <!-- Survey details will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-primary" id="takeSurveyBtn" style="display: none;">
-                    <i class="fas fa-play"></i> Bắt đầu khảo sát
-                </button>
             </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="~/js/surveys.js"></script>
+    <script>
+        // Pass user permissions to JavaScript
+        window.USER_PERMISSIONS = {
+            canTakeSurveys: @(User.CanTakeSurveys().ToString().ToLower()),
+            canManageSurveys: @(User.CanManageSurveys().ToString().ToLower()),
+            canViewReports: @(User.CanViewReports().ToString().ToLower()),
+            isAuthenticated: @(User.Identity.IsAuthenticated.ToString().ToLower()),
+            userRole: '@User.GetHighestRole()'
+        };
+    </script>
+    <script src="~/js/surveys.js" asp-append-version="true"></script>
 }

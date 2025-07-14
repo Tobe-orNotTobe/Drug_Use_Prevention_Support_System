@@ -70,7 +70,7 @@ namespace BusinessObjects.Extensions
 		// Course permissions
 		public static bool CanViewCourses(this ClaimsPrincipal user)
 		{
-			return true; // Everyone can view courses (including guests)
+			return true;
 		}
 
 		public static bool CanRegisterCourses(this ClaimsPrincipal user)

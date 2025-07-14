@@ -45,6 +45,19 @@ namespace DUPSWebApp.Controllers
 			return View();
 		}
 
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Book(int id)
+		{
+			if (!User.CanRegisterCourses())
+			{
+				return ForbiddenRedirect("Bạn không có quyền đăng ký khóa học");
+			}
+
+			ViewBag.CourseId = id;
+			SetViewBagPermissions();
+			return View();
+		}
+
 		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Manage()
 		{

@@ -6,7 +6,11 @@ namespace DUPSWebApp.Controllers
 	{
 		public IActionResult Dashboard()
 		{
-			ViewData["Title"] = "Dashboard & Report";
+			return View();
+		}
+
+		public IActionResult UserManager()
+		{
 			return View();
 		}
 	}

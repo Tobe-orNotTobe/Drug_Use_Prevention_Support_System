@@ -1,510 +1,511 @@
-﻿// my-appointments.js - My Appointments page functionality
-$(document).ready(function () {
+﻿$(document).ready(function () {
     // Configuration
     const API_BASE_URL = 'https://localhost:7008/odata';
-    let CURRENT_USER_ID = window.CURRENT_USER_ID || null;
+    const CURRENT_USER_ID = window.CURRENT_USER_ID || null;
+    const USER_PERMISSIONS = window.USER_PERMISSIONS || {};
 
-    let userAppointments = [];
-    let filteredAppointments = [];
-
-    // Check if user is logged in
-    if (!CURRENT_USER_ID || !window.USER_TOKEN) {
-        showAlert('warning', 'Bạn cần đăng nhập để xem lịch hẹn của mình');
-        setTimeout(() => {
-            window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-        }, 2000);
-        return;
-    }
+    let currentPage = 1;
+    let pageSize = 10;
+    let totalRecords = 0;
 
     // Initialize page
     init();
 
     function init() {
-        loadUserAppointments();
+        loadConsultants(); // Load consultants for filter
+        loadAppointments();
+        if (USER_PERMISSIONS.canViewAllAppointments) {
+            loadAppointmentStatistics();
+        }
         bindEvents();
     }
 
     function bindEvents() {
-        // Filter and search functionality
-        $('#statusFilter, #sortFilter').change(function () {
-            filterAndDisplayAppointments();
+        // Filter functionality
+        $('#filterBtn').click(function () {
+            currentPage = 1;
+            loadAppointments();
         });
 
-        $('#searchInput').on('input', function () {
-            filterAndDisplayAppointments();
-        });
-
-        // Cancel appointment
-        $('#confirmCancelBtn').click(function () {
-            const appointmentId = $(this).data('appointment-id');
-            if (appointmentId) {
-                cancelAppointment(appointmentId);
-            }
+        $('#statusFilter, #dateFilter, #consultantFilter').change(function () {
+            currentPage = 1;
+            loadAppointments();
         });
     }
 
     // Setup AJAX headers with authentication
     function setupAjaxHeaders() {
-        return {
-            'Authorization': `Bearer ${window.USER_TOKEN}`,
+        const headers = {
             'Content-Type': 'application/json'
         };
+
+        if (USER_PERMISSIONS.isAuthenticated && window.USER_TOKEN) {
+            headers['Authorization'] = `Bearer ${window.USER_TOKEN}`;
+        }
+
+        return headers;
     }
 
-    // Load user appointments
-    function loadUserAppointments() {
+    // Load consultants for filter dropdown
+    function loadConsultants() {
+        $.ajax({
+            url: `${API_BASE_URL}/Consultants?$select=ConsultantId,FullName&$filter=IsActive eq true`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const consultants = response.value || response;
+                const select = $('#consultantFilter');
+
+                consultants.forEach(consultant => {
+                    select.append(`<option value="${consultant.ConsultantId}">${consultant.FullName}</option>`);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading consultants:', error);
+            }
+        });
+    }
+
+    // Load appointments based on user role
+    function loadAppointments() {
         showLoading();
 
+        let odataQuery = `${API_BASE_URL}/Appointments?`;
+        let filters = [];
+
+        // Role-based filtering
+        if (USER_PERMISSIONS.isConsultant && !USER_PERMISSIONS.canViewAllAppointments) {
+            // Consultants can only see their own appointments
+            filters.push(`ConsultantId eq ${CURRENT_USER_ID}`);
+        } else if (!USER_PERMISSIONS.canViewAllAppointments) {
+            // Regular users can only see their own appointments
+            filters.push(`UserId eq ${CURRENT_USER_ID}`);
+        }
+
+        // Status filter
+        const status = $('#statusFilter').val();
+        if (status) {
+            filters.push(`Status eq '${status}'`);
+        }
+
+        // Date filter
+        const dateFilter = $('#dateFilter').val();
+        if (dateFilter) {
+            filters.push(`date(AppointmentDate) eq ${dateFilter}`);
+        }
+
+        // Consultant filter
+        const consultantId = $('#consultantFilter').val();
+        if (consultantId) {
+            filters.push(`ConsultantId eq ${consultantId}`);
+        }
+
+        // Apply filters
+        if (filters.length > 0) {
+            odataQuery += `$filter=${filters.join(' and ')}&`;
+        }
+
+        // Add expansion, ordering and pagination
+        odataQuery += `$expand=User,Consultant&$orderby=AppointmentDate desc&$top=${pageSize}&$skip=${(currentPage - 1) * pageSize}&$count=true`;
+
         $.ajax({
-            url: `${API_BASE_URL}/Appointments/user/${CURRENT_USER_ID}`,
+            url: odataQuery,
             method: 'GET',
             headers: setupAjaxHeaders(),
             success: function (response) {
                 hideLoading();
-
-                if (response.success || response.Success) {
-                    userAppointments = response.data || response.Data || [];
-                    filteredAppointments = [...userAppointments];
-
-                    displayAppointments();
-                    updateStatistics();
-                } else {
-                    showAlert('error', response.message || 'Đã xảy ra lỗi khi tải lịch hẹn');
-                }
+                const appointments = response.value || response;
+                displayAppointments(appointments);
+                totalRecords = response['@odata.count'] || appointments.length;
+                updatePagination();
             },
             error: function (xhr, status, error) {
                 hideLoading();
-                console.error('Error loading appointments:', error);
-
-                if (xhr.status === 401) {
-                    showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                    setTimeout(() => {
-                        window.location.href = '/Auth/Login';
-                    }, 2000);
-                } else {
-                    showAlert('error', 'Đã xảy ra lỗi khi tải lịch hẹn');
-                }
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi tải danh sách lịch hẹn');
             }
         });
     }
 
-    // Filter and display appointments
-    function filterAndDisplayAppointments() {
-        const statusFilter = $('#statusFilter').val();
-        const sortFilter = $('#sortFilter').val();
-        const searchTerm = $('#searchInput').val().toLowerCase().trim();
+    // Display appointments with role-based action buttons
+    function displayAppointments(appointments) {
+        const tbody = $('#appointmentsTableBody');
+        tbody.empty();
 
-        // Apply filters
-        filteredAppointments = userAppointments.filter(appointment => {
-            // Status filter
-            if (statusFilter && appointment.Status !== statusFilter) {
-                return false;
-            }
-
-            // Search filter
-            if (searchTerm) {
-                const consultantName = appointment.ConsultantName?.toLowerCase() || '';
-                const notes = appointment.Notes?.toLowerCase() || '';
-
-                if (!consultantName.includes(searchTerm) && !notes.includes(searchTerm)) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
-        // Apply sorting
-        switch (sortFilter) {
-            case 'newest':
-                filteredAppointments.sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
-                break;
-            case 'oldest':
-                filteredAppointments.sort((a, b) => new Date(a.CreatedAt) - new Date(b.CreatedAt));
-                break;
-            case 'date_asc':
-                filteredAppointments.sort((a, b) => new Date(a.AppointmentDate) - new Date(b.AppointmentDate));
-                break;
-            case 'date_desc':
-                filteredAppointments.sort((a, b) => new Date(b.AppointmentDate) - new Date(a.AppointmentDate));
-                break;
-        }
-
-        displayAppointments();
-    }
-
-    // Display appointments
-    function displayAppointments() {
-        const appointmentsList = $('#appointmentsList');
-        const emptyState = $('#emptyState');
-
-        appointmentsList.empty();
-
-        if (filteredAppointments.length === 0) {
-            appointmentsList.hide();
-            emptyState.show();
+        if (!appointments || appointments.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="7" class="text-center">Không có lịch hẹn nào</td>
+                </tr>
+            `);
             return;
         }
 
-        emptyState.hide();
-        appointmentsList.show();
+        appointments.forEach(appointment => {
+            const actionButtons = generateAppointmentActionButtons(appointment);
 
-        filteredAppointments.forEach(appointment => {
-            const appointmentDate = new Date(appointment.AppointmentDate);
-            const isUpcoming = appointmentDate > new Date();
-            const canCancel = appointment.Status === 'Pending' || appointment.Status === 'Confirmed';
-
-            const statusColor = getStatusColor(appointment.Status);
-            const statusIcon = getStatusIcon(appointment.Status);
-
-            const appointmentCard = `
-                <div class="card mb-3 appointment-card" data-appointment-id="${appointment.AppointmentId}">
-                    <div class="card-header bg-${statusColor} text-white">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h6 class="mb-0">
-                                    <i class="${statusIcon}"></i> 
-                                    Tư vấn với ${escapeHtml(appointment.ConsultantName)}
-                                </h6>
-                                <small>Chuyên môn: ${escapeHtml(appointment.ConsultantExpertise)}</small>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <span class="badge bg-light text-dark">
-                                    ${getStatusText(appointment.Status)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-2">
-                                    <i class="fas fa-calendar text-primary"></i>
-                                    <strong>Ngày hẹn:</strong> ${formatDateTime(appointment.AppointmentDate)}
-                                </div>
-                                <div class="mb-2">
-                                    <i class="fas fa-clock text-primary"></i>
-                                    <strong>Thời lượng:</strong> ${appointment.DurationMinutes || 60} phút
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-2">
-                                    <i class="fas fa-calendar-plus text-primary"></i>
-                                    <strong>Ngày đặt:</strong> ${formatDate(appointment.CreatedAt)}
-                                </div>
-                                ${isUpcoming ? `
-                                    <div class="mb-2">
-                                        <i class="fas fa-hourglass-half text-warning"></i>
-                                        <strong>Còn lại:</strong> ${getTimeUntilAppointment(appointment.AppointmentDate)}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-
-                        ${appointment.Notes ? `
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <div class="alert alert-light">
-                                        <i class="fas fa-sticky-note"></i>
-                                        <strong>Ghi chú:</strong> ${escapeHtml(appointment.Notes)}
-                                    </div>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <div class="mt-3">
-                            <div class="btn-group" role="group">
-                                <button type="button" 
-                                        class="btn btn-info btn-sm" 
-                                        onclick="viewAppointmentDetail(${appointment.AppointmentId})"
-                                        title="Xem chi tiết">
-                                    <i class="fas fa-eye"></i> Chi tiết
-                                </button>
-                                ${canCancel ? `
-                                    <button type="button" 
-                                            class="btn btn-danger btn-sm" 
-                                            onclick="showCancelConfirmation(${appointment.AppointmentId})"
-                                            title="Hủy lịch hẹn">
-                                        <i class="fas fa-times"></i> Hủy
-                                    </button>
-                                ` : ''}
-                                ${appointment.Status === 'Confirmed' && isUpcoming ? `
-                                    <button type="button" 
-                                            class="btn btn-success btn-sm" 
-                                            title="Sẵn sàng tham gia">
-                                        <i class="fas fa-check"></i> Sẵn sàng
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            const row = `
+                <tr>
+                    <td>${appointment.AppointmentId}</td>
+                    <td>
+                        <strong>${escapeHtml(appointment.Consultant?.FullName || 'N/A')}</strong>
+                        ${appointment.Consultant?.Specialization ? `<br><small class="text-muted">${escapeHtml(appointment.Consultant.Specialization)}</small>` : ''}
+                    </td>
+                    <td>${formatDate(appointment.AppointmentDate)}</td>
+                    <td>${formatTime(appointment.AppointmentTime)}</td>
+                    <td>
+                        <span class="badge bg-${getStatusClass(appointment.Status)}">
+                            ${getStatusText(appointment.Status)}
+                        </span>
+                    </td>
+                    <td>
+                        ${appointment.Notes ? `<small>${escapeHtml(appointment.Notes.substring(0, 50))}${appointment.Notes.length > 50 ? '...' : ''}</small>` : '-'}
+                    </td>
+                    <td>${actionButtons}</td>
+                </tr>
             `;
-
-            appointmentsList.append(appointmentCard);
+            tbody.append(row);
         });
     }
 
-    // Update statistics
-    function updateStatistics() {
-        const total = userAppointments.length;
-        const pending = userAppointments.filter(a => a.Status === 'Pending').length;
-        const confirmed = userAppointments.filter(a => a.Status === 'Confirmed').length;
-        const completed = userAppointments.filter(a => a.Status === 'Completed').length;
+    // Generate action buttons based on user permissions and appointment status
+    function generateAppointmentActionButtons(appointment) {
+        let buttons = '';
 
-        $('#totalAppointments').text(total);
-        $('#pendingCount').text(pending);
-        $('#confirmedCount').text(confirmed);
-        $('#completedCount').text(completed);
-    }
+        // Everyone can view details
+        buttons += `<button type="button" class="btn btn-info btn-sm me-1" onclick="viewAppointment(${appointment.AppointmentId})" title="Xem chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </button>`;
 
-    // View appointment detail
-    function viewAppointmentDetail(appointmentId) {
-        const appointment = userAppointments.find(a => a.AppointmentId === appointmentId);
-        if (!appointment) return;
+        // User actions
+        if (appointment.UserId === CURRENT_USER_ID || USER_PERMISSIONS.canManageAppointments) {
+            // Can edit if pending and user owns it or has management rights
+            if (appointment.Status === 'Pending') {
+                buttons += `<button type="button" class="btn btn-warning btn-sm me-1" onclick="editAppointment(${appointment.AppointmentId})" title="Chỉnh sửa">
+                                <i class="fas fa-edit"></i>
+                            </button>`;
+            }
 
-        const isUpcoming = new Date(appointment.AppointmentDate) > new Date();
-        const canCancel = appointment.Status === 'Pending' || appointment.Status === 'Confirmed';
-
-        const detailContent = `
-            <div class="row">
-                <div class="col-md-8">
-                    <h4><i class="fas fa-calendar-check"></i> Chi tiết lịch hẹn</h4>
-                    <p class="text-muted">Mã lịch hẹn: #${appointment.AppointmentId}</p>
-                </div>
-                <div class="col-md-4">
-                    <span class="badge bg-${getStatusColor(appointment.Status)} fs-6 p-2">
-                        ${getStatusText(appointment.Status)}
-                    </span>
-                </div>
-            </div>
-            
-            <hr>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <h6><i class="fas fa-user-md"></i> Tư vấn viên:</h6>
-                    <p>${escapeHtml(appointment.ConsultantName)}</p>
-                    <small class="text-muted">${escapeHtml(appointment.ConsultantExpertise)}</small>
-                </div>
-                <div class="col-md-6">
-                    <h6><i class="fas fa-calendar"></i> Ngày và giờ hẹn:</h6>
-                    <p><strong>${formatDateTime(appointment.AppointmentDate)}</strong></p>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <h6><i class="fas fa-clock"></i> Thời lượng:</h6>
-                    <p>${appointment.DurationMinutes || 60} phút</p>
-                </div>
-                <div class="col-md-6">
-                    <h6><i class="fas fa-calendar-plus"></i> Ngày đặt:</h6>
-                    <p>${formatDateTime(appointment.CreatedAt)}</p>
-                </div>
-            </div>
-            
-            ${appointment.Notes ? `
-                <div class="row">
-                    <div class="col-12">
-                        <h6><i class="fas fa-sticky-note"></i> Ghi chú:</h6>
-                        <div class="alert alert-light">
-                            ${escapeHtml(appointment.Notes)}
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
-
-            ${isUpcoming ? `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Lưu ý:</strong> Còn ${getTimeUntilAppointment(appointment.AppointmentDate)} nữa đến lịch hẹn của bạn.
-                </div>
-            ` : ''}
-
-            ${appointment.Status === 'Completed' ? `
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    <strong>Hoàn thành:</strong> Buổi tư vấn đã kết thúc thành công.
-                </div>
-            ` : ''}
-        `;
-
-        $('#appointmentDetailContent').html(detailContent);
-
-        // Setup modal buttons
-        if (canCancel) {
-            $('#cancelAppointmentBtn').show().data('appointment-id', appointmentId);
-        } else {
-            $('#cancelAppointmentBtn').hide();
+            // Can cancel if not completed/cancelled
+            if (appointment.Status !== 'Completed' && appointment.Status !== 'Cancelled') {
+                buttons += `<button type="button" class="btn btn-danger btn-sm me-1" onclick="cancelAppointment(${appointment.AppointmentId})" title="Hủy lịch hẹn">
+                                <i class="fas fa-times"></i>
+                            </button>`;
+            }
         }
 
-        new bootstrap.Modal(document.getElementById('appointmentDetailModal')).show();
+        // Consultant actions
+        if (USER_PERMISSIONS.isConsultant && appointment.ConsultantId === CURRENT_USER_ID) {
+            // Confirm appointment
+            if (appointment.Status === 'Pending') {
+                buttons += `<button type="button" class="btn btn-success btn-sm me-1" onclick="confirmAppointment(${appointment.AppointmentId})" title="Xác nhận">
+                                <i class="fas fa-check"></i>
+                            </button>`;
+            }
+
+            // Complete appointment and add notes
+            if (appointment.Status === 'Confirmed') {
+                buttons += `<button type="button" class="btn btn-primary btn-sm me-1" onclick="completeAppointment(${appointment.AppointmentId})" title="Hoàn thành">
+                                <i class="fas fa-clipboard-check"></i>
+                            </button>`;
+            }
+
+            // View/Add consultation notes
+            buttons += `<button type="button" class="btn btn-secondary btn-sm" onclick="viewConsultationNotes(${appointment.AppointmentId})" title="Ghi chú tư vấn">
+                            <i class="fas fa-sticky-note"></i>
+                        </button>`;
+        }
+
+        // Staff+ management actions
+        if (USER_PERMISSIONS.canManageAppointments) {
+            buttons += `<button type="button" class="btn btn-dark btn-sm" onclick="manageAppointment(${appointment.AppointmentId})" title="Quản lý">
+                            <i class="fas fa-cog"></i>
+                        </button>`;
+        }
+
+        return `<div class="btn-group btn-group-sm" role="group">${buttons}</div>`;
     }
 
-    // Show cancel confirmation
-    function showCancelConfirmation(appointmentId) {
-        $('#confirmCancelBtn').data('appointment-id', appointmentId);
-        new bootstrap.Modal(document.getElementById('cancelConfirmModal')).show();
-    }
-
-    // Cancel appointment
-    function cancelAppointment(appointmentId) {
-        const cancelData = {
-            userId: CURRENT_USER_ID
-        };
-
+    // Load appointment statistics (for management roles)
+    function loadAppointmentStatistics() {
+        // Total appointments
         $.ajax({
-            url: `${API_BASE_URL}/Appointments(${appointmentId})/cancel`,
-            method: 'POST',
+            url: `${API_BASE_URL}/Appointments?$count=true`,
+            method: 'GET',
             headers: setupAjaxHeaders(),
-            data: JSON.stringify(cancelData),
             success: function (response) {
-                if (response.success || response.Success) {
-                    showAlert('success', 'Hủy lịch hẹn thành công');
+                const total = response['@odata.count'] || 0;
+                $('#totalAppointments').text(total);
+            }
+        });
 
-                    // Hide modals
-                    bootstrap.Modal.getInstance(document.getElementById('cancelConfirmModal')).hide();
-                    const detailModal = bootstrap.Modal.getInstance(document.getElementById('appointmentDetailModal'));
-                    if (detailModal) {
-                        detailModal.hide();
-                    }
+        // Pending appointments
+        $.ajax({
+            url: `${API_BASE_URL}/Appointments?$filter=Status eq 'Pending'&$count=true`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const pending = response['@odata.count'] || 0;
+                $('#pendingAppointments').text(pending);
+            }
+        });
 
-                    // Reload appointments
-                    loadUserAppointments();
-                } else {
-                    showAlert('error', response.message || response.Message || 'Đã xảy ra lỗi khi hủy lịch hẹn');
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Error cancelling appointment:', error);
+        // Completed appointments
+        $.ajax({
+            url: `${API_BASE_URL}/Appointments?$filter=Status eq 'Completed'&$count=true`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const completed = response['@odata.count'] || 0;
+                $('#completedAppointments').text(completed);
+            }
+        });
 
-                if (xhr.status === 401) {
-                    showAlert('error', 'Phiên đăng nhập đã hết hạn');
-                } else {
-                    const errorMessage = xhr.responseJSON?.message || xhr.responseJSON?.Message || 'Đã xảy ra lỗi khi hủy lịch hẹn';
-                    showAlert('error', errorMessage);
-                }
+        // Cancelled appointments
+        $.ajax({
+            url: `${API_BASE_URL}/Appointments?$filter=Status eq 'Cancelled'&$count=true`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const cancelled = response['@odata.count'] || 0;
+                $('#cancelledAppointments').text(cancelled);
             }
         });
     }
 
-    // Utility functions
-    function getStatusColor(status) {
-        switch (status) {
-            case 'Pending': return 'warning';
-            case 'Confirmed': return 'info';
-            case 'Completed': return 'success';
-            case 'Cancelled': return 'secondary';
-            default: return 'light';
+    // Appointment action functions
+    window.viewAppointment = function (appointmentId) {
+        window.location.href = `/Appointments/Details/${appointmentId}`;
+    };
+
+    window.editAppointment = function (appointmentId) {
+        window.location.href = `/Appointments/Edit/${appointmentId}`;
+    };
+
+    window.cancelAppointment = function (appointmentId) {
+        if (confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) {
+            updateAppointmentStatus(appointmentId, 'Cancelled');
         }
+    };
+
+    window.confirmAppointment = function (appointmentId) {
+        if (!USER_PERMISSIONS.isConsultant) {
+            showAlert('error', 'Chỉ tư vấn viên mới có thể xác nhận lịch hẹn');
+            return;
+        }
+        updateAppointmentStatus(appointmentId, 'Confirmed');
+    };
+
+    window.completeAppointment = function (appointmentId) {
+        if (!USER_PERMISSIONS.isConsultant) {
+            showAlert('error', 'Chỉ tư vấn viên mới có thể hoàn thành lịch hẹn');
+            return;
+        }
+
+        // Show modal for completion notes
+        showCompletionModal(appointmentId);
+    };
+
+    window.viewConsultationNotes = function (appointmentId) {
+        window.location.href = `/Appointments/ConsultationNotes/${appointmentId}`;
+    };
+
+    window.manageAppointment = function (appointmentId) {
+        if (!USER_PERMISSIONS.canManageAppointments) {
+            showAlert('error', 'Bạn không có quyền quản lý lịch hẹn');
+            return;
+        }
+        window.location.href = `/Appointments/Manage/${appointmentId}`;
+    };
+
+    // Update appointment status
+    function updateAppointmentStatus(appointmentId, status) {
+        const data = {
+            Status: status,
+            UpdatedAt: new Date().toISOString()
+        };
+
+        $.ajax({
+            url: `${API_BASE_URL}/Appointments(${appointmentId})`,
+            method: 'PATCH',
+            headers: setupAjaxHeaders(),
+            data: JSON.stringify(data),
+            success: function (response) {
+                showAlert('success', `Cập nhật trạng thái lịch hẹn thành công!`);
+                loadAppointments(); // Reload appointments
+                if (USER_PERMISSIONS.canViewAllAppointments) {
+                    loadAppointmentStatistics(); // Reload statistics
+                }
+            },
+            error: function (xhr, status, error) {
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi cập nhật trạng thái lịch hẹn');
+            }
+        });
     }
 
-    function getStatusIcon(status) {
-        switch (status) {
-            case 'Pending': return 'fas fa-clock';
-            case 'Confirmed': return 'fas fa-check';
-            case 'Completed': return 'fas fa-check-double';
-            case 'Cancelled': return 'fas fa-times';
-            default: return 'fas fa-question';
+    // Show completion modal
+    function showCompletionModal(appointmentId) {
+        const modalHtml = `
+            <div class="modal fade" id="completionModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Hoàn thành lịch hẹn</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="consultationNotes" class="form-label">Ghi chú tư vấn <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="consultationNotes" rows="4" placeholder="Nhập ghi chú về buổi tư vấn..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="recommendations" class="form-label">Khuyến nghị</label>
+                                <textarea class="form-control" id="recommendations" rows="3" placeholder="Khuyến nghị cho khách hàng..."></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-primary" onclick="completeAppointmentWithNotes(${appointmentId})">Hoàn thành</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        $('#completionModal').remove();
+
+        // Add modal to body and show
+        $('body').append(modalHtml);
+        $('#completionModal').modal('show');
+    }
+
+    // Complete appointment with notes
+    window.completeAppointmentWithNotes = function (appointmentId) {
+        const consultationNotes = $('#consultationNotes').val().trim();
+        const recommendations = $('#recommendations').val().trim();
+
+        if (!consultationNotes) {
+            showAlert('error', 'Vui lòng nhập ghi chú tư vấn');
+            return;
         }
+
+        const data = {
+            Status: 'Completed',
+            ConsultationNotes: consultationNotes,
+            Recommendations: recommendations,
+            CompletedAt: new Date().toISOString(),
+            UpdatedAt: new Date().toISOString()
+        };
+
+        $.ajax({
+            url: `${API_BASE_URL}/Appointments(${appointmentId})`,
+            method: 'PATCH',
+            headers: setupAjaxHeaders(),
+            data: JSON.stringify(data),
+            success: function (response) {
+                $('#completionModal').modal('hide');
+                showAlert('success', 'Hoàn thành lịch hẹn thành công!');
+                loadAppointments(); // Reload appointments
+                if (USER_PERMISSIONS.canViewAllAppointments) {
+                    loadAppointmentStatistics(); // Reload statistics
+                }
+            },
+            error: function (xhr, status, error) {
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi hoàn thành lịch hẹn');
+            }
+        });
+    };
+
+    // Helper functions
+    function getStatusClass(status) {
+        const classes = {
+            'Pending': 'warning',
+            'Confirmed': 'info',
+            'Completed': 'success',
+            'Cancelled': 'danger'
+        };
+        return classes[status] || 'secondary';
     }
 
     function getStatusText(status) {
-        switch (status) {
-            case 'Pending': return 'Chờ xác nhận';
-            case 'Confirmed': return 'Đã xác nhận';
-            case 'Completed': return 'Đã hoàn thành';
-            case 'Cancelled': return 'Đã hủy';
-            default: return status || 'Không xác định';
-        }
+        const texts = {
+            'Pending': 'Chờ xác nhận',
+            'Confirmed': 'Đã xác nhận',
+            'Completed': 'Hoàn thành',
+            'Cancelled': 'Đã hủy'
+        };
+        return texts[status] || status;
     }
 
-    function getTimeUntilAppointment(appointmentDate) {
-        const now = new Date();
-        const appointment = new Date(appointmentDate);
-        const diff = appointment - now;
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN');
+    }
 
-        if (diff <= 0) return 'Đã qua';
+    function formatTime(timeString) {
+        if (!timeString) return 'N/A';
+        return timeString.substring(0, 5); // Format HH:MM
+    }
 
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-        if (days > 0) {
-            return `${days} ngày ${hours} giờ`;
-        } else if (hours > 0) {
-            return `${hours} giờ ${minutes} phút`;
+    function handleAjaxError(xhr, defaultMessage) {
+        if (xhr.status === 401) {
+            showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            setTimeout(() => {
+                window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            }, 2000);
+        } else if (xhr.status === 403) {
+            showAlert('error', 'Bạn không có quyền thực hiện hành động này.');
         } else {
-            return `${minutes} phút`;
+            showAlert('error', defaultMessage);
         }
     }
 
     function showLoading() {
         $('#loadingSpinner').show();
-        $('#appointmentsList').hide();
-        $('#emptyState').hide();
     }
 
     function hideLoading() {
         $('#loadingSpinner').hide();
-        $('#appointmentsList').show();
     }
 
     function showAlert(type, message) {
-        const alertClass = {
-            'success': 'alert-success',
-            'error': 'alert-danger',
-            'warning': 'alert-warning',
-            'info': 'alert-info'
-        }[type] || 'alert-info';
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-warning';
+        const alertHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                              ${message}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                           </div>`;
+        $('.container-fluid').prepend(alertHtml);
 
-        const alertHtml = `
-            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
-                 style="top: 20px; right: 20px; z-index: 1050; min-width: 300px;" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-
-        // Remove existing alerts
-        $('.alert.position-fixed').remove();
-
-        // Add new alert
-        $('body').append(alertHtml);
-
-        // Auto remove after 5 seconds
         setTimeout(() => {
-            $('.alert.position-fixed').fadeOut();
+            $('.alert').fadeOut();
         }, 5000);
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function updatePagination() {
+        const totalPages = Math.ceil(totalRecords / pageSize);
+        const pagination = $('#pagination');
+        pagination.empty();
+
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = i === currentPage ? 'active' : '';
+            pagination.append(`
+                <li class="page-item ${activeClass}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `);
+        }
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN');
-    }
-
-    function formatDateTime(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // Make functions global for onclick handlers
-    window.viewAppointmentDetail = viewAppointmentDetail;
-    window.showCancelConfirmation = showCancelConfirmation;
+    window.changePage = function (page) {
+        currentPage = page;
+        loadAppointments();
+    };
 });

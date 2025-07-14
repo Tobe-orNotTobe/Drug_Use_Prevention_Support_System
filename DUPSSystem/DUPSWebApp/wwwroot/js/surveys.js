@@ -1,386 +1,458 @@
-﻿// surveys.js - Survey list page functionality
-$(document).ready(function () {
+﻿$(document).ready(function () {
     // Configuration
     const API_BASE_URL = 'https://localhost:7008/odata';
-    const API_RESULTS_URL = 'https://localhost:7008/api/SurveyResults';
-    let CURRENT_USER_ID = window.CURRENT_USER_ID || null;
+    const CURRENT_USER_ID = window.CURRENT_USER_ID || null;
+    const USER_PERMISSIONS = window.USER_PERMISSIONS || {};
 
-    let allSurveys = [];
-    let filteredSurveys = [];
-    let userCompletedSurveys = [];
-
-    // Check if user is logged in
-    if (!CURRENT_USER_ID || !window.USER_TOKEN) {
-        showAlert('warning', 'Bạn cần đăng nhập để xem khảo sát');
-        setTimeout(() => {
-            window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-        }, 2000);
-        return;
-    }
+    let currentPage = 1;
+    let pageSize = 10;
+    let totalRecords = 0;
 
     // Initialize page
     init();
 
     function init() {
         loadSurveys();
-        loadUserSurveyHistory();
+        if (USER_PERMISSIONS.isAuthenticated) {
+            loadUserSurveyResults();
+        }
+        if (USER_PERMISSIONS.canViewReports) {
+            loadSurveyStatistics();
+        }
         bindEvents();
     }
 
     function bindEvents() {
         // Search and filter functionality
         $('#searchBtn').click(function () {
-            filterAndDisplaySurveys();
+            currentPage = 1;
+            loadSurveys();
         });
 
-        $('#searchInput').on('input', function () {
-            filterAndDisplaySurveys();
+        $('#searchInput').keypress(function (e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                loadSurveys();
+            }
         });
 
-        $('#sortFilter').change(function () {
-            filterAndDisplaySurveys();
-        });
-
-        // Modal events
-        $('#takeSurveyBtn').click(function () {
-            const surveyId = $(this).data('survey-id');
-            window.location.href = `/Surveys/Take/${surveyId}`;
+        $('#typeFilter, #statusFilter').change(function () {
+            currentPage = 1;
+            loadSurveys();
         });
     }
 
     // Setup AJAX headers with authentication
     function setupAjaxHeaders() {
-        return {
-            'Authorization': `Bearer ${window.USER_TOKEN}`,
+        const headers = {
             'Content-Type': 'application/json'
         };
+
+        if (USER_PERMISSIONS.isAuthenticated && window.USER_TOKEN) {
+            headers['Authorization'] = `Bearer ${window.USER_TOKEN}`;
+        }
+
+        return headers;
     }
 
-    // Load all surveys
+    // Load all surveys with filtering
     function loadSurveys() {
         showLoading();
 
-        const odataQuery = `${API_BASE_URL}/Surveys?$orderby=CreatedAt desc`;
+        let odataQuery = `${API_BASE_URL}/Surveys?`;
+        let filters = [];
+
+        // Search filter
+        const searchTerm = $('#searchInput').val().trim();
+        if (searchTerm) {
+            filters.push(`contains(tolower(Title), '${searchTerm.toLowerCase()}') or contains(tolower(Description), '${searchTerm.toLowerCase()}')`);
+        }
+
+        // Type filter
+        const type = $('#typeFilter').val();
+        if (type) {
+            filters.push(`SurveyType eq '${type}'`);
+        }
+
+        // Status filter
+        const status = $('#statusFilter').val();
+        if (status !== '') {
+            filters.push(`IsActive eq ${status}`);
+        }
+
+        // Apply filters
+        if (filters.length > 0) {
+            odataQuery += `$filter=${filters.join(' and ')}&`;
+        }
+
+        // Add ordering and pagination
+        odataQuery += `$orderby=CreatedAt desc&$top=${pageSize}&$skip=${(currentPage - 1) * pageSize}&$count=true`;
 
         $.ajax({
             url: odataQuery,
             method: 'GET',
             headers: setupAjaxHeaders(),
             success: function (response) {
-                allSurveys = response.value || response || [];
-                filteredSurveys = [...allSurveys];
-
-                displaySurveys();
-                updateStatistics();
                 hideLoading();
+                const surveys = response.value || response;
+                displaySurveys(surveys);
+                totalRecords = response['@odata.count'] || surveys.length;
+                updatePagination();
             },
             error: function (xhr, status, error) {
                 hideLoading();
-                console.error('Error loading surveys:', error);
-
-                if (xhr.status === 401) {
-                    showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                    setTimeout(() => {
-                        window.location.href = '/Auth/Login';
-                    }, 2000);
-                } else {
-                    showAlert('error', 'Đã xảy ra lỗi khi tải danh sách khảo sát');
-                }
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi tải danh sách khảo sát');
             }
         });
     }
 
-    // Load user survey history for statistics
-    function loadUserSurveyHistory() {
-        $.ajax({
-            url: `${API_RESULTS_URL}/user/${CURRENT_USER_ID}`,
-            method: 'GET',
-            headers: setupAjaxHeaders(),
-            success: function (response) {
-                if (response.success) {
-                    userCompletedSurveys = response.data || [];
-                    updateStatistics();
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Error loading user survey history:', error);
-            }
-        });
-    }
+    // Display surveys with role-based action buttons
+    function displaySurveys(surveys) {
+        const tbody = $('#surveysTableBody');
+        tbody.empty();
 
-    // Filter and display surveys
-    function filterAndDisplaySurveys() {
-        const searchTerm = $('#searchInput').val().toLowerCase().trim();
-        const sortFilter = $('#sortFilter').val();
-
-        // Apply search filter
-        filteredSurveys = allSurveys.filter(survey => {
-            if (searchTerm && !survey.Name.toLowerCase().includes(searchTerm) &&
-                (!survey.Description || !survey.Description.toLowerCase().includes(searchTerm))) {
-                return false;
-            }
-            return true;
-        });
-
-        // Apply sorting
-        switch (sortFilter) {
-            case 'newest':
-                filteredSurveys.sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt));
-                break;
-            case 'oldest':
-                filteredSurveys.sort((a, b) => new Date(a.CreatedAt) - new Date(b.CreatedAt));
-                break;
-            case 'name':
-                filteredSurveys.sort((a, b) => a.Name.localeCompare(b.Name));
-                break;
-        }
-
-        displaySurveys();
-    }
-
-    // Display surveys in grid
-    function displaySurveys() {
-        const surveysGrid = $('#surveysGrid');
-        const emptyState = $('#emptyState');
-
-        surveysGrid.empty();
-
-        if (filteredSurveys.length === 0) {
-            surveysGrid.hide();
-            emptyState.show();
+        if (!surveys || surveys.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="7" class="text-center">Không có khảo sát nào</td>
+                </tr>
+            `);
             return;
         }
 
-        emptyState.hide();
-        surveysGrid.show();
+        surveys.forEach(survey => {
+            const actionButtons = generateSurveyActionButtons(survey);
 
-        filteredSurveys.forEach(survey => {
-            const isCompleted = userCompletedSurveys.some(us => us.SurveyId === survey.SurveyId);
-            const completedResult = userCompletedSurveys.find(us => us.SurveyId === survey.SurveyId);
-
-            const surveyCard = `
-                <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100 survey-card" data-survey-id="${survey.SurveyId}">
-                        <div class="card-header ${isCompleted ? 'bg-success' : 'bg-primary'} text-white">
-                            <h5 class="card-title mb-0">${escapeHtml(survey.Name)}</h5>
-                            ${isCompleted ? `
-                                <span class="badge bg-light text-dark float-end">
-                                    <i class="fas fa-check"></i> Đã hoàn thành
-                                </span>
-                            ` : `
-                                <span class="badge bg-light text-dark float-end">
-                                    <i class="fas fa-play"></i> Chưa làm
-                                </span>
-                            `}
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text">${survey.Description ? escapeHtml(survey.Description.substring(0, 120)) + (survey.Description.length > 120 ? '...' : '') : 'Không có mô tả'}</p>
-                            
-                            ${isCompleted ? `
-                                <div class="mb-3">
-                                    <div class="row text-center">
-                                        <div class="col-6">
-                                            <small class="text-muted">Điểm số:</small><br>
-                                            <strong class="text-success">${completedResult.TotalScore}</strong>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Ngày làm:</small><br>
-                                            <strong>${formatDate(completedResult.TakenAt)}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
-
-                            <div class="text-center">
-                                <small class="text-muted">Ngày tạo: ${formatDate(survey.CreatedAt)}</small>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <div class="btn-group w-100" role="group">
-                                <button type="button" 
-                                        class="btn btn-info btn-sm" 
-                                        onclick="viewSurveyDetail(${survey.SurveyId})"
-                                        title="Xem chi tiết">
-                                    <i class="fas fa-eye"></i> Chi tiết
-                                </button>
-                                ${isCompleted ? `
-                                    <button type="button" 
-                                            class="btn btn-success btn-sm" 
-                                            onclick="viewResult(${completedResult.ResultId})"
-                                            title="Xem kết quả">
-                                        <i class="fas fa-chart-bar"></i> Kết quả
-                                    </button>
-                                ` : `
-                                    <button type="button" 
-                                            class="btn btn-primary btn-sm" 
-                                            onclick="startSurvey(${survey.SurveyId})"
-                                            title="Bắt đầu khảo sát">
-                                        <i class="fas fa-play"></i> Bắt đầu
-                                    </button>
-                                `}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            const row = `
+                <tr>
+                    <td>${survey.SurveyId}</td>
+                    <td>
+                        <strong>${escapeHtml(survey.Title)}</strong>
+                        ${survey.Description ? `<br><small class="text-muted">${escapeHtml(survey.Description.substring(0, 100))}${survey.Description.length > 100 ? '...' : ''}</small>` : ''}
+                    </td>
+                    <td>
+                        <span class="badge bg-info">${getSurveyTypeText(survey.SurveyType)}</span>
+                    </td>
+                    <td>${survey.QuestionCount || 0}</td>
+                    <td>
+                        <span class="badge bg-${survey.IsActive ? 'success' : 'secondary'}">
+                            ${survey.IsActive ? 'Hoạt động' : 'Không hoạt động'}
+                        </span>
+                    </td>
+                    <td>${formatDate(survey.CreatedAt)}</td>
+                    <td>${actionButtons}</td>
+                </tr>
             `;
-
-            surveysGrid.append(surveyCard);
+            tbody.append(row);
         });
     }
 
-    // Update statistics
-    function updateStatistics() {
-        const totalSurveys = allSurveys.length;
-        const completedSurveys = userCompletedSurveys.length;
-        const availableSurveys = totalSurveys - completedSurveys;
-        const avgScore = completedSurveys > 0 ?
-            Math.round(userCompletedSurveys.reduce((sum, us) => sum + us.TotalScore, 0) / completedSurveys) : 0;
+    // Generate action buttons based on user permissions
+    function generateSurveyActionButtons(survey) {
+        let buttons = '';
 
-        $('#totalSurveys').text(totalSurveys);
-        $('#completedSurveys').text(completedSurveys);
-        $('#availableSurveys').text(availableSurveys);
-        $('#avgScore').text(avgScore);
-    }
+        // Everyone can view details
+        buttons += `<button type="button" class="btn btn-info btn-sm me-1" onclick="viewSurvey(${survey.SurveyId})" title="Xem chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </button>`;
 
-    // View survey detail
-    function viewSurveyDetail(surveyId) {
-        const survey = allSurveys.find(s => s.SurveyId === surveyId);
-        if (!survey) return;
-
-        const isCompleted = userCompletedSurveys.some(us => us.SurveyId === surveyId);
-        const completedResult = userCompletedSurveys.find(us => us.SurveyId === surveyId);
-
-        const detailContent = `
-            <div class="row">
-                <div class="col-md-8">
-                    <h4>${escapeHtml(survey.Name)}</h4>
-                    <p class="text-muted">${survey.Description ? escapeHtml(survey.Description) : 'Không có mô tả'}</p>
-                </div>
-                <div class="col-md-4">
-                    <span class="badge ${isCompleted ? 'bg-success' : 'bg-primary'} fs-6 p-2">
-                        ${isCompleted ? 'Đã hoàn thành' : 'Chưa thực hiện'}
-                    </span>
-                </div>
-            </div>
-            
-            <hr>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <h6><i class="fas fa-calendar-plus"></i> Ngày tạo:</h6>
-                    <p>${formatDate(survey.CreatedAt)}</p>
-                </div>
-                ${isCompleted ? `
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-calendar-check"></i> Ngày hoàn thành:</h6>
-                        <p>${formatDate(completedResult.TakenAt)}</p>
-                    </div>
-                ` : ''}
-            </div>
-            
-            ${isCompleted ? `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-star"></i> Điểm số:</h6>
-                        <p><strong class="text-success">${completedResult.TotalScore}</strong></p>
-                    </div>
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-lightbulb"></i> Khuyến nghị:</h6>
-                        <p class="text-info">${completedResult.Recommendation || 'Không có khuyến nghị'}</p>
-                    </div>
-                </div>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    Bạn đã hoàn thành khảo sát này. Có thể xem chi tiết kết quả trong mục "Kết quả của tôi".
-                </div>
-            ` : `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    Bạn chưa thực hiện khảo sát này. Hãy bắt đầu để nhận được đánh giá và khuyến nghị phù hợp.
-                </div>
-            `}
-        `;
-
-        $('#surveyDetailContent').html(detailContent);
-
-        // Setup modal buttons
-        if (isCompleted) {
-            $('#takeSurveyBtn').hide();
-        } else {
-            $('#takeSurveyBtn').show().data('survey-id', surveyId);
+        // Only authenticated users can take surveys
+        if (USER_PERMISSIONS.isAuthenticated && USER_PERMISSIONS.canTakeSurveys && survey.IsActive) {
+            buttons += `<button type="button" class="btn btn-success btn-sm me-1" onclick="takeSurvey(${survey.SurveyId})" title="Làm khảo sát">
+                            <i class="fas fa-play"></i>
+                        </button>`;
         }
 
-        new bootstrap.Modal(document.getElementById('surveyDetailModal')).show();
+        // Only Staff+ can manage surveys
+        if (USER_PERMISSIONS.canManageSurveys) {
+            buttons += `<button type="button" class="btn btn-warning btn-sm me-1" onclick="editSurvey(${survey.SurveyId})" title="Chỉnh sửa">
+                            <i class="fas fa-edit"></i>
+                        </button>`;
+
+            buttons += `<button type="button" class="btn btn-danger btn-sm" onclick="deleteSurvey(${survey.SurveyId})" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>`;
+        }
+
+        return `<div class="btn-group btn-group-sm" role="group">${buttons}</div>`;
     }
 
-    // Start survey
-    function startSurvey(surveyId) {
+    // Load user's survey results
+    function loadUserSurveyResults() {
+        if (!CURRENT_USER_ID) return;
+
+        const odataQuery = `${API_BASE_URL}/SurveyResults?$filter=UserId eq ${CURRENT_USER_ID}&$expand=Survey&$orderby=CompletedAt desc`;
+
+        $.ajax({
+            url: odataQuery,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const userResults = response.value || response;
+                displayUserSurveyResults(userResults);
+            },
+            error: function (xhr, status, error) {
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi tải kết quả khảo sát');
+            }
+        });
+    }
+
+    // Display user's survey results
+    function displayUserSurveyResults(userResults) {
+        const tbody = $('#userSurveyResultsTableBody');
+        tbody.empty();
+
+        if (!userResults || userResults.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="6" class="text-center">Bạn chưa thực hiện khảo sát nào</td>
+                </tr>
+            `);
+            return;
+        }
+
+        userResults.forEach(result => {
+            const survey = result.Survey;
+            if (!survey) return;
+
+            const riskLevel = getRiskLevel(result.Score, result.MaxScore);
+            const recommendation = getRecommendation(riskLevel);
+
+            const row = `
+                <tr>
+                    <td>
+                        <strong>${escapeHtml(survey.Title)}</strong>
+                        <br><small class="text-muted">${getSurveyTypeText(survey.SurveyType)}</small>
+                    </td>
+                    <td>${formatDate(result.CompletedAt)}</td>
+                    <td>
+                        <strong>${result.Score}/${result.MaxScore}</strong>
+                        <br><small class="text-muted">${Math.round((result.Score / result.MaxScore) * 100)}%</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-${getRiskLevelClass(riskLevel)}">
+                            ${riskLevel}
+                        </span>
+                    </td>
+                    <td>
+                        <small>${recommendation}</small>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-info btn-sm" onclick="viewResult(${result.SurveyResultId})" title="Xem chi tiết">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    // Load survey statistics (for managers)
+    function loadSurveyStatistics() {
+        $.ajax({
+            url: `${API_BASE_URL}/SurveyResults?$count=true`,
+            method: 'GET',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                const totalCount = response['@odata.count'] || 0;
+                $('#totalSurveys').text(totalCount);
+
+                // Load completed surveys
+                $.ajax({
+                    url: `${API_BASE_URL}/SurveyResults?$filter=CompletedAt ne null&$count=true`,
+                    method: 'GET',
+                    headers: setupAjaxHeaders(),
+                    success: function (response) {
+                        const completedCount = response['@odata.count'] || 0;
+                        $('#completedSurveys').text(completedCount);
+                    }
+                });
+
+                // Load high risk surveys (assuming score > 70% is high risk)
+                // This would need to be adjusted based on actual scoring logic
+                $.ajax({
+                    url: `${API_BASE_URL}/SurveyResults?$filter=Score gt 7&$count=true`,
+                    method: 'GET',
+                    headers: setupAjaxHeaders(),
+                    success: function (response) {
+                        const highRiskCount = response['@odata.count'] || 0;
+                        $('#highRiskSurveys').text(highRiskCount);
+                    }
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading survey statistics:', error);
+            }
+        });
+    }
+
+    // Survey action functions
+    window.viewSurvey = function (surveyId) {
+        window.location.href = `/Surveys/Details/${surveyId}`;
+    };
+
+    window.takeSurvey = function (surveyId) {
+        if (!USER_PERMISSIONS.isAuthenticated) {
+            showAlert('warning', 'Bạn cần đăng nhập để làm khảo sát');
+            setTimeout(() => {
+                window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            }, 2000);
+            return;
+        }
+
+        if (!USER_PERMISSIONS.canTakeSurveys) {
+            showAlert('error', 'Bạn không có quyền làm khảo sát');
+            return;
+        }
+
         window.location.href = `/Surveys/Take/${surveyId}`;
+    };
+
+    window.editSurvey = function (surveyId) {
+        if (!USER_PERMISSIONS.canManageSurveys) {
+            showAlert('error', 'Bạn không có quyền chỉnh sửa khảo sát');
+            return;
+        }
+        window.location.href = `/Surveys/Edit/${surveyId}`;
+    };
+
+    window.deleteSurvey = function (surveyId) {
+        if (!USER_PERMISSIONS.canManageSurveys) {
+            showAlert('error', 'Bạn không có quyền xóa khảo sát');
+            return;
+        }
+
+        if (confirm('Bạn có chắc chắn muốn xóa khảo sát này?')) {
+            deleteSurveyAction(surveyId);
+        }
+    };
+
+    window.viewResult = function (resultId) {
+        window.location.href = `/Surveys/ResultDetail/${resultId}`;
+    };
+
+    // Action implementations
+    function deleteSurveyAction(surveyId) {
+        $.ajax({
+            url: `${API_BASE_URL}/Surveys(${surveyId})`,
+            method: 'DELETE',
+            headers: setupAjaxHeaders(),
+            success: function (response) {
+                showAlert('success', 'Xóa khảo sát thành công!');
+                loadSurveys(); // Reload surveys
+                if (USER_PERMISSIONS.canViewReports) {
+                    loadSurveyStatistics(); // Reload statistics
+                }
+            },
+            error: function (xhr, status, error) {
+                handleAjaxError(xhr, 'Đã xảy ra lỗi khi xóa khảo sát');
+            }
+        });
     }
 
-    // View result
-    function viewResult(resultId) {
-        window.location.href = `/Surveys/Results#result-${resultId}`;
+    // Helper functions
+    function getSurveyTypeText(type) {
+        const types = {
+            'ASSIST': 'ASSIST',
+            'CRAFFT': 'CRAFFT',
+            'Custom': 'Tùy chỉnh'
+        };
+        return types[type] || type;
     }
 
-    // Utility functions
-    function showLoading() {
-        $('#loadingSpinner').show();
-        $('#surveysGrid').hide();
-        $('#emptyState').hide();
+    function getRiskLevel(score, maxScore) {
+        const percentage = (score / maxScore) * 100;
+        if (percentage < 30) return 'Thấp';
+        if (percentage < 60) return 'Trung bình';
+        if (percentage < 80) return 'Cao';
+        return 'Rất cao';
     }
 
-    function hideLoading() {
-        $('#loadingSpinner').hide();
-        $('#surveysGrid').show();
+    function getRiskLevelClass(riskLevel) {
+        const classes = {
+            'Thấp': 'success',
+            'Trung bình': 'warning',
+            'Cao': 'danger',
+            'Rất cao': 'dark'
+        };
+        return classes[riskLevel] || 'secondary';
     }
 
-    function showAlert(type, message) {
-        const alertClass = {
-            'success': 'alert-success',
-            'error': 'alert-danger',
-            'warning': 'alert-warning',
-            'info': 'alert-info'
-        }[type] || 'alert-info';
-
-        const alertHtml = `
-            <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
-                 style="top: 20px; right: 20px; z-index: 1050; min-width: 300px;" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-
-        // Remove existing alerts
-        $('.alert.position-fixed').remove();
-
-        // Add new alert
-        $('body').append(alertHtml);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            $('.alert.position-fixed').fadeOut();
-        }, 5000);
+    function getRecommendation(riskLevel) {
+        const recommendations = {
+            'Thấp': 'Tiếp tục duy trì lối sống lành mạnh',
+            'Trung bình': 'Tham gia các khóa học phòng ngừa',
+            'Cao': 'Nên đặt lịch hẹn tư vấn với chuyên gia',
+            'Rất cao': 'Cần tư vấn và hỗ trợ chuyên môn ngay lập tức'
+        };
+        return recommendations[riskLevel] || '';
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function handleAjaxError(xhr, defaultMessage) {
+        if (xhr.status === 401) {
+            showAlert('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            setTimeout(() => {
+                window.location.href = '/Auth/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            }, 2000);
+        } else if (xhr.status === 403) {
+            showAlert('error', 'Bạn không có quyền thực hiện hành động này.');
+        } else {
+            showAlert('error', defaultMessage);
+        }
     }
 
     function formatDate(dateString) {
-        if (!dateString) return '';
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleDateString('vi-VN');
     }
 
-    // Make functions global for onclick handlers
-    window.viewSurveyDetail = viewSurveyDetail;
-    window.startSurvey = startSurvey;
-    window.viewResult = viewResult;
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showLoading() {
+        $('#loadingSpinner').show();
+    }
+
+    function hideLoading() {
+        $('#loadingSpinner').hide();
+    }
+
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-warning';
+        const alertHtml = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                              ${message}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                           </div>`;
+        $('.container-fluid').prepend(alertHtml);
+
+        setTimeout(() => {
+            $('.alert').fadeOut();
+        }, 5000);
+    }
+
+    function updatePagination() {
+        const totalPages = Math.ceil(totalRecords / pageSize);
+        const pagination = $('#pagination');
+        pagination.empty();
+
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = i === currentPage ? 'active' : '';
+            pagination.append(`
+                <li class="page-item ${activeClass}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `);
+        }
+    }
+
+    window.changePage = function (page) {
+        currentPage = page;
+        loadSurveys();
+    };
 });
