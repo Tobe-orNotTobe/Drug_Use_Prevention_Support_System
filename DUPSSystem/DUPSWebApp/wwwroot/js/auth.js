@@ -286,6 +286,53 @@ function validateLoginForm(data) {
     return isValid;
 
 }
+
+function validateRegisterForm(data) {
+    let isValid = true;
+
+    if (!data.fullName || data.fullName.trim().length < 2) {
+        showFieldError('fullName', 'Họ tên phải có ít nhất 2 ký tự');
+        isValid = false;
+    }
+
+    if (!data.email) {
+        showFieldError('email', 'Email là bắt buộc');
+        isValid = false;
+    } else if (!isValidEmail(data.email)) {
+        showFieldError('email', 'Email không hợp lệ');
+        isValid = false;
+    }
+
+    if (!data.password) {
+        showFieldError('password', 'Mật khẩu là bắt buộc');
+        isValid = false;
+    } else if (data.password.length < 6) {
+        showFieldError('password', 'Mật khẩu phải có ít nhất 6 ký tự');
+        isValid = false;
+    }
+
+    if (!data.confirmPassword) {
+        showFieldError('confirmPassword', 'Xác nhận mật khẩu là bắt buộc');
+        isValid = false;
+    } else if (data.password !== data.confirmPassword) {
+        showFieldError('confirmPassword', 'Mật khẩu xác nhận không khớp');
+        isValid = false;
+    }
+
+    if (data.phone && !isValidPhone(data.phone)) {
+        showFieldError('phone', 'Số điện thoại không hợp lệ');
+        isValid = false;
+    }
+
+    if (!$('#agreeTerms').is(':checked')) {
+        showFieldError('agreeTerms', 'Bạn phải đồng ý với điều khoản sử dụng');
+        $('#agreeTerms').addClass('is-invalid');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
 function validateProfileForm(data) {
     let isValid = true;
     clearAllErrors('#profileForm');

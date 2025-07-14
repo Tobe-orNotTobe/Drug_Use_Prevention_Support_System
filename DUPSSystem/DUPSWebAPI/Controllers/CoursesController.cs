@@ -106,7 +106,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
-		[Authorize(Roles = Roles.AdminOnly)]
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Delete([FromODataUri] int key)
 		{
 			try

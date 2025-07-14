@@ -1,0 +1,109 @@
+﻿/* wwwroot/css/my-courses.css */
+
+.course-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    }
+
+.status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.course-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.progress-bar-container {
+    height: 8px;
+    background-color: #f1f3f5;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #0d6efd;
+    transition: width 0.3s ease;
+}
+
+.small-box {
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    color: #333;
+    position: relative;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    transition: background-color 0.3s;
+}
+
+    .small-box:hover {
+        background-color: #e2e6ea;
+    }
+
+    .small-box .inner {
+        position: relative;
+        z-index: 2;
+    }
+
+    .small-box .icon {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 2rem;
+        opacity: 0.2;
+        color: #0d6efd;
+    }
+
+    .small-box h3 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+        color: #0d6efd;
+    }
+
+    .small-box p {
+        margin: 0.5rem 0 0;
+        font-size: 0.95rem;
+        color: #6c757d;
+    }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #adb5bd;
+}
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #ced4da;
+    }
+
+@media (max-width: 768px) {
+    .small-box {
+        margin-bottom: 1rem;
+    }
+
+        .small-box h3 {
+            font-size: 1.4rem;
+        }
+
+        .small-box .icon {
+            font-size: 1.5rem;
+        }
+
+    .course-card {
+        margin-bottom: 1rem;
+    }
+}

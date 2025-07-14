@@ -1,0 +1,286 @@
+﻿@{
+    ViewData["Title"] = "Chi tiết Khóa học";
+    var role = Context.Session.GetString("Role");
+    var canManage = role == "Admin" || role == "Staff";
+    var isMember = role == "Member";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="mb-3">
+            <a href="/Course" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-body" id="courseDetails">
+                <!-- Loading Spinner -->
+                <div id="loadingSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Course Details Content -->
+                <div id="courseContent" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 id="courseName" class="mb-3"></h2>
+                            <div class="mb-3">
+                                <span class="badge bg-info fs-6 me-2" id="targetAudience"></span>
+                                <span class="badge bg-secondary fs-6" id="courseStatus"></span>
+                            </div>
+                            <div class="mb-4">
+                                <h5>Mô tả ngắn</h5>
+                                <p id="shortDescription" class="text-muted"></p>
+                            </div>
+                            <div class="mb-4">
+                                <h5>Nội dung khóa học</h5>
+                                <div id="fullDescription" class="course-content"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Thông tin khóa học</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <i class="fas fa-users text-primary me-2"></i>
+                                            <strong>Đối tượng:</strong>
+                                            <span id="detailTargetAudience"></span>
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-clock text-primary me-2"></i>
+                                            <strong>Thời lượng:</strong>
+                                            <span id="courseDuration"></span> giờ
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-info-circle text-primary me-2"></i>
+                                            <strong>Trạng thái:</strong>
+                                            <span id="detailStatus"></span>
+                                        </li>
+                                    </ul>
+
+                                    <!-- Action Buttons -->
+                                    <div class="d-grid gap-2 mt-4">
+                                        @if (isMember)
+                                        {
+                                            <button type="button" class="btn btn-success" onclick="registerCourse()">
+                                                <i class="fas fa-user-plus me-2"></i>
+                                                Đăng ký khóa học
+                                            </button>
+                                        }
+
+                                        @if (canManage)
+                                        {
+                                            <a href="#" id="editLink" class="btn btn-warning">
+                                                <i class="fas fa-edit me-2"></i>
+                                                Chỉnh sửa
+                                            </a>
+                                            <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+                                                <i class="fas fa-trash me-2"></i>
+                                                Xóa khóa học
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span id="errorText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (canManage)
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                        Xác nhận xóa
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn xóa khóa học <strong id="courseNameToDelete"></strong>?</p>
+                    <p class="text-muted">Hành động này không thể hoàn tác.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash me-2"></i>Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Registration Success Modal -->
+@if (isMember)
+{
+    <div class="modal fade" id="registrationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Đăng ký thành công
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Bạn đã đăng ký khóa học thành công!</p>
+                    <p class="text-muted">Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        let courseId = null;
+
+        $(document).ready(function() {
+            // Get course ID from URL
+            const urlParts = window.location.pathname.split('/');
+            courseId = urlParts[urlParts.length - 1];
+
+            if (courseId) {
+                loadCourseDetails();
+            } else {
+                showError('ID khóa học không hợp lệ.');
+            }
+        });
+
+        function loadCourseDetails() {
+            $.ajax({
+                url: `/odata/Courses(${courseId})`,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                success: function(course) {
+                    renderCourseDetails(course);
+                },
+                error: function(xhr) {
+                    if (xhr.status === 404) {
+                        showError('Không tìm thấy khóa học.');
+                    } else {
+                        showError('Không thể tải thông tin khóa học.');
+                    }
+                }
+            });
+        }
+
+        function renderCourseDetails(course) {
+            $('#loadingSpinner').hide();
+            $('#courseContent').show();
+
+            // Basic info
+            $('#courseName').text(course.Name);
+            $('#shortDescription').text(course.ShortDescription || 'Chưa có mô tả ngắn');
+            $('#fullDescription').html(course.FullDescription || '<p class="text-muted">Chưa có nội dung chi tiết</p>');
+
+            // Badges
+            $('#targetAudience').text(course.TargetAudiences);
+            $('#detailTargetAudience').text(course.TargetAudiences);
+            $('#courseDuration').text(course.Duration);
+
+            // Status
+            const statusBadge = course.Status === 'Active'
+                ? '<span class="badge bg-success">Hoạt động</span>'
+                : '<span class="badge bg-secondary">Không hoạt động</span>';
+            $('#courseStatus').html(statusBadge);
+            $('#detailStatus').html(statusBadge);
+
+            // Edit link
+            $('#editLink').attr('href', `/Course/Edit/${course.CourseId}`);
+
+            // Delete modal
+            $('#courseNameToDelete').text(course.Name);
+
+            // Update page title
+            document.title = `${course.Name} - Drug Use Prevention Support System`;
+        }
+
+        function registerCourse() {
+            $.ajax({
+                url: `/api/CourseRegistration`,
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    CourseId: courseId,
+                    UserId: localStorage.getItem('userId')
+                }),
+                success: function() {
+                    $('#registrationModal').modal('show');
+                },
+                error: function(xhr) {
+                    if (xhr.status === 409) {
+                        showError('Bạn đã đăng ký khóa học này rồi.');
+                    } else {
+                        showError('Không thể đăng ký khóa học. Vui lòng thử lại.');
+                    }
+                }
+            });
+        }
+
+        function showDeleteModal() {
+            $('#deleteModal').modal('show');
+        }
+
+        function confirmDelete() {
+            $.ajax({
+                url: `/odata/Courses(${courseId})`,
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                success: function() {
+                    $('#deleteModal').modal('hide');
+                    showSuccess('Xóa khóa học thành công!');
+                    setTimeout(() => {
+                        window.location.href = '/Course';
+                    }, 1500);
+                },
+                error: function(xhr) {
+                    $('#deleteModal').modal('hide');
+                    showError('Không thể xóa khóa học.');
+                }
+            });
+        }
+
+        function showError(message) {
+            $('#loadingSpinner').hide();
+            $('#courseContent').hide();
+            $('#errorText').text(message);
+            $('#errorMessage').show();
+        }
+
+        function showSuccess(message) {
+            $('#successMessage').text(message);
+            $('#successToast').toast('show');
+        }
+    </script>
+}

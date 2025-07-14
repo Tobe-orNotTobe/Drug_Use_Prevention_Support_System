@@ -19,7 +19,7 @@ namespace DUPSWebApp.Controllers
 		[HttpGet]
 		public IActionResult Login(string returnUrl = null)
 		{
-			if (!IsGuest)
+			if (IsAuthenticated)
 			{
 				return RedirectToAction("Index", "Home");
 			}
@@ -124,7 +124,7 @@ namespace DUPSWebApp.Controllers
 		[HttpGet]
 		public IActionResult Register()
 		{
-			if (!IsGuest)
+			if (IsAuthenticated)
 			{
 				return RedirectToAction("Index", "Home");
 			}
@@ -199,12 +199,11 @@ namespace DUPSWebApp.Controllers
 		{
 			return role switch
 			{
-				"Admin" => 6,
-				"Manager" => 5,
-				"Staff" => 4,
-				"Consultant" => 3,
-				"Member" => 2,
-				"Guest" => 1,
+				"Admin" => 5,
+				"Manager" => 4,
+				"Staff" => 3,
+				"Consultant" => 2,
+				"Member" => 1,
 				_ => 0
 			};
 		}

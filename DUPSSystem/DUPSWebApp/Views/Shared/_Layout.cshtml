@@ -7,10 +7,18 @@
     <meta name="auth-token" content="@ViewBag.AuthToken" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/my-courses.css" asp-append-version="true" />
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <meta name="api-base-url" content="https://localhost:7008" />
+    <meta name="auth-token" content="@ViewBag.AuthToken" />
+    <meta name="current-user-id" content="@ViewBag.CurrentUserId" />
+
 </head>
-<body>
+<body data-user-role="@ViewBag.CurrentUserRole">
     <header>
+
+
         <nav class="navbar navbar-expand-sm navbar-dark bg-dark fixed-top">
             <div class="container-fluid">
                 <a class="navbar-brand" href="@Url.Action("Index", "Home")">
@@ -42,7 +50,16 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="@Url.Action("Index", "Courses")">Danh sách khóa học</a></li>
-                                @if (isAuthenticated && role != "Guest")
+                                @if (isAuthenticated && role == "Member")
+                                {
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("MyCourses", "Courses")">
+                                            <i class="fas fa-user-graduate"></i> Khóa học của tôi
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                }
+                                @if (isAuthenticated && role != "Guest" && role != "Member")
                                 {
                                     <li><a class="dropdown-item" href="@Url.Action("MyCourses", "Courses")">Khóa học của tôi</a></li>
                                 }
@@ -189,11 +206,10 @@
         </nav>
     </header>
 
+    <div id="notification-area"></div>
+
     <div class="container-fluid" style="margin-top: 76px;">
         <main role="main" class="pb-3">
-            <!-- Notification Area -->
-            <div id="notification-area" class="mt-3"></div>
-
             @RenderBody()
         </main>
     </div>
@@ -273,7 +289,7 @@
             }
         });
     </script>
-
+    @RenderSection("Styles", required: false)
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

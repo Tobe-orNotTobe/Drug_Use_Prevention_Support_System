@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DUPSWebApp.Controllers
 {
@@ -9,9 +10,14 @@ namespace DUPSWebApp.Controllers
 			return View();
 		}
 
-		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		[RoleAuthorization("Member")]
 		public IActionResult MyCourses()
 		{
+			if (!IsMember)
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+
 			return View();
 		}
 
@@ -43,7 +49,7 @@ namespace DUPSWebApp.Controllers
 			return View();
 		}
 
-		[RoleAuthorization("Admin")]
+		[RoleAuthorization("Staff, Admin")]
 		public IActionResult Delete(int id)
 		{
 			return View();

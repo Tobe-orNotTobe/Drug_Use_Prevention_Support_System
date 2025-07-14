@@ -124,7 +124,6 @@ CREATE TABLE Appointments (
 );
 
 INSERT INTO Roles (RoleName) VALUES
-(N'Guest'),
 (N'Member'),
 (N'Staff'),
 (N'Consultant'),
@@ -140,8 +139,18 @@ VALUES
 (N'long.tran@dups.org', N'123456', N'Trần Văn Long', '1978-07-22', N'Nam', N'0912345678', N'Hồ Chí Minh'),
 (N'mai.pham@dups.org', N'123456', N'Phạm Thị Mai', '1990-12-01', N'Nữ', N'0923456789', N'Đà Nẵng'),
 (N'dung.le@dups.org', N'123456', N'Lê Quốc Dũng', '1982-05-10', N'Nam', N'0934567890', N'Cần Thơ'),
-(N'lan.vo@dups.org', N'123456', N'Võ Thị Lan', '1988-08-08', N'Nữ', N'0945678901', N'Bình Dương');
+(N'lan.vo@dups.org', N'123456', N'Võ Thị Lan', '1988-08-08', N'Nữ', N'0945678901', N'Bình Dương'),
+(N'staff.nguyen@dups.org', N'123456', N'Nguyễn Văn Staff', '1992-08-10', N'Nam', N'0988111222', N'Hà Nội');
 
+INSERT INTO Users (Email, PasswordHash, FullName, DateOfBirth, Gender, Phone, Address)
+VALUES (N'staff.nguyen@dups.org', N'123456', N'Nguyễn Văn Staff', '1992-08-10', N'Nam', N'0988111222', N'Hà Nội');
+
+-- Gán role Staff cho user vừa tạo
+INSERT INTO UserRoles (UserId, RoleId)
+VALUES (
+    (SELECT UserId FROM Users WHERE Email = N'staff.nguyen@dups.org'),
+    (SELECT RoleId FROM Roles WHERE RoleName = N'Staff')
+);
 INSERT INTO UserRoles (UserId, RoleId) VALUES
 (1, 6), 
 (2, 2),
@@ -150,7 +159,8 @@ INSERT INTO UserRoles (UserId, RoleId) VALUES
 (5, 4),
 (6, 4),
 (7, 4),
-(8, 4);
+(8, 4),
+(9, 5),
 
 INSERT INTO Consultants (UserId, Qualification, Expertise, WorkSchedule, Bio)
 VALUES

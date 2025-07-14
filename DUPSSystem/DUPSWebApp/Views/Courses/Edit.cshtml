@@ -1,0 +1,111 @@
+﻿@{
+    ViewData["Title"] = "Chỉnh sửa khóa học";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-edit"></i> @ViewData["Title"]
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="alertContainer"></div>
+
+                    <div id="loadingSpinner" class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Đang tải dữ liệu...</span>
+                        </div>
+                        <p class="mt-2">Đang tải thông tin khóa học...</p>
+                    </div>
+
+                    <form id="editCourseForm" style="display: none;">
+                        <input type="hidden" id="courseId" name="CourseId">
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="courseTitle" class="form-label">Tiêu đề khóa học <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="courseTitle" name="Title" required maxlength="255">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="targetAudience" class="form-label">Đối tượng <span class="text-danger">*</span></label>
+                                <select class="form-select" id="targetAudience" name="TargetAudience" required>
+                                    <option value="">Chọn đối tượng</option>
+                                    <option value="Học sinh">Học sinh</option>
+                                    <option value="Phụ huynh">Phụ huynh</option>
+                                    <option value="Giáo viên">Giáo viên</option>
+                                    <option value="Tất cả">Tất cả</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="durationMinutes" class="form-label">Thời lượng (phút) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="durationMinutes" name="DurationMinutes" required min="1" max="10080">
+                                <div class="form-text">Nhập số phút (ví dụ: 60 phút = 1 giờ)</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="description" class="form-label">Mô tả khóa học</label>
+                                <textarea class="form-control" id="description" name="Description" rows="6"></textarea>
+                                <div class="form-text">Mô tả chi tiết về nội dung khóa học</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive">
+                                    <label class="form-check-label" for="isActive">
+                                        Kích hoạt
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Thông tin khóa học:</strong>
+                                    <br>ID: <span id="displayCourseId"></span>
+                                    <br>Ngày tạo: <span id="displayCreatedAt"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                                        <i class="fas fa-save"></i> Cập nhật
+                                    </button>
+                                    <a href="@Url.Action("Index", "Courses")" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Quay lại
+                                    </a>
+                                    <button type="button" class="btn btn-outline-warning" id="resetBtn">
+                                        <i class="fas fa-undo"></i> Khôi phục
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/courses/course-edit.js"></script>
+}

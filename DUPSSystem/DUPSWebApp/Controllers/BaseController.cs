@@ -1,30 +1,29 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace DUPSWebApp.Controllers
 {
 	public class BaseController : Controller
 	{
-		protected string CurrentUserRole => HttpContext.Session.GetString("Role") ?? "Guest";
+		protected string CurrentUserRole => HttpContext.Session.GetString("Role");
 		protected int CurrentUserId => int.TryParse(HttpContext.Session.GetString("UserId"), out int id) ? id : 0;
 		protected string CurrentUserEmail => HttpContext.Session.GetString("Email") ?? "";
 		protected string CurrentUserName => HttpContext.Session.GetString("FullName") ?? "";
 
-		protected bool IsGuest => CurrentUserRole == "Guest";
 		protected bool IsMember => CurrentUserRole == "Member";
 		protected bool IsStaff => CurrentUserRole == "Staff";
 		protected bool IsConsultant => CurrentUserRole == "Consultant";
 		protected bool IsManager => CurrentUserRole == "Manager";
 		protected bool IsAdmin => CurrentUserRole == "Admin";
 
+		protected bool IsAuthenticated => !string.IsNullOrEmpty(CurrentUserRole);
+
 		protected bool HasRole(params string[] roles)
 		{
-			return roles.Contains(CurrentUserRole);
+			return IsAuthenticated && roles.Contains(CurrentUserRole);
 		}
 
-		protected bool CanViewCourses() => true; 
+		protected bool CanViewCourses() => true;
 		protected bool CanManageCourses() => HasRole("Staff", "Manager", "Admin");
 		protected bool CanRegisterCourses() => HasRole("Member", "Staff", "Consultant", "Manager", "Admin");
 
@@ -41,7 +40,7 @@ namespace DUPSWebApp.Controllers
 
 		public IActionResult CheckAuthorization(params string[] allowedRoles)
 		{
-			if (IsGuest && !allowedRoles.Contains("Guest"))
+			if (!IsAuthenticated)
 			{
 				return RedirectToAction("Login", "Auth");
 			}
@@ -56,12 +55,7 @@ namespace DUPSWebApp.Controllers
 
 		protected bool HasAuthorization(params string[] allowedRoles)
 		{
-			if (IsGuest && !allowedRoles.Contains("Guest"))
-			{
-				return false;
-			}
-
-			return allowedRoles.Contains(CurrentUserRole);
+			return IsAuthenticated && allowedRoles.Contains(CurrentUserRole);
 		}
 
 		public override void OnActionExecuting(ActionExecutingContext context)
@@ -69,8 +63,9 @@ namespace DUPSWebApp.Controllers
 			ViewBag.CurrentUserRole = CurrentUserRole;
 			ViewBag.CurrentUserName = CurrentUserName;
 			ViewBag.CurrentUserEmail = CurrentUserEmail;
-			ViewBag.IsAuthenticated = !IsGuest;
+			ViewBag.IsAuthenticated = IsAuthenticated;
 			ViewBag.AuthToken = HttpContext.Session.GetString("Token") ?? "";
+			ViewBag.CurrentUserId = CurrentUserId;
 
 			base.OnActionExecuting(context);
 		}
@@ -99,9 +94,9 @@ namespace DUPSWebApp.Controllers
 			}
 			else
 			{
-				var currentRole = context.HttpContext.Session.GetString("Role") ?? "Guest";
+				var currentRole = context.HttpContext.Session.GetString("Role");
 
-				if (currentRole == "Guest" && !_allowedRoles.Contains("Guest"))
+				if (string.IsNullOrEmpty(currentRole))
 				{
 					context.Result = new RedirectToActionResult("Login", "Auth", null);
 					return;
@@ -129,9 +124,9 @@ namespace DUPSWebApp.Controllers
 
 		public override void OnActionExecuting(ActionExecutingContext context)
 		{
-			var currentRole = context.HttpContext.Session.GetString("Role") ?? "Guest";
+			var currentRole = context.HttpContext.Session.GetString("Role");
 
-			if (currentRole == "Guest" && !_allowedRoles.Contains("Guest"))
+			if (string.IsNullOrEmpty(currentRole))
 			{
 				context.Result = new RedirectToActionResult("Login", "Auth", null);
 				return;

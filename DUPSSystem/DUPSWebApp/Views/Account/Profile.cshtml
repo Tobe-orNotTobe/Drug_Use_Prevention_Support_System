@@ -11,15 +11,6 @@
             <div class="card mb-4 border-0 shadow-sm">
                 <div class="card-body">
                     <div class="row align-items-center">
-                        <div class="col-md-2 text-center">
-                            <div class="profile-avatar">
-                                <img src="https://via.placeholder.com/120x120/007bff/ffffff?text=@(Model?.FullName?.Substring(0,1) ?? "U")" 
-                                     alt="Avatar" class="rounded-circle" width="120" height="120">
-                                <button class="btn btn-sm btn-outline-primary mt-2">
-                                    <i class="fas fa-camera"></i> Đổi ảnh
-                                </button>
-                            </div>
-                        </div>
                         <div class="col-md-10">
                             <h3 class="mb-1">@(Model?.FullName ?? "Chưa cập nhật")</h3>
                             <p class="text-muted mb-2">@(Model?.Email ?? "")</p>
@@ -30,14 +21,6 @@
                                     {
                                         <span class="badge bg-primary">@role</span>
                                     }
-                                }
-                                @if (Model?.IsActive == true)
-                                {
-                                    <span class="badge bg-success">Đang hoạt động</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Không hoạt động</span>
                                 }
                             </div>
                         </div>
@@ -175,41 +158,6 @@
                             <i class="fas fa-key"></i> Đổi mật khẩu
                         </button>
                     </form>
-                </div>
-            </div>
-
-            <!-- Account Info -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom">
-                    <h6 class="card-title mb-0">
-                        <i class="fas fa-info-circle"></i> Thông tin tài khoản
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                            <i class="fas fa-calendar-plus text-muted me-2"></i>
-                            <strong>Tham gia:</strong> @(Model?.CreatedAt.ToString("dd/MM/yyyy") ?? "Chưa rõ")
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-id-badge text-muted me-2"></i>
-                            <strong>ID:</strong> @(Model?.UserId ?? 0)
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-shield-alt text-muted me-2"></i>
-                            <strong>Quyền:</strong> @string.Join(", ", Model?.Roles ?? new List<string>())
-                        </li>
-                    </ul>
-
-                    @if (ViewBag.CurrentUserRole == "Consultant")
-                    {
-                        <hr>
-                        <div class="text-center">
-                            <a href="@Url.Action("ConsultantProfile", "Account")" class="btn btn-info btn-sm w-100">
-                                <i class="fas fa-user-md"></i> Hồ sơ tư vấn viên
-                            </a>
-                        </div>
-                    }
                 </div>
             </div>
         </div>

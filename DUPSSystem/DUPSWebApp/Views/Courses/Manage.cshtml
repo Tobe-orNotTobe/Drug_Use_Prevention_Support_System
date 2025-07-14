@@ -1,0 +1,202 @@
+﻿@{
+    ViewData["Title"] = "Quản lý khóa học";
+    var role = ViewBag.CurrentUserRole as string ?? "Guest";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h3 class="mb-0">
+                                <i class="fas fa-cogs"></i> @ViewData["Title"]
+                            </h3>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <a href="@Url.Action("Create", "Courses")" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Tạo khóa học mới
+                            </a>
+                            <a href="@Url.Action("Index", "Courses")" class="btn btn-outline-primary">
+                                <i class="fas fa-eye"></i> Xem danh sách công khai
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="small-box bg-primary">
+                                <div class="inner">
+                                    <h3 id="totalCourses">-</h3>
+                                    <p>Tổng khóa học</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3 id="activeCourses">-</h3>
+                                    <p>Đang hoạt động</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3 id="inactiveCourses">-</h3>
+                                    <p>Không hoạt động</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-pause-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3 id="totalRegistrations">-</h3>
+                                    <p>Lượt đăng ký</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" id="searchName" class="form-control" placeholder="Tìm theo tên...">
+                                <button class="btn btn-outline-secondary" type="button" id="btnSearch">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="searchTargetAudience" class="form-select">
+                                <option value="">Tất cả đối tượng</option>
+                                <option value="Học sinh">Học sinh</option>
+                                <option value="Phụ huynh">Phụ huynh</option>
+                                <option value="Giáo viên">Giáo viên</option>
+                                <option value="Tất cả">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select id="searchStatus" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="true">Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="btnClearSearch" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-eraser"></i> Xóa bộ lọc
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="btnRefresh" class="btn btn-outline-info w-100">
+                                <i class="fas fa-sync-alt"></i> Làm mới
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="alertContainer"></div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="coursesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên khóa học</th>
+                                    <th>Đối tượng</th>
+                                    <th>Thời lượng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Lượt đăng ký</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coursesTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Đang tải...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <nav aria-label="Phân trang khóa học">
+                        <ul class="pagination justify-content-center" id="pagination">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa khóa học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Cảnh báo!</strong> Việc xóa khóa học có thể ảnh hưởng đến:
+                </div>
+                <ul>
+                    <li>Các đăng ký hiện có của học viên</li>
+                    <li>Dữ liệu báo cáo liên quan</li>
+                    <li>Lịch sử tham gia khóa học</li>
+                </ul>
+                <p>Bạn có chắc chắn muốn xóa khóa học <strong id="deleteCourseTitle"></strong>?</p>
+                <p class="text-danger"><i class="fas fa-warning"></i> Hành động này không thể hoàn tác!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Xác nhận xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thay đổi trạng thái</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có muốn <strong id="statusAction"></strong> khóa học <strong id="statusCourseTitle"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusBtn">
+                    <i class="fas fa-check"></i> Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/courses/course-manage.js"></script>
+}

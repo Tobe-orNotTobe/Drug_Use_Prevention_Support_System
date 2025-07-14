@@ -36,7 +36,7 @@ namespace BusinessObjects.Extensions
 
 		public static bool IsGuest(this ClaimsPrincipal user)
 		{
-			return !user.IsAuthenticated() || user.IsInRole(Roles.Guest);
+			return !user.IsAuthenticated();
 		}
 
 		public static bool IsMember(this ClaimsPrincipal user)
@@ -188,8 +188,7 @@ namespace BusinessObjects.Extensions
 			if (user.IsManager()) return Roles.Manager;
 			if (user.IsStaff()) return Roles.Staff;
 			if (user.IsConsultant()) return Roles.Consultant;
-			if (user.IsMember()) return Roles.Member;
-			return Roles.Guest;
+			return Roles.Member;
 		}
 
 		public static List<string> GetUserRoles(this ClaimsPrincipal user)

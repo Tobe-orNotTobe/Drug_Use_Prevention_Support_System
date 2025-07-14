@@ -1,565 +1,360 @@
-﻿/* Custom CSS for DUPS System */
+﻿// Global site JavaScript for DUPS System
 
-/* Global Styles */
-:root {
-    --primary - color: #007bff;
-    --secondary - color: #6c757d;
-    --success - color: #28a745;
-    --info - color: #17a2b8;
-    --warning - color: #ffc107;
-    --danger - color: #dc3545;
-    --light - color: #f8f9fa;
-    --dark - color: #343a40;
-    --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    --shadow - lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+// API Base URL
+const API_BASE_URL = 'https://localhost:7008/api';
+
+// Global notification function
+function showNotification(message, type = 'info', duration = 5000) {
+    const alertClass = getAlertClass(type);
+    const icon = getAlertIcon(type);
+    
+    const notification = `
+        <div class="alert ${alertClass} alert-dismissible fade show notification-alert" role="alert">
+            <i class="${icon}"></i> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Remove existing notifications
+    $('.notification-alert').remove();
+    
+    // Add new notification
+    $('#notification-area').html(notification);
+    
+    // Auto dismiss
+    if (duration > 0) {
+        setTimeout(() => {
+            $('.notification-alert').alert('close');
+        }, duration);
+    }
 }
 
-body {
-    font - family: 'Segoe UI', Tahoma, Geneva, Verdana, sans - serif;
-    background - color: #f8f9fa;
+function getAlertClass(type) {
+    switch (type) {
+        case 'success': return 'alert-success';
+        case 'error': case 'danger': return 'alert-danger';
+        case 'warning': return 'alert-warning';
+        case 'info': default: return 'alert-info';
+    }
 }
 
-/* Header and Navigation */
-.navbar - brand {
-    font - weight: 600;
-    font - size: 1.5rem;
+function getAlertIcon(type) {
+    switch (type) {
+        case 'success': return 'fas fa-check-circle';
+        case 'error': case 'danger': return 'fas fa-exclamation-triangle';
+        case 'warning': return 'fas fa-exclamation-circle';
+        case 'info': default: return 'fas fa-info-circle';
+    }
 }
 
-.navbar - brand i {
-    color: #28a745;
-    margin - right: 0.5rem;
+// Loading overlay functions
+function showLoading(message = 'Đang xử lý...') {
+    const loadingHtml = `
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2">${message}</div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(loadingHtml);
 }
 
-.navbar - nav.nav - link {
-    font - weight: 500;
-    transition: color 0.3s ease;
+function hideLoading() {
+    $('#loading-overlay').remove();
 }
 
-.navbar - nav.nav - link:hover {
-    color: #28a745!important;
+// Confirmation dialog
+function confirmAction(message, callback, title = 'Xác nhận') {
+    if (confirm(`${title}\n\n${message}`)) {
+        callback();
+    }
 }
 
-.navbar - nav.nav - link i {
-    margin - right: 0.5rem;
-    width: 16px;
-    text - align: center;
+// Advanced confirmation modal (requires Bootstrap 5)
+function showConfirmModal(title, message, onConfirm, onCancel = null) {
+    const modalId = 'confirmModal_' + Date.now();
+    const modalHtml = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${message}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-primary confirm-btn">Xác nhận</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    
+    // Handle confirm button click
+    $(`#${modalId} .confirm-btn`).click(function() {
+        modal.hide();
+        if (onConfirm) onConfirm();
+    });
+    
+    // Handle modal hidden event
+    $(`#${modalId}`).on('hidden.bs.modal', function() {
+        $(this).remove();
+        if (onCancel) onCancel();
+    });
+    
+    modal.show();
 }
 
-/* Role Badge Styling */
-.badge {
-    font - size: 0.7rem;
-    font - weight: 500;
+// Date formatting utilities
+function formatDate(dateString, format = 'dd/MM/yyyy') {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    
+    switch (format) {
+        case 'dd/MM/yyyy': return `${day}/${month}/${year}`;
+        case 'dd/MM/yyyy HH:mm': return `${day}/${month}/${year} ${hour}:${minute}`;
+        case 'yyyy-MM-dd': return `${year}-${month}-${day}`;
+        default: return `${day}/${month}/${year}`;
+    }
 }
 
-/* Card Styling */
-.card {
-    border: none;
-    border - radius: 0.75rem;
-    box - shadow: var(--shadow);
-    transition: box - shadow 0.3s ease;
+function formatRelativeTime(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Vừa xong';
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    
+    return formatDate(dateString);
 }
 
-.card:hover {
-    box - shadow: var(--shadow - lg);
-}
-
-.card - header {
-    border - bottom: 1px solid rgba(0, 0, 0, 0.125);
-    border - radius: 0.75rem 0.75rem 0 0!important;
-    font - weight: 600;
-}
-
-/* Button Styling */
-.btn {
-    border - radius: 0.5rem;
-    font - weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn i {
-    margin - right: 0.5rem;
-}
-
-.btn:hover {
-    transform: translateY(-1px);
-}
-
-/* Form Styling */
-.form - control, .form - select {
-    border - radius: 0.5rem;
-    border: 1px solid #ced4da;
-    transition: border - color 0.3s ease, box - shadow 0.3s ease;
-}
-
-.form - control: focus, .form - select:focus {
-    border - color: var(--primary - color);
-    box - shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.input - group - text {
-    border - radius: 0.5rem 0 0 0.5rem;
-    background - color: #e9ecef;
-    border: 1px solid #ced4da;
-}
-
-.invalid - feedback {
-    display: block;
-    font - size: 0.875rem;
-    margin - top: 0.25rem;
-}
-
-/* Loading Overlay */
-.loading - overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100 %;
-    height: 100 %;
-    background - color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify - content: center;
-    align - items: center;
-    z - index: 9999;
-}
-
-.loading - content {
-    background - color: white;
-    padding: 2rem;
-    border - radius: 0.75rem;
-    text - align: center;
-    box - shadow: var(--shadow - lg);
-}
-
-/* Notification Styling */
-.notification - alert {
-    margin - bottom: 1rem;
-    border - radius: 0.5rem;
-    border: none;
-    box - shadow: var(--shadow);
-}
-
-.notification - alert i {
-    margin - right: 0.5rem;
-}
-
-/* Access Denied Page */
-.access - denied - icon {
-    font - size: 5rem;
-    color: var(--warning - color);
-    margin - bottom: 1rem;
-}
-
-/* Table Styling */
-.table {
-    border - radius: 0.5rem;
-    overflow: hidden;
-    box - shadow: var(--shadow);
-}
-
-.table thead th {
-    background - color: var(--light - color);
-    border - bottom: 2px solid var(--primary - color);
-    font - weight: 600;
-    color: var(--dark - color);
-}
-
-.table tbody tr:hover {
-    background - color: rgba(0, 123, 255, 0.05);
-}
-
-/* Dashboard Cards */
-.dashboard - card {
-    border - left: 4px solid var(--primary - color);
-    transition: all 0.3s ease;
-}
-
-.dashboard - card:hover {
-    transform: translateY(-2px);
-    box - shadow: var(--shadow - lg);
-}
-
-.dashboard - card.success {
-    border - left - color: var(--success - color);
-}
-
-.dashboard - card.warning {
-    border - left - color: var(--warning - color);
-}
-
-.dashboard - card.danger {
-    border - left - color: var(--danger - color);
-}
-
-.dashboard - card.info {
-    border - left - color: var(--info - color);
-}
-
-/* Stats Cards */
-.stats - card {
-    text - align: center;
-    padding: 1.5rem;
-}
-
-.stats - card.stats - icon {
-    font - size: 3rem;
-    margin - bottom: 1rem;
-}
-
-.stats - card.stats - number {
-    font - size: 2rem;
-    font - weight: 700;
-    color: var(--primary - color);
-}
-
-.stats - card.stats - label {
-    font - size: 0.9rem;
-    color: var(--secondary - color);
-    text - transform: uppercase;
-    letter - spacing: 0.5px;
-}
-
-/* Role-based styling */
-.role - admin { border - left - color: var(--danger - color)!important; }
-.role - manager { border - left - color: var(--warning - color)!important; }
-.role - staff { border - left - color: var(--primary - color)!important; }
-.role - consultant { border - left - color: var(--info - color)!important; }
-.role - member { border - left - color: var(--success - color)!important; }
-
-/* Footer */
-.footer {
-    padding: 1rem 0;
-    margin - top: 2rem;
-    border - top: 1px solid #dee2e6;
-}
-
-/* Responsive Design */
-@media(max - width: 768px) {
-    .navbar - brand {
-        font - size: 1.2rem;
+// API helper functions
+function callApi(endpoint, method = 'GET', data = null, options = {}) {
+    const token = getAuthToken();
+    
+    const defaultOptions = {
+        url: `${API_BASE_URL}${endpoint}`,
+        type: method,
+        contentType: 'application/json',
+        headers: {
+            'Authorization': token ? `Bearer ${token}` : ''
+        },
+        ...options
+    };
+    
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        defaultOptions.data = JSON.stringify(data);
     }
     
-    .card {
-        margin - bottom: 1rem;
-    }
+    return $.ajax(defaultOptions);
+}
+
+function getAuthToken() {
+    // This should match how you store the token in your application
+    // For now, we'll try to get it from a data attribute or session
+    return $('meta[name="auth-token"]').attr('content') || '';
+}
+
+// Form validation helpers
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function validatePhone(phone) {
+    const phoneRegex = /^[\+]?[0-9\-\s\(\)]{10,15}$/;
+    return phoneRegex.test(phone);
+}
+
+function validateRequired(value) {
+    return value && value.toString().trim().length > 0;
+}
+
+function showFieldError(fieldName, message) {
+    const field = $(`#${fieldName}, [name="${fieldName}"]`);
+    field.addClass('is-invalid');
+    field.siblings('.invalid-feedback').text(message);
     
-    .btn {
-        margin - bottom: 0.5rem;
+    // If no invalid-feedback element exists, create one
+    if (field.siblings('.invalid-feedback').length === 0) {
+        field.after(`<div class="invalid-feedback">${message}</div>`);
     }
+}
+
+function clearFieldError(fieldName) {
+    const field = $(`#${fieldName}, [name="${fieldName}"]`);
+    field.removeClass('is-invalid');
+    field.siblings('.invalid-feedback').text('');
+}
+
+function clearAllErrors(formSelector = 'form') {
+    $(formSelector).find('.is-invalid').removeClass('is-invalid');
+    $(formSelector).find('.invalid-feedback').text('');
+}
+
+// Table utilities
+function initDataTable(tableSelector, options = {}) {
+    const defaultOptions = {
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        language: {
+            "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+            "zeroRecords": "Không tìm thấy dữ liệu",
+            "info": "Hiển thị _START_ đến _END_ của _TOTAL_ dòng",
+            "infoEmpty": "Hiển thị 0 đến 0 của 0 dòng",
+            "infoFiltered": "(lọc từ _MAX_ dòng)",
+            "search": "Tìm kiếm:",
+            "paginate": {
+                "first": "Đầu",
+                "last": "Cuối",
+                "next": "Tiếp",
+                "previous": "Trước"
+            }
+        },
+        ...options
+    };
     
-    .table - responsive {
-        border - radius: 0.5rem;
+    return $(tableSelector).DataTable(defaultOptions);
+}
+
+// Role-based UI utilities
+function hideElementsByRole(userRole) {
+    // Hide elements based on user role
+    $('[data-roles]').each(function() {
+        const allowedRoles = $(this).data('roles').split(',');
+        if (!allowedRoles.includes(userRole)) {
+            $(this).hide();
+        }
+    });
+}
+
+function showElementsByRole(userRole) {
+    // Show elements based on user role
+    $('[data-roles]').each(function() {
+        const allowedRoles = $(this).data('roles').split(',');
+        if (allowedRoles.includes(userRole)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+// Local storage utilities
+function setLocalStorage(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.warn('LocalStorage not available:', e);
     }
 }
 
-/* Animation Classes */
-.fade -in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.slide -in -left {
-    animation: slideInLeft 0.5s ease - out;
-}
-
-@keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-50px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-.slide -in -right {
-    animation: slideInRight 0.5s ease - out;
-}
-
-@keyframes slideInRight {
-    from { opacity: 0; transform: translateX(50px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-/* Custom Utilities */
-.shadow - sm - custom {
-    box - shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)!important;
-}
-
-.shadow - custom {
-    box - shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15)!important;
-}
-
-.shadow - lg - custom {
-    box - shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175)!important;
-}
-
-.border - radius - custom {
-    border - radius: 0.75rem!important;
-}
-
-.text - primary - custom {
-    color: var(--primary - color)!important;
-}
-
-.bg - primary - custom {
-    background - color: var(--primary - color)!important;
-}
-
-/* Custom scrollbar for webkit browsers */
-:: -webkit - scrollbar {
-    width: 8px;
-}
-
-:: -webkit - scrollbar - track {
-    background: #f1f1f1;
-    border - radius: 4px;
-}
-
-:: -webkit - scrollbar - thumb {
-    background: #888;
-    border - radius: 4px;
-}
-
-:: -webkit - scrollbar - thumb:hover {
-    background: #555;
-}
-
-/* Print styles */
-@media print {
-    .navbar, .footer, .btn, .alert {
-        display: none!important;
+function getLocalStorage(key, defaultValue = null) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (e) {
+        console.warn('LocalStorage not available:', e);
+        return defaultValue;
     }
+}
+
+function removeLocalStorage(key) {
+    try {
+        localStorage.removeItem(key);
+    } catch (e) {
+        console.warn('LocalStorage not available:', e);
+    }
+}
+
+// Initialize on document ready
+$(document).ready(function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
     
-    .card {
-        border: 1px solid #dee2e6!important;
-        box - shadow: none!important;
-    }
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
     
-    .table {
-        box - shadow: none!important;
-    }
-}
-
-/* Accessibility improvements */
-.btn: focus, .form - control: focus, .form - select:focus {
-    outline: 2px solid var(--primary - color);
-    outline - offset: 2px;
-}
-
-.skip - link {
-    position: absolute;
-    top: -40px;
-    left: 6px;
-    background: var(--primary - color);
-    color: white;
-    padding: 8px;
-    text - decoration: none;
-    z - index: 9999;
-}
-
-.skip - link:focus {
-    top: 6px;
-}
-
-/* Error pages styling */
-.error - page {
-    text - align: center;
-    padding: 3rem 0;
-}
-
-.error - page.error - code {
-    font - size: 6rem;
-    font - weight: 300;
-    color: var(--secondary - color);
-}
-
-.error - page.error - message {
-    font - size: 1.5rem;
-    margin - bottom: 2rem;
-}
-
-/* Login/Register page specific styles */
-.auth - card {
-    max - width: 400px;
-    margin: 2rem auto;
-}
-
-.auth - card.card - header {
-    text - align: center;
-    background: linear - gradient(135deg, var(--primary - color), var(--info - color));
-    color: white;
-}
-
-.demo - accounts {
-    background - color: rgba(23, 162, 184, 0.1);
-    border: 1px solid rgba(23, 162, 184, 0.3);
-    border - radius: 0.5rem;
-    padding: 1rem;
-    margin - top: 1rem;
-}
-
-.demo - accounts strong {
-    cursor: pointer;
-    color: var(--info - color);
-    text - decoration: underline;
-}
-
-.demo - accounts strong:hover {
-    color: var(--primary - color);
-}
-
-/* Survey and course cards */
-.course - card, .survey - card {
-    transition: all 0.3s ease;
-    border: 1px solid #e3e6f0;
-}
-
-.course - card: hover, .survey - card:hover {
-    transform: translateY(-5px);
-    box - shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-.course - card.card - img - top {
-    height: 200px;
-    object - fit: cover;
-}
-
-.course - meta, .survey - meta {
-    font - size: 0.875rem;
-    color: var(--secondary - color);
-}
-
-/* Appointment status badges */
-.status - pending { background - color: var(--warning - color)!important; }
-.status - confirmed { background - color: var(--info - color)!important; }
-.status - completed { background - color: var(--success - color)!important; }
-.status - cancelled { background - color: var(--secondary - color)!important; }
-
-/* Calendar styling for appointment booking */
-.calendar - day {
-    min - height: 100px;
-    border: 1px solid #dee2e6;
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: background - color 0.3s ease;
-}
-
-.calendar - day:hover {
-    background - color: rgba(0, 123, 255, 0.1);
-}
-
-.calendar - day.selected {
-    background - color: var(--primary - color);
-    color: white;
-}
-
-.calendar - day.disabled {
-    background - color: #f8f9fa;
-    color: #6c757d;
-    cursor: not - allowed;
-}
-
-/* Time slot styling */
-.time - slot {
-    padding: 0.5rem 1rem;
-    margin: 0.25rem;
-    border: 1px solid #dee2e6;
-    border - radius: 0.375rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.time - slot:hover {
-    background - color: var(--primary - color);
-    color: white;
-}
-
-.time - slot.booked {
-    background - color: #f8f9fa;
-    color: #6c757d;
-    cursor: not - allowed;
-}
-
-.time - slot.selected {
-    background - color: var(--success - color);
-    color: white;
-}
-
-/* DataTables custom styling */
-.dataTables_wrapper.dataTables_paginate.paginate_button {
-    border - radius: 0.375rem!important;
-    margin: 0 0.125rem;
-}
-
-.dataTables_wrapper.dataTables_filter input {
-    border - radius: 0.375rem;
-    border: 1px solid #ced4da;
-}
-
-.dataTables_wrapper.dataTables_length select {
-    border - radius: 0.375rem;
-    border: 1px solid #ced4da;
-}
-
-/* Progress bars */
-.progress {
-    border - radius: 0.5rem;
-    height: 0.75rem;
-}
-
-.progress - bar {
-    border - radius: 0.5rem;
-}
-
-/* Consultant profile cards */
-.consultant - card {
-    transition: all 0.3s ease;
-    border: 1px solid #e3e6f0;
-}
-
-.consultant - card:hover {
-    transform: translateY(-3px);
-    box - shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-.consultant - avatar {
-    width: 80px;
-    height: 80px;
-    border - radius: 50 %;
-    object - fit: cover;
-    border: 3px solid var(--primary - color);
-}
-
-.consultant - rating {
-    color: #ffc107;
-}
-
-/* Dashboard widgets */
-.widget {
-    background: white;
-    border - radius: 0.75rem;
-    padding: 1.5rem;
-    margin - bottom: 1.5rem;
-    box - shadow: var(--shadow);
-    border: 1px solid #e3e6f0;
-}
-
-.widget - header {
-    display: flex;
-    justify - content: space - between;
-    align - items: center;
-    margin - bottom: 1rem;
-    padding - bottom: 0.5rem;
-    border - bottom: 1px solid #e3e6f0;
-}
-
-.widget - title {
-    font - size: 1.1rem;
-    font - weight: 600;
-    margin: 0;
-    color: var(--dark - color);
-}
-
-.widget - icon {
-    font - size: 1.5rem;
-    color: var(--primary - color);
-}
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert:not(.alert-permanent)').fadeOut();
+    }, 5000);
+    
+    // Handle AJAX form submissions with data-ajax="true"
+    $('form[data-ajax="true"]').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const url = form.attr('action');
+        const method = form.attr('method') || 'POST';
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showNotification(response.message || 'Thao tác thành công', 'success');
+                    
+                    // Trigger custom event
+                    form.trigger('ajax:success', [response]);
+                } else {
+                    showNotification(response.message || 'Có lỗi xảy ra', 'error');
+                }
+            },
+            error: function(xhr) {
+                const message = xhr.responseJSON?.message || 'Có lỗi xảy ra khi xử lý yêu cầu';
+                showNotification(message, 'error');
+            }
+        });
+    });
+    
+    // Global error handler for AJAX requests
+    $(document).ajaxError(function(event, xhr, settings, thrownError) {
+        if (xhr.status === 401) {
+            showNotification('Phiên đăng nhập đã hết hạn. Đang chuyển hướng...', 'warning');
+            setTimeout(() => {
+                window.location.href = '/Auth/Login';
+            }, 2000);
+        } else if (xhr.status === 403) {
+            showNotification('Bạn không có quyền thực hiện thao tác này.', 'error');
+        } else if (xhr.status === 500) {
+            showNotification('Lỗi hệ thống. Vui lòng thử lại sau.', 'error');
+        }
+    });
+});
