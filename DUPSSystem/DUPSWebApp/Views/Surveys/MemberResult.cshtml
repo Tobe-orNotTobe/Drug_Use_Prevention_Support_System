@@ -1,0 +1,134 @@
+﻿@{
+    ViewData["Title"] = "Kết quả khảo sát của tôi";
+    var surveyId = ViewBag.SurveyId;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-chart-pie"></i> Kết quả khảo sát của tôi</h2>
+            <a href="@Url.Action("Index", "Surveys")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-2">Đang tải kết quả...</p>
+        </div>
+
+        <div id="resultContainer" style="display: none;">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-1" id="surveyName"></h4>
+                    <p class="mb-0">Hoàn thành lúc: <span id="completedTime"></span></p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Cảm ơn bạn đã hoàn thành khảo sát!</strong>
+                        Kết quả của bạn đã được ghi nhận và sẽ được sử dụng để cải thiện các chương trình hỗ trợ.
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Câu trả lời của bạn</h5>
+                </div>
+                <div class="card-body">
+                    <div id="answersContainer">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Đề xuất hỗ trợ</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recommendationsContainer">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded">
+                                    <i class="fas fa-graduation-cap fa-2x text-primary mb-2"></i>
+                                    <h6>Khóa học phù hợp</h6>
+                                    <p class="text-muted">Tham gia các khóa học về phòng ngừa ma túy</p>
+                                    <a href="@Url.Action("Index", "Courses")" class="btn btn-sm btn-primary">Xem khóa học</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded">
+                                    <i class="fas fa-user-md fa-2x text-success mb-2"></i>
+                                    <h6>Tư vấn trực tiếp</h6>
+                                    <p class="text-muted">Đặt lịch gặp tư vấn viên chuyên nghiệp</p>
+                                    <a href="@Url.Action("Book", "Appointments")" class="btn btn-sm btn-success">Đặt lịch</a>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3 border rounded">
+                                    <i class="fas fa-clipboard-question fa-2x text-info mb-2"></i>
+                                    <h6>Khảo sát khác</h6>
+                                    <p class="text-muted">Tham gia thêm các khảo sát khác</p>
+                                    <a href="@Url.Action("Index", "Surveys")" class="btn btn-sm btn-info">Xem thêm</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const surveyId = @surveyId;
+            loadMemberResult(surveyId);
+        });
+
+        function displayMemberResult(result) {
+            $('#surveyName').text(result.surveyName);
+            $('#completedTime').text(formatDateTime(result.completedDate));
+
+            displayMemberAnswers(result.answers);
+
+            $('#loadingSpinner').hide();
+            $('#resultContainer').show();
+        }
+
+        function displayMemberAnswers(answers) {
+            const container = $('#answersContainer');
+            container.empty();
+
+            answers.forEach((answer, index) => {
+                const answerHtml = `
+                    <div class="mb-4 p-3 border rounded">
+                        <h6 class="text-primary">Câu ${index + 1}: ${answer.questionContent}</h6>
+                        <div class="mt-2">
+                            ${Array.isArray(answer.answerText) ?
+                                answer.answerText.map(text => `<span class="badge bg-light text-dark me-1">${text}</span>`).join('') :
+                                `<p class="text-muted">${answer.answerText}</p>`
+                            }
+                        </div>
+                    </div>
+                `;
+                container.append(answerHtml);
+            });
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+}

@@ -6,29 +6,79 @@ namespace DUPSWebApp.Controllers
 	{
 		public IActionResult Index()
 		{
+			if (IsMember)
+			{
+				return View("MemberIndex");
+			}
+
+			if (!CanManageSurveys())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+
 			return View();
 		}
 
-		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
-		public IActionResult Take(int surveyId)
+		[RoleAuthorization("Staff", "Admin")]
+		public IActionResult Create()
 		{
-			if (!CanTakeSurveys())
+			if (!CanManageSurveys())
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}
 			return View();
 		}
 
-		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
-		public IActionResult MyResults()
+		[RoleAuthorization("Staff", "Admin")]
+		public IActionResult Edit(int id)
 		{
+			if (!CanManageSurveys())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+			ViewBag.SurveyId = id;
 			return View();
 		}
 
-		[RoleAuthorization("Staff", "Manager", "Admin")]
-		public IActionResult Manage()
+		public IActionResult Details(int id)
 		{
-			if (!CanManageSurveys())
+			ViewBag.SurveyId = id;
+			return View();
+		}
+
+		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		public IActionResult Take(int id)
+		{
+			if (!CanTakeSurveys())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+			ViewBag.SurveyId = id;
+			return View();
+		}
+
+		[RoleAuthorization("Member", "Staff", "Admin")]
+		public IActionResult Result(int id)
+		{
+			ViewBag.SurveyId = id;
+
+			if (IsMember)
+			{
+				return View("MemberResult");
+			}
+
+			if (IsAdmin)
+			{
+				return View("AdminResult");
+			}
+
+			return View();
+		}
+
+		[RoleAuthorization("Admin")]
+		public IActionResult AllResults()
+		{
+			if (!IsAdmin)
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}

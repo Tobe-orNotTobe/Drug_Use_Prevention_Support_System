@@ -8,7 +8,9 @@ namespace DataAccessObjects
 		public static Survey GetById(int id)
 		{
 			using var db = new DrugPreventionDbContext();
-			return db.Surveys.FirstOrDefault(c => c.SurveyId.Equals(id));
+			return db.Surveys
+				.Include(s => s.SurveyQuestions.OrderBy(q => q.QuestionId))
+					.ThenInclude(q => q.SurveyOptions.OrderBy(o => o.OptionId)).FirstOrDefault(c => c.SurveyId.Equals(id));
 		}
 
 		// THÊM METHOD MỚI
@@ -55,7 +57,9 @@ namespace DataAccessObjects
 			try
 			{
 				using var db = new DrugPreventionDbContext();
-				list = db.Surveys.OrderByDescending(s => s.CreatedAt).ToList();
+				list = db.Surveys.Include(s => s.SurveyQuestions.OrderBy(q => q.QuestionId))
+
+					.ThenInclude(q => q.SurveyOptions.OrderBy(o => o.OptionId)).OrderByDescending(s => s.CreatedAt).ToList();
 			}
 			catch (Exception e) { }
 			return list;

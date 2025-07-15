@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Quản lý Khảo sát";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-poll"></i> Quản lý Khảo sát</h2>
+            <a href="@Url.Action("Create", "Surveys")" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tạo khảo sát mới
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Danh sách khảo sát</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Tìm kiếm theo tên, đối tượng...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div id="loadingSpinner" class="text-center d-none">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover" id="surveysTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Tên khảo sát</th>
+                                <th>Đối tượng</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="surveysTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav aria-label="Phân trang">
+                    <ul class="pagination justify-content-center" id="pagination">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa khảo sát này không?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Thao tác này không thể hoàn tác!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        <script src="~/js/surveys/survey-index.js" asp-append-version="true"></script>
+}

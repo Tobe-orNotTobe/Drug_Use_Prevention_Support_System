@@ -1,0 +1,106 @@
+﻿@{
+    ViewData["Title"] = "Làm khảo sát";
+    var surveyId = ViewBag.SurveyId;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div id="loadingSpinner" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-2">Đang tải khảo sát...</p>
+        </div>
+
+        <div id="surveyContainer" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1" id="surveyTitle"></h4>
+                            <p class="mb-0" id="surveyDescription"></p>
+                        </div>
+                        <div class="text-end">
+                            <small>Đối tượng: <span id="targetAudiences"></span></small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Hướng dẫn:</strong> Vui lòng đọc kỹ từng câu hỏi và chọn đáp án phù hợp nhất với tình hình của bạn.
+                        Thông tin của bạn sẽ được bảo mật tuyệt đối.
+                    </div>
+
+                    <form id="surveyForm">
+                        <input type="hidden" id="surveyId" value="@surveyId" />
+                        <div id="questionsContainer">
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-secondary me-2" id="backBtn">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane"></i> Nộp bài khảo sát
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="completedContainer" style="display: none;">
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="text-success mb-3">Cảm ơn bạn đã hoàn thành khảo sát!</h3>
+                    <p class="text-muted mb-4">
+                        Kết quả khảo sát của bạn đã được ghi nhận. Dựa trên kết quả này,
+                        hệ thống sẽ đưa ra những gợi ý phù hợp để hỗ trợ bạn.
+                    </p>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="@Url.Action("Index", "Surveys")" class="btn btn-primary">
+                            <i class="fas fa-list"></i> Xem khảo sát khác
+                        </a>
+                        <button type="button" class="btn btn-success" id="viewResultBtn">
+                            <i class="fas fa-chart-bar"></i> Xem kết quả
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmSubmitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận nộp bài</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn nộp bài khảo sát này không?</p>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Sau khi nộp bài, bạn sẽ không thể thay đổi câu trả lời.
+                </p>
+                <div id="validationErrors" class="alert alert-danger d-none">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kiểm tra lại</button>
+                <button type="button" class="btn btn-primary" id="confirmSubmitBtn">Nộp bài</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/surveys/survey-take.js" asp-append-version="true"></script>
+}

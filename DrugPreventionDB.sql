@@ -140,27 +140,20 @@ VALUES
 (N'mai.pham@dups.org', N'123456', N'Phạm Thị Mai', '1990-12-01', N'Nữ', N'0923456789', N'Đà Nẵng'),
 (N'dung.le@dups.org', N'123456', N'Lê Quốc Dũng', '1982-05-10', N'Nam', N'0934567890', N'Cần Thơ'),
 (N'lan.vo@dups.org', N'123456', N'Võ Thị Lan', '1988-08-08', N'Nữ', N'0945678901', N'Bình Dương'),
-(N'staff.nguyen@dups.org', N'123456', N'Nguyễn Văn Staff', '1992-08-10', N'Nam', N'0988111222', N'Hà Nội');
+(N'staff.nguyen@dups.org', N'123456', N'Nguyễn Văn Staff', '1992-08-10', N'Nam', N'0988111222', N'Hà Nội'),
+(N'manager.le@dups.org', N'123456', N'Lê Thị Manager', '1985-01-15', N'Nữ', N'0911222333', N'Đà Nẵng');
 
-INSERT INTO Users (Email, PasswordHash, FullName, DateOfBirth, Gender, Phone, Address)
-VALUES (N'staff.nguyen@dups.org', N'123456', N'Nguyễn Văn Staff', '1992-08-10', N'Nam', N'0988111222', N'Hà Nội');
-
--- Gán role Staff cho user vừa tạo
-INSERT INTO UserRoles (UserId, RoleId)
-VALUES (
-    (SELECT UserId FROM Users WHERE Email = N'staff.nguyen@dups.org'),
-    (SELECT RoleId FROM Roles WHERE RoleName = N'Staff')
-);
 INSERT INTO UserRoles (UserId, RoleId) VALUES
-(1, 6), 
-(2, 2),
-(3, 4), 
-(4, 4),
-(5, 4),
-(6, 4),
-(7, 4),
-(8, 4),
-(9, 5),
+(1, 5), 
+(2, 1),
+(3, 3), 
+(4, 3),
+(5, 3),
+(6, 3),
+(7, 3),
+(8, 3),
+(9, 2),
+(10,4);
 
 INSERT INTO Consultants (UserId, Qualification, Expertise, WorkSchedule, Bio)
 VALUES

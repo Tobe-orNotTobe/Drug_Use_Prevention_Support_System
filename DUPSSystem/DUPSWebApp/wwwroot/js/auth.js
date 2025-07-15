@@ -47,7 +47,6 @@
             data: JSON.stringify(formData),
             success: function (response) {
                 if (response.success) {
-                    showNotification(response.message, 'success');
                     setTimeout(() => {
                         const returnUrl = response.redirectUrl || '/';
                         window.location.href = returnUrl;
