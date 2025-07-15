@@ -1,314 +1,166 @@
-﻿@{
-    ViewData["Title"] = "Dashboard & Báo Cáo";
+﻿@model DUPSWebApp.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard Admin";
 }
 
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 text-primary">
-            <i class="fas fa-chart-pie me-2"></i>Dashboard & Báo Cáo
-        </h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
-                <i class="fas fa-sync-alt me-1"></i>Làm mới
-            </button>
-            <button class="btn btn-primary" type="button" onclick="exportDashboardReport()">
-                <i class="fas fa-download me-1"></i>Xuất Báo Cáo Dashboard
-            </button>
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tachometer-alt"></i> Dashboard Admin</h2>
+                <button type="button" class="btn btn-success" id="exportReportBtn">
+                    <i class="fas fa-file-excel"></i> Export Report
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="text-center py-5" style="display: none;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Đang tải...</span>
-        </div>
-        <p class="mt-2">Đang tải dữ liệu Dashboard...</p>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="row mb-4" id="summaryCards">
-        <div class="col-xl-3 col-md-6 mb-4">
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Tổng Người Dùng
+                                Tổng Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUsers">-</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUsers">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <small class="text-muted">Hoạt động: <span id="activeUsers">-</span></small>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
             <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Tổng Tư Vấn Viên
+                                Consultants
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalConsultants">-</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalConsultants">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-user-md fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <small class="text-muted">Hoạt động: <span id="activeConsultants">-</span></small>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Tổng Lịch Hẹn
+                                Appointments
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalAppointments">-</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalAppointments">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <small class="text-muted">Trong tháng này</small>
                 </div>
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Tổng Khóa Học
+                                Courses
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCourses">-</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCourses">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-graduation-cap fa-2x text-gray-300"></i>
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <small class="text-muted">Khóa học hiện có</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Surveys
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalSurveys">
+                                <span class="spinner-border spinner-border-sm"></span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-poll fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Row 1 -->
-    <div class="row mb-4">
-        <!-- Appointment Status Chart -->
+    <div class="row">
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Phân Bổ Trạng Thái Lịch Hẹn</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Thống kê Users theo Role</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-pie pt-4 pb-2">
-                        <canvas id="appointmentStatusChart"></canvas>
+                        <canvas id="usersByRoleChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- User Role Distribution -->
         <div class="col-xl-6 col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Phân Bổ Vai Trò Người Dùng</h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
-                        <canvas id="userRoleChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row 2 -->
-    <div class="row mb-4">
-        <!-- Appointment Trends -->
-        <div class="col-xl-8 col-lg-7">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Xu Hướng Lịch Hẹn (30 Ngày Gần Nhất)</h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-area">
-                        <canvas id="appointmentTrendsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Course Distribution by Audience -->
-        <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Khóa Học Theo Đối Tượng</h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-pie pt-4 pb-2">
-                        <canvas id="courseAudienceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Monthly User Registrations -->
-    <div class="row mb-4">
-        <div class="col-xl-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Đăng Ký Người Dùng Theo Tháng (12 Tháng Gần Nhất)</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Trạng thái Appointments</h6>
                 </div>
                 <div class="card-body">
                     <div class="chart-bar">
-                        <canvas id="monthlyRegistrationsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Data Tables Row -->
-    <div class="row mb-4">
-        <!-- Top Consultants -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Top 5 Tư Vấn Viên</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="topConsultantsTable">
-                            <thead>
-                                <tr>
-                                    <th>Tên Tư Vấn Viên</th>
-                                    <th>Chuyên Môn</th>
-                                    <th>Số Lịch Hẹn</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Courses -->
-        <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Top 5 Khóa Học Phổ Biến</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="topCoursesTable">
-                            <thead>
-                                <tr>
-                                    <th>Tên Khóa Học</th>
-                                    <th>Đối Tượng</th>
-                                    <th>Số Lượt Đăng Ký</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upcoming Appointments -->
-    <div class="row mb-4">
-        <div class="col-xl-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Lịch Hẹn Sắp Tới (7 Ngày Tới)</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" id="upcomingAppointmentsTable">
-                            <thead>
-                                <tr>
-                                    <th>Ngày & Giờ</th>
-                                    <th>Người Dùng</th>
-                                    <th>Tư Vấn Viên</th>
-                                    <th>Trạng Thái</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Survey Statistics -->
-    <div class="row mb-4">
-        <div class="col-xl-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Thống Kê Khảo Sát</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-primary" id="totalSurveys">-</h4>
-                                <p class="text-muted">Tổng Khảo Sát</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-success" id="totalQuestions">-</h4>
-                                <p class="text-muted">Tổng Câu Hỏi</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-info" id="totalResponses">-</h4>
-                                <p class="text-muted">Tổng Phản Hồi</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-warning" id="avgResponsesPerSurvey">-</h4>
-                                <p class="text-muted">TB Phản Hồi/Mẫu</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered" id="popularSurveysTable">
-                            <thead>
-                                <tr>
-                                    <th>Tên Khảo Sát</th>
-                                    <th>Số Người Tham Gia</th>
-                                    <th>Tỉ Lệ Phản Hồi</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+                        <canvas id="appointmentsByStatusChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="exportToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-file-excel text-success me-2"></i>
+            <strong class="me-auto">Export Report</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            <span id="exportToastMessage">Đang xuất báo cáo...</span>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="~/js/admin.js"></script>
 
 <style>
     .border-left-primary {
@@ -327,17 +179,29 @@
         border-left: 0.25rem solid #f6c23e !important;
     }
 
-    .chart-area, .chart-pie, .chart-bar {
+    .border-left-danger {
+        border-left: 0.25rem solid #e74a3b !important;
+    }
+
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+
+    .shadow {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+    }
+
+    .chart-pie {
         position: relative;
-        height: 300px;
+        height: 15rem;
+    }
+
+    .chart-bar {
+        position: relative;
+        height: 20rem;
     }
 </style>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="~/js/dashboard.js" asp-append-version="true"></script>
-    @if (ViewContext.HttpContext.Request.Query.ContainsKey("debug"))
-    {
-        <script src="~/js/dashboard-debug.js" asp-append-version="true"></script>
-    }
-}

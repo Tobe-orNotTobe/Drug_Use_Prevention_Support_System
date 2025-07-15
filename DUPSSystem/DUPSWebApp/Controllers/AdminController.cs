@@ -7,6 +7,20 @@ namespace DUPSWebApp.Controllers
 		[RoleAuthorization("Admin")]
 		public IActionResult Dashboard()
 		{
+			if (!CanManageUsers())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
+			return View();
+		}
+
+		[RoleAuthorization("Admin")]
+		public IActionResult UserManagement()
+		{
+			if (!CanManageUsers())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
 			return View();
 		}
 
@@ -17,12 +31,16 @@ namespace DUPSWebApp.Controllers
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}
-			return View();
+			return RedirectToAction("UserManagement");
 		}
 
 		[RoleAuthorization("Admin")]
 		public IActionResult Roles()
 		{
+			if (!CanManageUsers())
+			{
+				return RedirectToAction("AccessDenied", "Home");
+			}
 			return View();
 		}
 	}

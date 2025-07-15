@@ -1,0 +1,379 @@
+﻿@model DUPSWebApp.Models.UserManagementViewModel
+@{
+    ViewData["Title"] = "Quản lý Users";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users-cog"></i> Quản lý Users</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <i class="fas fa-plus"></i> Tạo User mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Tìm kiếm & Lọc</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="searchFullName">Họ tên</label>
+                                <input type="text" class="form-control" id="searchFullName" placeholder="Nhập họ tên...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="searchEmail">Email</label>
+                                <input type="text" class="form-control" id="searchEmail" placeholder="Nhập email...">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="filterRole">Role</label>
+                                <select class="form-control" id="filterRole">
+                                    <option value="">Tất cả</option>
+                                    <option value="Member">Member</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Consultant">Consultant</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="filterStatus">Trạng thái</label>
+                                <select class="form-control" id="filterStatus">
+                                    <option value="">Tất cả</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="button" class="btn btn-info btn-block" id="searchBtn">
+                                        <i class="fas fa-search"></i> Tìm kiếm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Danh sách Users</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="usersTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Họ tên</th>
+                                    <th>Email</th>
+                                    <th>Điện thoại</th>
+                                    <th>Role</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th width="200">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <span class="spinner-border spinner-border-sm"></span> Đang tải...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <nav aria-label="Users pagination">
+                        <ul class="pagination justify-content-center" id="usersPagination">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">
+                    <i class="fas fa-user-plus"></i> Tạo User mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="createFullName" class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="createFullName" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="createEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="createEmail" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="createPassword" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="createPassword" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="createConfirmPassword" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="createConfirmPassword" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="createPhone" class="form-label">Điện thoại</label>
+                                <input type="tel" class="form-control" id="createPhone">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-3">
+                                <label for="createRole" class="form-label">Role <span class="text-danger">*</span></label>
+                                <select class="form-control" id="createRole" required>
+                                    <option value="">Chọn role</option>
+                                    <option value="Member">Member</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Consultant">Consultant</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-3">
+                                <label for="createStatus" class="form-label">Trạng thái</label>
+                                <select class="form-control" id="createStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">
+                    <i class="fas fa-save"></i> Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">
+                    <i class="fas fa-user-edit"></i> Chỉnh sửa User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editFullName" class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editFullName" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="editPhone" class="form-label">Điện thoại</label>
+                                <input type="tel" class="form-control" id="editPhone">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-3">
+                                <label for="editRole" class="form-label">Role <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editRole" required>
+                                    <option value="Member">Member</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Consultant">Consultant</option>
+                                    <option value="Manager">Manager</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-3">
+                                <label for="editStatus" class="form-label">Trạng thái</label>
+                                <select class="form-control" id="editStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="updateUserBtn">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="deleteUserModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa user <strong id="deleteUserName"></strong>?</p>
+                <p class="text-muted">Hành động này không thể hoàn tác.</p>
+                <input type="hidden" id="deleteUserId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailModalLabel">
+                    <i class="fas fa-user"></i> Chi tiết User
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>ID:</strong> <span id="detailUserId"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Họ tên:</strong> <span id="detailFullName"></span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Email:</strong> <span id="detailEmail"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Điện thoại:</strong> <span id="detailPhone"></span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Role:</strong> <span id="detailRole" class="badge"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Trạng thái:</strong> <span id="detailStatus" class="badge"></span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Ngày tạo:</strong> <span id="detailCreatedDate"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Lần đăng nhập cuối:</strong> <span id="detailLastLogin"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="actionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-info-circle text-primary me-2"></i>
+            <strong class="me-auto">Thông báo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            <span id="actionToastMessage">Thông báo</span>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/admin.js"></script>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,123,255,.075);
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+
+    .btn-group-xs > .btn, .btn-xs {
+        padding: .25rem .4rem;
+        font-size: .675rem;
+        line-height: .5;
+        border-radius: .2rem;
+    }
+</style>
