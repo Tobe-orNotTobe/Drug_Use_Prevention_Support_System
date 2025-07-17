@@ -45,6 +45,20 @@ namespace Services
 				};
 			}
 		}
+		public int? GetConsultantIdByUserId(int userId)
+		{
+			try
+			{
+				var consultant = _consultantRepository.GetAllConsultants()
+					.FirstOrDefault(c => c.UserId == userId);
+				return consultant?.ConsultantId;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error getting ConsultantId for UserId {userId}: {ex.Message}");
+				return null;
+			}
+		}
 
 		public AppointmentResponse GetAppointmentById(int appointmentId)
 		{
@@ -156,17 +170,6 @@ namespace Services
 		{
 			try
 			{
-				// Validate user exists
-				var user = _userRepository.GetAccountById(request.UserId);
-				if (user == null)
-				{
-					return new AppointmentResponse
-					{
-						Success = false,
-						Message = "Người dùng không tồn tại"
-					};
-				}
-
 				// Validate consultant exists
 				var consultant = _consultantRepository.GetConsultantById(request.ConsultantId);
 				if (consultant == null)
@@ -174,61 +177,66 @@ namespace Services
 					return new AppointmentResponse
 					{
 						Success = false,
-						Message = "Tư vấn viên không tồn tại"
+						Message = "Không tìm thấy tư vấn viên"
 					};
 				}
 
-				// Check if consultant is active
-				if (!consultant.User.IsActive)
+				// Validate user exists
+				var user = _userRepository.GetAccountById(request.UserId);
+				if (user == null)
 				{
 					return new AppointmentResponse
 					{
 						Success = false,
-						Message = "Tư vấn viên hiện không khả dụng"
+						Message = "Không tìm thấy người dùng"
 					};
 				}
 
-				// Validate appointment date
-				if (request.AppointmentDate <= DateTime.Now)
+				// Validate appointment date is in the future
+				if (request.AppointmentDate.Date <= DateTime.Now.Date)
 				{
 					return new AppointmentResponse
 					{
 						Success = false,
-						Message = "Ngày hẹn phải sau thời gian hiện tại"
+						Message = "Ngày hẹn phải là ngày trong tương lai"
 					};
 				}
 
-				// Check for conflicting appointments
-				if (_appointmentRepository.HasConflictingAppointment(request.ConsultantId, request.AppointmentDate))
+				// Check if consultant is available at this time (optional business logic)
+				var existingAppointments = _appointmentRepository.GetConsultantAppointments(request.ConsultantId)
+					.Where(a => a.AppointmentDate.Date == request.AppointmentDate.Date &&
+							   (a.Status == "Confirmed" || a.Status == "Pending"))
+					.ToList();
+
+				if (existingAppointments.Count >= 8) // Max 8 appointments per day
 				{
 					return new AppointmentResponse
 					{
 						Success = false,
-						Message = "Tư vấn viên đã có lịch hẹn vào thời gian này"
+						Message = "Tư vấn viên đã có đủ lịch hẹn trong ngày này"
 					};
 				}
 
+				// Create new appointment
 				var appointment = new Appointment
 				{
 					UserId = request.UserId,
 					ConsultantId = request.ConsultantId,
 					AppointmentDate = request.AppointmentDate,
-					DurationMinutes = request.DurationMinutes,
+					DurationMinutes = request.DurationMinutes ?? 60,
+					Status = "Pending",
 					Notes = request.Notes,
-					Status = "Pending"
+					CreatedAt = DateTime.Now
 				};
 
 				_appointmentRepository.SaveAppointment(appointment);
-
-				// Reload with related data
-				var savedAppointment = _appointmentRepository.GetAppointmentById(appointment.AppointmentId);
 
 				return new AppointmentResponse
 				{
 					Success = true,
 					Message = "Đặt lịch hẹn thành công",
 					AppointmentId = appointment.AppointmentId,
-					Data = MapToAppointmentDetail(savedAppointment!)
+					Data = MapToAppointmentDetail(appointment)
 				};
 			}
 			catch (Exception ex)

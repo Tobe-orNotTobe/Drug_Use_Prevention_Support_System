@@ -1,0 +1,201 @@
+﻿@{
+    ViewData["Title"] = "Đặt lịch hẹn";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">
+                    <i class="fas fa-user-tie text-primary"></i>
+                    Chọn tư vấn viên
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="@Url.Action("Index", "Home")">
+                                <i class="fas fa-home"></i> Trang chủ
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Đặt lịch hẹn</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>
+                    <strong>Hướng dẫn:</strong> Chọn tư vấn viên phù hợp với nhu cầu của bạn và đặt lịch hẹn.
+                    Tư vấn viên sẽ xác nhận lịch hẹn và liên hệ với bạn sớm nhất.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-plus"></i>
+                        Danh sách tư vấn viên
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="loading-spinner" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                        <p class="mt-2">Đang tải danh sách tư vấn viên...</p>
+                    </div>
+
+                    <div id="consultants-container" class="row g-4">
+                    </div>
+
+                    <div id="empty-message" class="text-center py-5 d-none">
+                        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Hiện tại chưa có tư vấn viên nào hoạt động.</p>
+                        <p class="text-muted">Vui lòng quay lại sau hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal đặt lịch hẹn -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="appointmentModalLabel">
+                    <i class="fas fa-calendar-plus"></i>
+                    Đặt lịch hẹn tư vấn
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="appointmentForm" novalidate>
+                    <input type="hidden" id="selectedConsultantId" name="consultantId" value="">
+
+                    <!-- Thông tin tư vấn viên -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-user-tie"></i>
+                                Tư vấn viên được chọn
+                            </label>
+                            <div class="consultant-info p-3 bg-light rounded">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h6 class="mb-1" id="consultantName"></h6>
+                                        <p class="mb-1 text-primary" id="consultantExpertise"></p>
+                                        <small class="text-muted" id="consultantEmail"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin lịch hẹn -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="appointmentDate" class="form-label fw-bold">
+                                <i class="fas fa-calendar"></i>
+                                Ngày hẹn <span class="text-danger">*</span>
+                            </label>
+                            <input type="date"
+                                   class="form-control"
+                                   id="appointmentDate"
+                                   name="date"
+                                   required>
+                            <div class="invalid-feedback">
+                                Vui lòng chọn ngày hẹn hợp lệ (tối thiểu là ngày mai).
+                            </div>
+                            <small class="form-text text-muted">
+                                Lịch hẹn phải được đặt trước ít nhất 1 ngày.
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="timeSlot" class="form-label fw-bold">
+                                <i class="fas fa-clock"></i>
+                                Thời lượng <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="timeSlot" name="timeSlot" required>
+                                <option value="">Chọn thời lượng</option>
+                                <optgroup label="Tư vấn ngắn">
+                                    <option value="30">30 phút</option>
+                                    <option value="45">45 phút</option>
+                                </optgroup>
+                                <optgroup label="Tư vấn tiêu chuẩn">
+                                    <option value="60" selected>60 phút (Khuyến nghị)</option>
+                                    <option value="90">90 phút</option>
+                                </optgroup>
+                                <optgroup label="Tư vấn chuyên sâu">
+                                    <option value="120">120 phút</option>
+                                </optgroup>
+                            </select>
+                            <div class="invalid-feedback">
+                                Vui lòng chọn thời lượng phù hợp.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="notes" class="form-label fw-bold">
+                            <i class="fas fa-sticky-note"></i>
+                            Nội dung tư vấn / Ghi chú (Tùy chọn)
+                        </label>
+                        <textarea class="form-control"
+                                  id="notes"
+                                  name="notes"
+                                  rows="4"
+                                  maxlength="500"
+                                  placeholder="Mô tả ngắn gọn về vấn đề bạn muốn tư vấn hoặc ghi chú đặc biệt..."></textarea>
+                        <small class="form-text text-muted">
+                            Thông tin này sẽ giúp tư vấn viên chuẩn bị tốt hơn cho buổi tư vấn.
+                        </small>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Lưu ý quan trọng:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Sau khi đặt lịch, tư vấn viên sẽ xác nhận trong vòng 24 giờ.</li>
+                            <li>Bạn sẽ nhận được thông báo qua email về trạng thái lịch hẹn.</li>
+                            <li>Có thể hủy hoặc thay đổi lịch hẹn trước 4 giờ.</li>
+                            <li>Vui lòng chuẩn bị đầy đủ thông tin liên quan đến vấn đề cần tư vấn.</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i>
+                    Hủy bỏ
+                </button>
+                <button type="button" class="btn btn-primary" id="submitAppointment">
+                    <i class="fas fa-calendar-check"></i>
+                    Xác nhận đặt lịch
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/appointment.js"></script>
+    <script>
+        $(document).ready(function() {
+            ConsultantList.init();
+        });
+    </script>
+}

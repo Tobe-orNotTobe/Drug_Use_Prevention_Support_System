@@ -1,404 +1,316 @@
 ﻿/* Appointment specific styles */
-
-/* Consultant Cards */
 .consultant-card {
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
 }
 
     .consultant-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+        border-color: #007bff;
     }
 
-/* Appointment Cards */
-.appointment-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-    .appointment-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    .consultant-card .card-body {
+        padding: 1.5rem;
     }
 
-/* Status Colors */
-.status-pending {
-    background-color: #fff3cd;
-    border-left: 4px solid #ffc107;
+    .consultant-card img {
+        border: 3px solid #f8f9fa;
+        transition: border-color 0.2s ease-in-out;
+    }
+
+    .consultant-card:hover img {
+        border-color: #007bff;
+    }
+
+.btn-book-appointment {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    border-radius: 25px;
+    transition: all 0.2s ease-in-out;
 }
 
-.status-confirmed {
-    background-color: #d1ecf1;
-    border-left: 4px solid #17a2b8;
-}
+    .btn-book-appointment:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
 
-.status-completed {
-    background-color: #d4edda;
-    border-left: 4px solid #28a745;
-}
-
-.status-cancelled {
-    background-color: #f8d7da;
-    border-left: 4px solid #dc3545;
-}
-
-/* Form Enhancements */
-.form-group label {
-    font-weight: 600;
-    color: #495057;
-}
-
-.form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.form-control.is-invalid {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
-
-.form-control.is-valid {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-}
-
-/* Modal Enhancements */
+/* Appointment modal styles */
 .modal-content {
     border: none;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-    border-bottom: 1px solid #e9ecef;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-.modal-footer {
-    border-top: 1px solid #e9ecef;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
-/* Button Groups */
-.btn-group .btn {
-    flex: 1;
-}
-
-.btn-group-sm > .btn, .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    border-radius: 0.2rem;
-}
-
-/* Statistics Cards */
-.small-box {
-    border-radius: 8px;
-    position: relative;
-    display: block;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    border-radius: 15px;
     overflow: hidden;
 }
 
-    .small-box > .inner {
-        padding: 15px;
-    }
-
-    .small-box h3 {
-        font-size: 2.2rem;
-        font-weight: bold;
-        margin: 0 0 10px 0;
-        white-space: nowrap;
-        padding: 0;
-    }
-
-    .small-box p {
-        font-size: 1rem;
-        margin: 0;
-    }
-
-    .small-box .icon {
-        transition: all .3s linear;
-        position: absolute;
-        top: -10px;
-        right: 10px;
-        z-index: 0;
-        font-size: 90px;
-        color: rgba(0,0,0,0.15);
-    }
-
-/* Loading States */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+.modal-header {
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
 }
 
+.modal-body {
+    padding: 2rem;
+}
+
+.consultant-info {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    transition: border-color 0.2s ease-in-out;
+}
+
+    .consultant-info:hover {
+        border-color: #007bff;
+    }
+
+/* Appointment table styles */
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+    padding: 1rem 0.75rem;
+}
+
+.table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+/* Status badges */
+.badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+    .badge i {
+        margin-right: 0.25rem;
+    }
+
+/* Action buttons */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+}
+
+.btn-success:hover,
+.btn-primary:hover {
+    transform: translateY(-1px);
+}
+
+/* Filter buttons */
+.filter-buttons .btn-check:checked + .btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.filter-buttons .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Loading spinner */
 .spinner-border {
     width: 3rem;
     height: 3rem;
 }
 
-/* Empty States */
+/* Toast container */
+.toast-container {
+    z-index: 9999;
+}
+
+.toast {
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Empty state */
 .empty-state {
-    padding: 3rem 1rem;
+    padding: 3rem 2rem;
     text-align: center;
 }
 
-    .empty-state .fa-4x {
-        font-size: 4rem;
+    .empty-state i {
+        opacity: 0.5;
         margin-bottom: 1rem;
     }
 
-/* Table Improvements */
-.table th {
-    font-weight: 600;
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.table-hover tbody tr:hover {
-    background-color: rgba(0, 0, 0, 0.075);
-}
-
-/* Time Display */
-.time-display {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.time-until {
-    color: #28a745;
-    font-weight: 600;
-}
-
-.time-overdue {
-    color: #dc3545;
-    font-weight: 600;
-}
-
-/* Consultant Info Display */
-.consultant-info {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1rem;
-    border-left: 4px solid #007bff;
-}
-
-    .consultant-info h6 {
-        color: #007bff;
-        margin-bottom: 0.5rem;
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 0;
     }
 
-/* Appointment Timeline */
-.appointment-timeline {
-    position: relative;
-    padding-left: 2rem;
+/* Form validation */
+.was-validated .form-control:valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.18-.18 2.18-2.18-1.27-1.27L3.39 3.1 2.3 4.2l-.9-.9L.93 3.77z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
 }
 
-    .appointment-timeline::before {
-        content: '';
-        position: absolute;
-        left: 0.5rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #dee2e6;
-    }
-
-.appointment-timeline-item {
-    position: relative;
-    margin-bottom: 1.5rem;
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.7.7M5.8 8.4l.7-.7m-.7-.7.7.7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
 }
 
-    .appointment-timeline-item::before {
-        content: '';
-        position: absolute;
-        left: -0.75rem;
-        top: 0.25rem;
-        width: 0.75rem;
-        height: 0.75rem;
-        border-radius: 50%;
-        background: #007bff;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 2px #007bff;
-    }
-
-/* Notification Badges */
-.notification-badge {
-    position: relative;
-}
-
-    .notification-badge::after {
-        content: '';
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #dc3545;
-        animation: pulse 2s infinite;
-    }
-
-@keyframes pulse {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-    }
-
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-    }
-
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-    }
-}
-
-/* Responsive Design */
+/* Responsive design */
 @media (max-width: 768px) {
-    .consultant-card .card-title {
-        font-size: 1rem;
+    .consultant-card {
+        margin-bottom: 1rem;
     }
 
-    .small-box h3 {
-        font-size: 1.8rem;
+    .table-responsive {
+        font-size: 0.875rem;
     }
 
-    .small-box .icon {
-        font-size: 70px;
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
     }
 
-    .btn-group {
-        display: flex;
-        flex-direction: column;
+    .filter-buttons {
+        margin-top: 1rem;
     }
 
-        .btn-group .btn {
-            margin-bottom: 0.25rem;
-            border-radius: 0.25rem !important;
+        .filter-buttons .btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            margin: 0.125rem;
         }
 
-    .appointment-timeline {
-        padding-left: 1rem;
+    .modal-body {
+        padding: 1rem;
     }
 
-        .appointment-timeline::before {
-            left: 0.25rem;
-        }
+    .consultant-info {
+        padding: 1rem !important;
+    }
 
-    .appointment-timeline-item::before {
-        left: -0.5rem;
-        width: 0.5rem;
-        height: 0.5rem;
+        .consultant-info img {
+            width: 50px !important;
+            height: 50px !important;
+        }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .table td,
+    .table th {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .breadcrumb {
+        font-size: 0.875rem;
+    }
+
+    h2.h3 {
+        font-size: 1.5rem;
     }
 }
 
-/* Animation for new appointments */
-.appointment-card.new-appointment {
-    animation: slideInUp 0.5s ease-out;
-}
-
-@keyframes slideInUp {
+/* Animation for cards */
+@keyframes fadeInUp {
     from {
-        transform: translateY(30px);
         opacity: 0;
+        transform: translateY(30px);
     }
 
     to {
-        transform: translateY(0);
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
-/* Highlight current day appointments */
-.appointment-today {
-    border: 2px solid #ffc107;
-    background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+.consultant-card {
+    animation: fadeInUp 0.5s ease-out;
 }
 
-/* Status indicators */
-.status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 0.5rem;
-}
-
-    .status-indicator.pending {
-        background-color: #ffc107;
+    .consultant-card:nth-child(1) {
+        animation-delay: 0.1s;
     }
 
-    .status-indicator.confirmed {
-        background-color: #17a2b8;
+    .consultant-card:nth-child(2) {
+        animation-delay: 0.2s;
     }
 
-    .status-indicator.completed {
-        background-color: #28a745;
+    .consultant-card:nth-child(3) {
+        animation-delay: 0.3s;
     }
 
-    .status-indicator.cancelled {
-        background-color: #dc3545;
+    .consultant-card:nth-child(4) {
+        animation-delay: 0.4s;
     }
 
-/* Form validation styling */
-.invalid-feedback {
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-.valid-feedback {
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
-/* Custom alerts */
-.alert.alert-appointment {
-    border-left: 4px solid #007bff;
-    background-color: #e7f3ff;
-    border-color: #b3d9ff;
-    color: #004085;
-}
-
-/* Calendar integration styles */
-.calendar-link {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-    .calendar-link:hover {
-        color: #0056b3;
-        text-decoration: underline;
+    .consultant-card:nth-child(5) {
+        animation-delay: 0.5s;
     }
+
+    .consultant-card:nth-child(6) {
+        animation-delay: 0.6s;
+    }
+
+/* Focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
 
 /* Print styles */
 @media print {
-    .btn, .modal, .alert {
+    .btn,
+    .filter-buttons,
+    .pagination,
+    .breadcrumb {
         display: none !important;
     }
 
-    .appointment-card {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #dee2e6;
+    .card {
+        border: 1px solid #000 !important;
+    }
+
+    .table {
+        font-size: 12px;
+    }
+
+    .badge {
+        border: 1px solid #000;
+        color: #000 !important;
+        background: white !important;
     }
 }

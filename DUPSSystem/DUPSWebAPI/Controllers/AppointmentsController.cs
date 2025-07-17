@@ -38,11 +38,19 @@ namespace DUPSWebAPI.Controllers
 				}
 				else if (User.IsConsultant())
 				{
-					var filtered = appointments.Where(a => a.ConsultantId == currentUserId);
+					var consultantId = _appointmentService.GetConsultantIdByUserId(currentUserId);
+
+					if (consultantId == null)
+					{
+						return BadRequest(new { success = false, message = "Không tìm thấy thông tin tư vấn viên cho người dùng này" });
+					}
+
+					var filtered = appointments.Where(a => a.ConsultantId == consultantId.Value);
 					return Ok(filtered);
 				}
 				else
 				{
+					// Member và các role khác chỉ xem appointments của chính họ (UserId)
 					var filtered = appointments.Where(a => a.UserId == currentUserId);
 					return Ok(filtered);
 				}
@@ -107,23 +115,45 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[Authorize(Roles = Roles.AuthenticatedRoles)]
-		public IActionResult Put([FromODataUri] int key, [FromBody] Appointment appointment)
+		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<Appointment> delta)
 		{
 			try
 			{
-				var existing = _appointmentService.GetAppointments().FirstOrDefault(a => a.AppointmentId == key);
-				if (existing == null)
+				var appointment = _appointmentService.GetAppointment(key);
+				if (appointment == null)
 				{
 					return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn" });
 				}
 
+				var currentUserId = User.GetUserId();
+
 				// Kiểm tra quyền sửa
-				if (!User.IsOwnerOrCanViewAll(existing.UserId) && !User.CanManageAppointments())
+				bool canUpdate = false;
+
+				if (User.CanManageAppointments())
+				{
+					canUpdate = true; // Admin/Manager/Staff
+				}
+				else if (appointment.UserId == currentUserId)
+				{
+					canUpdate = true; // Member sửa appointment của mình
+				}
+				else if (User.IsConsultant())
+				{
+					// Consultant sửa appointment được đặt với họ
+					var consultantId = _appointmentService.GetConsultantIdByUserId(currentUserId);
+					canUpdate = (consultantId != null && appointment.ConsultantId == consultantId.Value);
+				}
+
+				if (!canUpdate)
 				{
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa lịch hẹn này" });
 				}
 
-				// Logic update...
+				// Apply changes
+				delta.Patch(appointment);
+				_appointmentService.UpdateAppointment(appointment);
+
 				return Updated(appointment);
 			}
 			catch (Exception ex)

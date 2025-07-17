@@ -15,6 +15,7 @@ namespace Services.Interfaces
 		AppointmentResponse CancelAppointment(int appointmentId, int userId);
 		AppointmentResponse ConfirmAppointment(int appointmentId);
 		AppointmentResponse CompleteAppointment(int appointmentId);
+		int? GetConsultantIdByUserId(int userId);
 
 		// Direct entity methods for OData controllers
 		List<Appointment> GetAppointments();

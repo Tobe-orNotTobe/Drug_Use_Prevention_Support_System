@@ -7,11 +7,11 @@
     <meta name="auth-token" content="@ViewBag.AuthToken" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/my-courses.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/appointment.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <meta name="api-base-url" content="https://localhost:7008" />
-    <meta name="auth-token" content="@ViewBag.AuthToken" />
     <meta name="current-user-id" content="@ViewBag.CurrentUserId" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body data-user-role="@ViewBag.CurrentUserRole">
     <header>
@@ -38,100 +38,176 @@
                             var isAuthenticated = ViewBag.IsAuthenticated as bool? ?? false;
                         }
 
+                        <!-- Courses Menu -->
                         @if (isAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "Courses")">
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-graduation-cap"></i> Khóa học
                                 </a>
-                            </li>
-
-                            @if (role == "Admin" || role == "Staff")
-                            {
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-poll"></i> Quản lý Khảo sát
-                                    </a>
-                                    <ul class="dropdown-menu">
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Index", "Courses")">
+                                            <i class="fas fa-list"></i> Danh sách khóa học
+                                        </a>
+                                    </li>
+                                    @if (role == "Member")
+                                    {
                                         <li>
-                                            <a class="dropdown-item" href="@Url.Action("Index", "Surveys")">
-                                                <i class="fas fa-list"></i> Danh sách khảo sát
+                                            <a class="dropdown-item" href="@Url.Action("MyCourses", "Courses")">
+                                                <i class="fas fa-book-open"></i> Khóa học của tôi
                                             </a>
                                         </li>
+                                    }
+                                    @if (role == "Staff" || role == "Manager" || role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("Manage", "Courses")">
+                                                <i class="fas fa-cogs"></i> Quản lý khóa học
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- Surveys Menu -->
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-clipboard-list"></i> Khảo sát
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Index", "Surveys")">
+                                            <i class="fas fa-list"></i> Danh sách khảo sát
+                                        </a>
+                                    </li>
+                                    @if (role == "Staff" || role == "Manager" || role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item" href="@Url.Action("Create", "Surveys")">
-                                                <i class="fas fa-plus"></i> Tạo khảo sát mới
+                                                <i class="fas fa-plus"></i> Tạo khảo sát
                                             </a>
                                         </li>
-                                        @if (role == "Admin")
-                                        {
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item" href="@Url.Action("AllResults", "Surveys")">
-                                                    <i class="fas fa-chart-bar"></i> Kết quả tổng hợp
-                                                </a>
-                                            </li>
-                                        }
-                                    </ul>
-                                </li>
-                            }
-                            else if (role == "Member")
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="@Url.Action("Index", "Surveys")">
-                                        <i class="fas fa-clipboard-question"></i> Làm Khảo sát
-                                    </a>
-                                </li>
-                            }
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "Consultants")">
-                                    <i class="fas fa-user-md"></i> Tư vấn viên
-                                </a>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("AllResults", "Surveys")">
+                                                <i class="fas fa-chart-bar"></i> Kết quả khảo sát
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
                             </li>
+                        }
 
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Book", "Appointments")">
-                                    <i class="fas fa-calendar-check"></i> Đặt lịch hẹn
-                                </a>
-                            </li>
-
-                            @if (role == "Manager" || role == "Admin")
+                        <!-- Appointments Menu -->
+                        @if (isAuthenticated)
+                        {
+                            @if (role == "Member")
                             {
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-cogs"></i> Quản lý
+                                        <i class="fas fa-calendar-alt"></i> Lịch hẹn
                                     </a>
                                     <ul class="dropdown-menu">
-                                        @if (role == "Admin")
-                                        {
-                                            <li>
-                                                <a class="dropdown-item" href="@Url.Action("Dashboard", "Admin")">
-                                                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" href="@Url.Action("Users", "Admin")">
-                                                    <i class="fas fa-users"></i> Quản lý người dùng
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" href="@Url.Action("ExportExcel", "Reports")">
-                                                    <i class="fas fa-file-excel"></i> Export Data
-                                                </a>
-                                            </li>
-                                        }
                                         <li>
-                                            <a class="dropdown-item" href="@Url.Action("Manage", "Consultants")">
-                                                <i class="fas fa-user-tie"></i> Quản lý tư vấn viên
+                                            <a class="dropdown-item" href="@Url.Action("Book", "Appointments")">
+                                                <i class="fas fa-calendar-plus"></i> Đặt lịch hẹn
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("MyAppointments", "Appointments")">
+                                                <i class="fas fa-calendar-check"></i> Lịch hẹn của tôi
                                             </a>
                                         </li>
                                     </ul>
+                                </li>
+                            }
+                            else if (role == "Consultant")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="@Url.Action("MyAppointments", "Appointments")">
+                                        <i class="fas fa-calendar-alt"></i> Lịch hẹn của tôi
+                                    </a>
+                                </li>
+                            }
+                            else if (role == "Staff" || role == "Manager" || role == "Admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="@Url.Action("Manage", "Appointments")">
+                                        <i class="fas fa-calendar-alt"></i> Quản lý lịch hẹn
+                                    </a>
                                 </li>
                             }
                         }
+
+                        <!-- Consultants Menu -->
+                        @if (isAuthenticated)
+                        {
+                            @if (role == "Manager" || role == "Admin")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="@Url.Action("Index", "Consultants")">
+                                        <i class="fas fa-user-tie"></i> Tư vấn viên
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" href="@Url.Action("Index", "Consultants")">
+                                        <i class="fas fa-user-tie"></i> Tư vấn viên
+                                    </a>
+                                </li>
+                            }
+                        }
+
+                        <!-- Admin Menu -->
+                        @if (role == "Admin" || role == "Manager")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> Quản trị
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (role == "Admin")
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("Dashboard", "Admin")">
+                                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("Users", "Admin")">
+                                                <i class="fas fa-users"></i> Quản lý người dùng
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("ExportExcel", "Reports")">
+                                                <i class="fas fa-file-excel"></i> Export Data
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Manage", "Consultants")">
+                                            <i class="fas fa-user-tie"></i> Quản lý tư vấn viên
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Dashboard", "Reports")">
+                                            <i class="fas fa-chart-line"></i> Báo cáo
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
                     </ul>
 
+                    <!-- User Menu -->
                     <ul class="navbar-nav">
                         @if (isAuthenticated)
                         {
@@ -145,11 +221,16 @@
                                             <i class="fas fa-id-card"></i> Hồ sơ cá nhân
                                         </a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("MyAppointments", "Appointments")">
-                                            <i class="fas fa-calendar"></i> Lịch hẹn của tôi
-                                        </a>
-                                    </li>
+
+                                    @if (role == "Member" || role == "Consultant")
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("MyAppointments", "Appointments")">
+                                                <i class="fas fa-calendar"></i> Lịch hẹn của tôi
+                                            </a>
+                                        </li>
+                                    }
+
                                     @if (role == "Member")
                                     {
                                         <li>
@@ -158,6 +239,7 @@
                                             </a>
                                         </li>
                                     }
+
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
@@ -188,22 +270,28 @@
         </nav>
     </header>
 
-    <div class="container-fluid" style="margin-top: 70px;">
+    <div class="container-fluid" style="margin-top: 76px;">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted bg-light mt-5">
-        <div class="container text-center py-3">
-            &copy; 2024 - DUPS System - <a href="@Url.Action("Privacy", "Home")">Chính sách bảo mật</a>
+    <footer class="border-top footer text-muted">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    &copy; 2024 - DUPS System - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small>Drug Use Prevention Support System v1.0</small>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,163 @@
+﻿@{
+    ViewData["Title"] = "Lịch hẹn của tôi";
+    var role = ViewBag.CurrentUserRole as string ?? "Guest";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h3 mb-0">
+                    <i class="fas fa-calendar-alt text-primary"></i>
+                    @if (role == "Member")
+                    {
+                        <span>Lịch hẹn của tôi</span>
+                    }
+                    else if (role == "Consultant")
+                    {
+                        <span>Lịch hẹn được đặt</span>
+                    }
+                    else
+                    {
+                        <span>Quản lý lịch hẹn</span>
+                    }
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="@Url.Action("Index", "Home")">
+                                <i class="fas fa-home"></i> Trang chủ
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Lịch hẹn</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    @if (role == "Member")
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <span>Bạn có thể <a href="@Url.Action("Book", "Appointments")" class="alert-link">đặt lịch hẹn mới</a> với các tư vấn viên.</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i>
+                            Danh sách lịch hẹn
+                        </h5>
+                        <div class="filter-buttons">
+                            <div class="btn-group" role="group" aria-label="Filter">
+                                <input type="radio" class="btn-check" name="statusFilter" id="filterAll" value="" checked>
+                                <label class="btn btn-outline-light btn-sm" for="filterAll">Tất cả</label>
+
+                                <input type="radio" class="btn-check" name="statusFilter" id="filterPending" value="Pending">
+                                <label class="btn btn-outline-light btn-sm" for="filterPending">Chờ xác nhận</label>
+
+                                <input type="radio" class="btn-check" name="statusFilter" id="filterConfirmed" value="Confirmed">
+                                <label class="btn btn-outline-light btn-sm" for="filterConfirmed">Đã xác nhận</label>
+
+                                <input type="radio" class="btn-check" name="statusFilter" id="filterCompleted" value="Completed">
+                                <label class="btn btn-outline-light btn-sm" for="filterCompleted">Hoàn thành</label>
+
+                                <input type="radio" class="btn-check" name="statusFilter" id="filterCancelled" value="Cancelled">
+                                <label class="btn btn-outline-light btn-sm" for="filterCancelled">Đã hủy</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="loading-spinner" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                        <p class="mt-2">Đang tải danh sách lịch hẹn...</p>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="appointmentsTable">
+                            <thead class="table-light">
+                                <tr>
+                                    @if (role == "Member")
+                                    {
+                                        <th>Tư vấn viên</th>
+                                        <th>Chuyên môn</th>
+                                    }
+                                    else if (role == "Consultant")
+                                    {
+                                        <th>Thành viên</th>
+                                        <th>Email</th>
+                                    }
+                                    <th>Ngày hẹn</th>
+                                    <th>Thời lượng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ghi chú</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointmentsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="empty-message" class="text-center py-5 d-none">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">
+                            @if (role == "Member")
+                            {
+                                <span>Bạn chưa có lịch hẹn nào. <a href="@Url.Action("Book", "Appointments")">Đặt lịch hẹn ngay</a>.</span>
+                            }
+                            else
+                            {
+                                <span>Chưa có lịch hẹn nào được đặt.</span>
+                            }
+                        </p>
+                    </div>
+
+                    <nav aria-label="Appointments pagination" id="paginationContainer" class="d-none">
+                        <ul class="pagination justify-content-center" id="pagination">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Xác nhận thao tác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Bạn có chắc chắn muốn thực hiện thao tác này?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmAction">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/appointment.js"></script>
+    <script>
+        $(document).ready(function() {
+            MyAppointment.init('@role');
+        });
+    </script>
+}

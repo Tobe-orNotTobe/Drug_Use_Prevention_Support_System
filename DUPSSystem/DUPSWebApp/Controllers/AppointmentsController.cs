@@ -4,20 +4,29 @@ namespace DUPSWebApp.Controllers
 {
 	public class AppointmentsController : BaseController
 	{
-		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		[RoleAuthorization("Member")]
 		public IActionResult Book()
 		{
-			if (!CanBookAppointments())
+			if (!CanBookAppointments() || !IsMember)
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}
-			return View();
+			return View("ConsultantList");
 		}
 
 		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
 		public IActionResult MyAppointments()
 		{
-			return View();
+			if (!IsAuthenticated)
+			{
+				return RedirectToAction("Login", "Auth");
+			}
+
+			ViewBag.PageTitle = IsMember ? "Lịch hẹn của tôi"
+							  : IsConsultant ? "Lịch hẹn được đặt"
+							  : "Quản lý lịch hẹn";
+
+			return View("MyAppointment");
 		}
 
 		[RoleAuthorization("Consultant", "Manager", "Admin")]
@@ -27,7 +36,8 @@ namespace DUPSWebApp.Controllers
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}
-			return View();
+
+			return RedirectToAction("MyAppointments");
 		}
 
 		[RoleAuthorization("Staff", "Manager", "Admin")]
@@ -37,7 +47,28 @@ namespace DUPSWebApp.Controllers
 			{
 				return RedirectToAction("AccessDenied", "Home");
 			}
+
+			ViewBag.PageTitle = "Quản lý tất cả lịch hẹn";
+			ViewBag.IsManagement = true;
+
+			return View("MyAppointment");
+		}
+
+		[RoleAuthorization("Member", "Staff", "Consultant", "Manager", "Admin")]
+		public IActionResult Details(int id)
+		{
+			if (!IsAuthenticated)
+			{
+				return RedirectToAction("Login", "Auth");
+			}
+
+			ViewBag.AppointmentId = id;
 			return View();
+		}
+
+		public IActionResult AccessDenied()
+		{
+			return View("~/Views/Shared/AccessDenied.cshtml");
 		}
 	}
 }
