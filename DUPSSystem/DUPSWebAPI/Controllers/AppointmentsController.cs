@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.OData.Deltas;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
-using Services;
 using Services.Interfaces;
 
 namespace DUPSWebAPI.Controllers
@@ -61,6 +60,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		// GET: odata/Appointments(5)
 		[EnableQuery]
 		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Get([FromODataUri] int key)
@@ -87,6 +87,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		// POST: odata/Appointments - CREATE APPOINTMENT
 		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Post([FromBody] AppointmentCreateRequest request)
 		{
@@ -105,8 +106,21 @@ namespace DUPSWebAPI.Controllers
 				// Auto-assign UserId từ JWT
 				request.UserId = User.GetUserId();
 
-				var response = _appointmentService.CreateAppointment(request);
-				return response.Success ? Created(response) : BadRequest(response);
+				var appointment = new Appointment
+				{
+					UserId = request.UserId,
+					ConsultantId = request.ConsultantId,
+					AppointmentDate = request.AppointmentDate,
+					DurationMinutes = request.DurationMinutes ?? 60,
+					Status = "Pending",
+					Notes = request.Notes ?? "",
+					CreatedAt = DateTime.Now
+				};
+
+				_appointmentService.SaveAppointment(appointment);
+
+				// Trả về entity đã được tạo (theo chuẩn OData)
+				return Created(appointment);
 			}
 			catch (Exception ex)
 			{
@@ -114,6 +128,7 @@ namespace DUPSWebAPI.Controllers
 			}
 		}
 
+		// PATCH: odata/Appointments(5) - UPDATE APPOINTMENT
 		[Authorize(Roles = Roles.AuthenticatedRoles)]
 		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<Appointment> delta)
 		{
@@ -155,6 +170,46 @@ namespace DUPSWebAPI.Controllers
 				_appointmentService.UpdateAppointment(appointment);
 
 				return Updated(appointment);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		// DELETE: odata/Appointments(5) - DELETE APPOINTMENT
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Delete([FromODataUri] int key)
+		{
+			try
+			{
+				var appointment = _appointmentService.GetAppointment(key);
+				if (appointment == null)
+				{
+					return NotFound(new { success = false, message = "Không tìm thấy lịch hẹn" });
+				}
+
+				var currentUserId = User.GetUserId();
+
+				// Kiểm tra quyền xóa (tương tự quyền sửa)
+				bool canDelete = false;
+
+				if (User.CanManageAppointments())
+				{
+					canDelete = true; // Admin/Manager/Staff
+				}
+				else if (appointment.UserId == currentUserId && appointment.Status == "Pending")
+				{
+					canDelete = true; // Member chỉ xóa được appointment pending của mình
+				}
+
+				if (!canDelete)
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền xóa lịch hẹn này" });
+				}
+
+				_appointmentService.DeleteAppointment(appointment);
+				return NoContent();
 			}
 			catch (Exception ex)
 			{

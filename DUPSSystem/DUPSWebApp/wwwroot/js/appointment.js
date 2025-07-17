@@ -34,9 +34,7 @@
         try {
             const response = await fetch(`${this.baseUrl}${url}`, config);
 
-            // Handle different response types from OData
             if (response.status === 204) {
-                // No Content - successful PATCH/PUT/DELETE
                 return { success: true };
             }
 
@@ -77,29 +75,36 @@
         if (role === 'Member') {
             return this.request(`/odata/Appointments?$filter=UserId eq ${userId}&$expand=Consultant($expand=User)`);
         } else if (role === 'Consultant') {
-            // Để API tự động filter dựa trên UserId -> ConsultantId mapping
-            return this.request('/odata/Appointments?$expand=User,Consultant($expand=User)');
+            return this.request(`/odata/Appointments?$expand=User,Consultant($expand=User)`);
         } else {
-            // Staff/Manager/Admin xem tất cả
             return this.request('/odata/Appointments?$expand=User,Consultant($expand=User)');
         }
     },
 
     async createAppointment(appointmentData) {
+        const requestData = {
+            ConsultantId: appointmentData.ConsultantId,
+            AppointmentDate: appointmentData.AppointmentDate,
+            DurationMinutes: appointmentData.DurationMinutes || 60,
+            Notes: appointmentData.Notes || ''
+        };
+
         return this.request('/odata/Appointments', {
             method: 'POST',
-            body: JSON.stringify(appointmentData)
+            body: JSON.stringify(requestData)
         });
     },
 
     async updateAppointment(appointmentId, updateData) {
         return this.request(`/odata/Appointments(${appointmentId})`, {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.getToken()}`
-            },
             body: JSON.stringify(updateData)
+        });
+    },
+
+    async deleteAppointment(appointmentId) {
+        return this.request(`/odata/Appointments(${appointmentId})`, {
+            method: 'DELETE'
         });
     }
 };
@@ -307,7 +312,6 @@ const ConsultantList = {
 
         const formData = new FormData(form);
 
-        // Get duration directly from select value (in minutes)
         const durationMinutes = parseInt(formData.get('timeSlot')) || 60;
 
         const appointmentData = {
@@ -323,19 +327,27 @@ const ConsultantList = {
 
             const response = await AppointmentAPI.createAppointment(appointmentData);
 
-            // OData Created response trả về appointment entity
-            if (response && response.AppointmentId) {
+            if (response && (response.AppointmentId || response.appointmentId)) {
                 AppointmentUtils.showToast('Đặt lịch hẹn thành công! Tư vấn viên sẽ xác nhận sớm nhất.', 'success');
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById('appointmentModal'));
                 modal.hide();
+
+                if (typeof MyAppointment !== 'undefined' && MyAppointment.loadAppointments) {
+                    await MyAppointment.loadAppointments();
+                }
             } else {
-                throw new Error('Không thể đặt lịch hẹn');
+                throw new Error('Không thể đặt lịch hẹn - Response không hợp lệ');
             }
 
         } catch (error) {
             console.error('Error creating appointment:', error);
-            const errorMessage = error.message || 'Không thể đặt lịch hẹn. Vui lòng thử lại.';
+            let errorMessage = 'Không thể đặt lịch hẹn. Vui lòng thử lại.';
+
+            if (error.message) {
+                errorMessage = error.message;
+            }
+
             AppointmentUtils.showToast(errorMessage, 'error');
         } finally {
             submitBtn.disabled = false;

@@ -147,19 +147,19 @@
                         <!-- Consultants Menu -->
                         @if (isAuthenticated)
                         {
-                            @if (role == "Manager" || role == "Admin")
+                            @if (role == "Consultant")
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" href="@Url.Action("Index", "Consultants")">
-                                        <i class="fas fa-user-tie"></i> Tư vấn viên
+                                    <a class="nav-link" asp-controller="Consultant" asp-action="MyProfile">
+                                        <i class="fas fa-user-md me-1"></i>Hồ sơ của tôi
                                     </a>
                                 </li>
                             }
-                            else
+                            else if (role == "Manager" || role == "Admin")
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" href="@Url.Action("Index", "Consultants")">
-                                        <i class="fas fa-user-tie"></i> Tư vấn viên
+                                    <a class="nav-link" asp-controller="Consultant" asp-action="Index">
+                                        <i class="fas fa-users-cog me-1"></i>Quản lý Consultant
                                     </a>
                                 </li>
                             }

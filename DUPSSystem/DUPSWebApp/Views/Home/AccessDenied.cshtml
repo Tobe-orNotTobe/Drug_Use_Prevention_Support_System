@@ -1,81 +1,44 @@
 ﻿@{
-    ViewData["Title"] = "Không có quyền truy cập";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Truy cập bị từ chối";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card border-warning">
-            <div class="card-header bg-warning text-dark text-center">
-                <h4><i class="fas fa-exclamation-triangle"></i> Không có quyền truy cập</h4>
-            </div>
-            <div class="card-body text-center">
-                <div class="mb-4">
-                    <i class="fas fa-ban fa-5x text-warning"></i>
-                </div>
-
-                <h5 class="mb-3">Xin lỗi, bạn không có quyền truy cập trang này!</h5>
-
-                @{
-                    var role = ViewBag.CurrentRole as string ?? "Guest";
-                    var userName = ViewBag.UserName as string ?? "";
-                }
-
-                @if (role == "Guest")
-                {
-                    <p class="mb-4">
-                        Bạn cần đăng nhập để truy cập trang này.
-                        Vui lòng đăng nhập để tiếp tục.
-                    </p>
-
-                    <div class="d-grid gap-2 d-md-block">
-                        <a href="@Url.Action("Login", "Auth")" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                        </a>
-                        <a href="@Url.Action("Register", "Auth")" class="btn btn-outline-success">
-                            <i class="fas fa-user-plus"></i> Đăng ký
-                        </a>
-                    </div>
-                }
-                else
-                {
-                    <p class="mb-3">
-                        Xin chào <strong>@userName</strong>,
-                        bạn đang đăng nhập với vai trò <span class="badge bg-secondary">@role</span>
-                    </p>
-
-                    <p class="mb-4">
-                        Vai trò hiện tại của bạn không có quyền truy cập chức năng này.
-                        Vui lòng liên hệ quản trị viên nếu bạn cần quyền truy cập.
-                    </p>
-
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-info-circle"></i> Quyền truy cập theo vai trò:</h6>
-                        <ul class="list-unstyled mb-0 text-start">
-                            <li><span class="badge bg-success">Member</span> - Xem khóa học, làm khảo sát, đặt lịch hẹn</li>
-                            <li><span class="badge bg-primary">Staff</span> - Quản lý khóa học và khảo sát</li>
-                            <li><span class="badge bg-info">Consultant</span> - Quản lý lịch hẹn tư vấn</li>
-                            <li><span class="badge bg-warning">Manager</span> - Quản lý tư vấn viên và báo cáo</li>
-                            <li><span class="badge bg-danger">Admin</span> - Toàn quyền quản lý hệ thống</li>
-                        </ul>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-ban text-danger" style="font-size: 4rem;"></i>
                     </div>
 
-                    <div class="d-grid gap-2 d-md-block">
-                        <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
-                            <i class="fas fa-home"></i> Về trang chủ
+                    <h2 class="text-danger fw-bold mb-3">Truy cập bị từ chối</h2>
+
+                    <p class="text-muted mb-4">
+                        Bạn không có quyền truy cập vào trang này.
+                        Vui lòng liên hệ quản trị viên nếu bạn cho rằng đây là lỗi.
+                    </p>
+
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Về trang chủ
                         </a>
-                        <button onclick="history.back()" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left"></i> Quay lại
+
+                        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>Quay lại
                         </button>
                     </div>
-                }
-            </div>
 
-            <div class="card-footer text-muted text-center">
-                <small>
-                    Nếu bạn cho rằng đây là lỗi, vui lòng liên hệ:
-                    <a href="mailto:admin@drugpreventionsystem.org">admin@drugpreventionsystem.org</a>
-                </small>
+                    <hr class="my-4">
+
+                    <div class="text-start">
+                        <h6 class="fw-bold text-muted mb-3">Thông tin chi tiết:</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li><i class="fas fa-user me-2"></i>Người dùng: @ViewBag.CurrentUserName</li>
+                            <li><i class="fas fa-id-badge me-2"></i>Vai trò hiện tại: @ViewBag.CurrentUserRole</li>
+                            <li><i class="fas fa-clock me-2"></i>Thời gian: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

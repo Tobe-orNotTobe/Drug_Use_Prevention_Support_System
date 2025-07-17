@@ -1,0 +1,187 @@
+﻿@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-md me-2"></i>Hồ sơ Tư vấn viên
+                    </h3>
+                </div>
+
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>@ViewBag.ErrorMessage
+                        </div>
+                    }
+
+                    <div id="profileInfo" style="display: block;">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-avatar mb-4">
+                                    <img src="~/images/default-avatar.png" class="rounded-circle img-fluid"
+                                         style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar">
+                                </div>
+                            </div>
+
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted">Họ và tên</label>
+                                        <div class="border rounded p-2 bg-light" id="displayFullName">
+                                            --
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted">Email</label>
+                                        <div class="border rounded p-2 bg-light" id="displayEmail">
+                                            --
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted">Số điện thoại</label>
+                                        <div class="border rounded p-2 bg-light" id="displayPhone">
+                                            --
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted">Trạng thái</label>
+                                        <div class="border rounded p-2 bg-light" id="displayStatus">
+                                            <span class="badge bg-success">Hoạt động</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-certificate me-2"></i>Thông tin chuyên môn
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Bằng cấp</label>
+                                <div class="border rounded p-3 bg-light" id="displayQualification">
+                                    --
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Chuyên môn</label>
+                                <div class="border rounded p-3 bg-light" id="displayExpertise">
+                                    --
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold text-muted">Lịch làm việc</label>
+                                <div class="border rounded p-3 bg-light" id="displayWorkSchedule">
+                                    --
+                                </div>
+                            </div>
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold text-muted">Giới thiệu bản thân</label>
+                                <div class="border rounded p-3 bg-light" id="displayBio" style="min-height: 80px;">
+                                    --
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary btn-lg" onclick="showEditForm()">
+                                <i class="fas fa-edit me-2"></i>Chỉnh sửa hồ sơ
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="editForm" style="display: none;">
+                        <form id="profileForm">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-edit me-2"></i>Chỉnh sửa thông tin chuyên môn
+                            </h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="qualification" class="form-label fw-bold">Bằng cấp</label>
+                                    <input type="text" class="form-control" id="qualification" name="qualification"
+                                           placeholder="Nhập bằng cấp của bạn">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="expertise" class="form-label fw-bold">Chuyên môn</label>
+                                    <input type="text" class="form-control" id="expertise" name="expertise"
+                                           placeholder="Nhập chuyên môn của bạn">
+                                </div>
+
+                                <div class="col-12 mb-3">
+                                    <label for="workSchedule" class="form-label fw-bold">Lịch làm việc</label>
+                                    <textarea class="form-control" id="workSchedule" name="workSchedule" rows="3"
+                                              placeholder="Mô tả lịch làm việc của bạn (ví dụ: Thứ 2-6: 8:00-17:00, Thứ 7: 8:00-12:00)"></textarea>
+                                </div>
+
+                                <div class="col-12 mb-3">
+                                    <label for="bio" class="form-label fw-bold">Giới thiệu bản thân</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="4"
+                                              placeholder="Giới thiệu về kinh nghiệm, phương pháp tư vấn của bạn..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="button" class="btn btn-success me-2" onclick="updateProfile()">
+                                    <i class="fas fa-save me-2"></i>Lưu thay đổi
+                                </button>
+                                <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                    <i class="fas fa-times me-2"></i>Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="successToast" class="toast" role="alert">
+        <div class="toast-header bg-success text-white">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong class="me-auto">Thành công</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="successMessage">
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="errorToast" class="toast" role="alert">
+        <div class="toast-header bg-danger text-white">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong class="me-auto">Lỗi</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="errorMessage">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/consultant.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConsultantProfile();
+        });
+    </script>
+}
