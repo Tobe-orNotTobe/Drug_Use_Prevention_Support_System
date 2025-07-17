@@ -271,18 +271,16 @@
             if (searchParams.email) {
                 filters.push(`contains(tolower(Email), '${searchParams.email.toLowerCase()}')`);
             }
-            if (searchParams.role) {
-                filters.push(`Role eq '${searchParams.role}'`);
-            }
             if (searchParams.status) {
-                filters.push(`Status eq '${searchParams.status}'`);
+                const isActive = searchParams.status === 'Active';
+                filters.push(`IsActive eq ${isActive}`);
             }
 
             if (filters.length > 0) {
                 filterQuery = `&$filter=${filters.join(' and ')}`;
             }
 
-            const response = await fetch(`${this.apiBaseUrl}/odata/Users?$count=true&$skip=${skip}&$top=${this.pageSize}&$orderby=CreatedAt desc${filterQuery}`, {
+            const response = await fetch(`${this.apiBaseUrl}/odata/Users?$expand=Roles&$count=true&$skip=${skip}&$top=${this.pageSize}&$orderby=CreatedAt desc${filterQuery}`, {
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`,
                     'Content-Type': 'application/json'
@@ -294,7 +292,6 @@
             }
 
             const data = await response.json();
-
             this.renderUsersTable(data.value || []);
             this.renderPagination(data['@odata.count'] || 0, page);
             this.currentPage = page;
@@ -323,14 +320,19 @@
             return;
         }
 
-        tbody.innerHTML = users.map(user => `
+        tbody.innerHTML = users.map(user => {
+            const userRoles = user.Roles ? user.Roles.map(role => role.RoleName).join(', ') : 'Member';
+            const primaryRole = user.Roles && user.Roles.length > 0 ? user.Roles[0].RoleName : 'Member';
+            const status = user.IsActive ? 'Active' : 'Inactive';
+
+            return `
             <tr>
                 <td>${user.UserId}</td>
                 <td>${user.FullName}</td>
                 <td>${user.Email}</td>
                 <td>${user.Phone || ''}</td>
-                <td><span class="badge ${this.getRoleBadgeClass(user.Role)}">${user.Role}</span></td>
-                <td><span class="badge ${this.getStatusBadgeClass(user.Status)}">${user.Status}</span></td>
+                <td><span class="badge ${this.getRoleBadgeClass(primaryRole)}">${userRoles}</span></td>
+                <td><span class="badge ${this.getStatusBadgeClass(status)}">${status}</span></td>
                 <td>${this.formatDate(user.CreatedAt)}</td>
                 <td>
                     <div class="btn-group btn-group-sm" role="group">
@@ -346,7 +348,8 @@
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     },
 
     renderPagination(totalCount, currentPage) {
@@ -387,20 +390,25 @@
         const form = document.getElementById('createUserForm');
         if (!this.validateForm(form)) return;
 
-        const userData = {
-            FullName: document.getElementById('createFullName').value,
-            Email: document.getElementById('createEmail').value,
-            Password: document.getElementById('createPassword').value,
-            ConfirmPassword: document.getElementById('createConfirmPassword').value,
-            Phone: document.getElementById('createPhone').value,
-            Role: document.getElementById('createRole').value,
-            Status: document.getElementById('createStatus').value
-        };
+        const password = document.getElementById('createPassword').value;
+        const confirmPassword = document.getElementById('createConfirmPassword').value;
 
-        if (userData.Password !== userData.ConfirmPassword) {
+        if (password !== confirmPassword) {
             this.showToast('error', 'Mật khẩu xác nhận không khớp');
             return;
         }
+
+        const userData = {
+            FullName: document.getElementById('createFullName').value,
+            Email: document.getElementById('createEmail').value,
+            PasswordHash: password,
+            Phone: document.getElementById('createPhone').value || null,
+            DateOfBirth: document.getElementById('createDateOfBirth').value || null,
+            Gender: document.getElementById('createGender').value || null,
+            Address: document.getElementById('createAddress').value || null,
+            IsActive: document.getElementById('createStatus').value === 'Active',
+            RoleName: document.getElementById('createRole').value
+        };
 
         try {
             const response = await fetch(`${this.apiBaseUrl}/odata/Users`, {
@@ -418,40 +426,18 @@
                 form.reset();
                 this.loadUsers(this.currentPage);
             } else {
-                const error = await response.json();
-                throw new Error(error.message || 'Có lỗi xảy ra khi tạo user');
+                const errorText = await response.text();
+                let errorMessage = 'Có lỗi xảy ra khi tạo user';
+                try {
+                    const error = JSON.parse(errorText);
+                    errorMessage = error.message || errorMessage;
+                } catch {
+                    errorMessage = errorText || errorMessage;
+                }
+                throw new Error(errorMessage);
             }
         } catch (error) {
             console.error('Error creating user:', error);
-            this.showToast('error', error.message);
-        }
-    },
-
-    async editUser(userId) {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/odata/Users(${userId})`, {
-                headers: {
-                    'Authorization': `Bearer ${this.authToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Không thể tải thông tin user');
-            }
-
-            const user = await response.json();
-
-            document.getElementById('editUserId').value = user.UserId;
-            document.getElementById('editFullName').value = user.FullName;
-            document.getElementById('editEmail').value = user.Email;
-            document.getElementById('editPhone').value = user.Phone || '';
-            document.getElementById('editRole').value = user.Role;
-            document.getElementById('editStatus').value = user.Status;
-
-            new bootstrap.Modal(document.getElementById('editUserModal')).show();
-        } catch (error) {
-            console.error('Error loading user details:', error);
             this.showToast('error', error.message);
         }
     },

@@ -1,4 +1,5 @@
 ﻿using BusinessObjects;
+using BusinessObjects.DTOs;
 
 namespace Services.Interfaces
 {
@@ -6,7 +7,7 @@ namespace Services.Interfaces
 	{
 		List<User> GetAccounts();
 		User GetAccountById(int userId);
-		void SaveAccount(User s);
+		void SaveAccount(CreateUserRequest request);
 		void UpdateAccount(User s);
 		void DeleteAccount(User s);
 	}

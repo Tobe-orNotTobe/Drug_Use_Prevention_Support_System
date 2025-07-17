@@ -1,46 +1,61 @@
-﻿using BusinessObjects;
+﻿using Azure.Core;
+using BusinessObjects;
 using BusinessObjects.Constants;
+using BusinessObjects.DTOs;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Formatter;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
+using Repositories.Interfaces;
 using Services.Interfaces;
 
 namespace DUPSWebAPI.Controllers
 {
-	[Authorize(Roles = Roles.AdminOnly)]
-	public class UserController : ODataController
+	public class UsersController : ODataController
 	{
 		private readonly IUserService _service;
 
-		public UserController(IUserService service)
+		public UsersController(IUserService service)
 		{
 			_service = service;
 		}
 
-		// GET: odata/Users
 		[EnableQuery(PageSize = 20)]
 		public IActionResult Get()
 		{
-			return Ok(_service.GetAccounts().AsQueryable());
+			try
+			{
+				var users = _service.GetAccounts();
+				return Ok(users.AsQueryable());
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { error = ex.Message });
+			}
 		}
 
-		// GET: odata/Users(5)
 		[EnableQuery]
 		public IActionResult Get([FromODataUri] int key)
 		{
-			var account = _service.GetAccountById(key);
-			if (account == null)
+			try
 			{
-				return NotFound();
+				var account = _service.GetAccountById(key);
+				if (account == null)
+				{
+					return NotFound();
+				}
+				return Ok(account);
 			}
-			return Ok(account);
+			catch (Exception ex)
+			{
+				return BadRequest(new { error = ex.Message });
+			}
 		}
 
-		// POST: odata/Users
 		[EnableQuery]
-		public IActionResult Post([FromBody] User User)
+		public IActionResult Post([FromBody] CreateUserRequest User)
 		{
 			if (!ModelState.IsValid)
 			{
@@ -50,15 +65,14 @@ namespace DUPSWebAPI.Controllers
 			try
 			{
 				_service.SaveAccount(User);
-				return Created(User);
+				return Ok();
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(ex.Message);
+				return BadRequest(new { error = ex.Message });
 			}
 		}
 
-		// PUT: odata/Users(5)
 		[EnableQuery]
 		public IActionResult Put([FromODataUri] int key, [FromBody] User User)
 		{
@@ -85,27 +99,26 @@ namespace DUPSWebAPI.Controllers
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(ex.Message);
+				return BadRequest(new { error = ex.Message });
 			}
 		}
 
-		// DELETE: odata/Users(5)
 		public IActionResult Delete([FromODataUri] int key)
 		{
-			var User = _service.GetAccountById(key);
-			if (User == null)
-			{
-				return NotFound();
-			}
-
 			try
 			{
+				var User = _service.GetAccountById(key);
+				if (User == null)
+				{
+					return NotFound();
+				}
+
 				_service.DeleteAccount(User);
 				return NoContent();
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(ex.Message);
+				return BadRequest(new { error = ex.Message });
 			}
 		}
 	}
