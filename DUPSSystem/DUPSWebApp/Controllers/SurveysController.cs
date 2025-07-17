@@ -56,33 +56,5 @@ namespace DUPSWebApp.Controllers
 			ViewBag.SurveyId = id;
 			return View();
 		}
-
-		[RoleAuthorization("Member", "Staff", "Admin")]
-		public IActionResult Result(int id)
-		{
-			ViewBag.SurveyId = id;
-
-			if (IsMember)
-			{
-				return View("MemberResult");
-			}
-
-			if (IsAdmin)
-			{
-				return View("AdminResult");
-			}
-
-			return View();
-		}
-
-		[RoleAuthorization("Admin")]
-		public IActionResult AllResults()
-		{
-			if (!IsAdmin)
-			{
-				return RedirectToAction("AccessDenied", "Home");
-			}
-			return View();
-		}
 	}
 }

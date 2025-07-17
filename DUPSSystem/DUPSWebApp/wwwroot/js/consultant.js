@@ -141,8 +141,8 @@ async function loadAvailableUsers() {
 
                 result.data.forEach(user => {
                     const option = document.createElement('option');
-                    option.value = user.UserId;
-                    option.textContent = `${user.FullName} (${user.Email})`;
+                    option.value = user.userId;
+                    option.textContent = `${user.fullName} (${user.email})`;
                     userSelect.appendChild(option);
                 });
             }
@@ -275,8 +275,15 @@ function clearSearch() {
 
 async function createConsultant() {
     try {
+        const userIdValue = document.getElementById('createUserId').value;
+
+        if (!userIdValue) {
+            showToast('error', 'Vui lòng chọn người dùng');
+            return;
+        }
+
         const formData = {
-            userId: parseInt(document.getElementById('createUserId').value),
+            userId: parseInt(userIdValue),
             qualification: document.getElementById('createQualification').value,
             expertise: document.getElementById('createExpertise').value,
             workSchedule: document.getElementById('createWorkSchedule').value,

@@ -82,7 +82,6 @@ namespace DUPSWebAPI.Controllers
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền đăng ký khóa học" });
 				}
 
-				// Force UserId to be current user (security)
 				request.UserId = User.GetUserId();
 
 				if (!ModelState.IsValid)
@@ -92,6 +91,32 @@ namespace DUPSWebAPI.Controllers
 
 				var result = _userCourseService.RegisterUserForCourse(request);
 				return Created(result);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		[Authorize(Roles = Roles.AuthenticatedRoles)]
+		public IActionResult Patch([FromODataUri] int key, [FromBody] Delta<UserCourse> delta)
+		{
+			try
+			{
+				var userCourse = _userCourseService.GetUserCourseById(key);
+				if (userCourse == null)
+				{
+					return NotFound(new { success = false, message = "Không tìm thấy đăng ký khóa học" });
+				}
+
+				if (!User.IsOwnerOrCanViewAll(userCourse.UserId))
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền cập nhật thông tin này" });
+				}
+
+				_userCourseService.MarkCourseAsCompleted(userCourse.UserId, userCourse.CourseId);
+
+				return Updated(userCourse);
 			}
 			catch (Exception ex)
 			{
@@ -110,7 +135,6 @@ namespace DUPSWebAPI.Controllers
 					return NotFound(new { success = false, message = "Không tìm thấy đăng ký khóa học" });
 				}
 
-				// Check permission to delete
 				if (!User.IsOwnerOrCanViewAll(userCourse.UserId))
 				{
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền hủy đăng ký này" });
@@ -124,6 +148,5 @@ namespace DUPSWebAPI.Controllers
 				return BadRequest(new { success = false, message = ex.Message });
 			}
 		}
-
 	}
 }

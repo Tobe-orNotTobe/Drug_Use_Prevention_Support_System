@@ -67,11 +67,6 @@ namespace DUPSWebAPI.Controllers
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo tư vấn viên" });
 				}
 
-				if (!ModelState.IsValid)
-				{
-					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
-				}
-
 				_consultantService.SaveConsultant(consultant);
 				return Created(consultant);
 			}
@@ -101,7 +96,20 @@ namespace DUPSWebAPI.Controllers
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa thông tin tư vấn viên này" });
 				}
 
+				// Validate delta trước khi patch
+				if (!TryValidateModel(delta))
+				{
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
+				}
+
 				delta.Patch(consultant);
+
+				// Validate model sau khi patch
+				if (!TryValidateModel(consultant))
+				{
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
+				}
+
 				_consultantService.UpdateConsultant(consultant);
 
 				return Updated(consultant);

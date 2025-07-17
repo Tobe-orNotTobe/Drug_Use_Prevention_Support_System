@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BusinessObjects;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
 
@@ -51,7 +52,6 @@ namespace DUPSWebApp.Controllers
 		{
 			return View();
 		}
-
 		[HttpPost]
 		[RoleAuthorization("Consultant")]
 		public async Task<IActionResult> UpdateProfile([FromBody] UpdateConsultantProfileRequest request)
@@ -64,10 +64,6 @@ namespace DUPSWebApp.Controllers
 				}
 
 				var consultantData = await GetMyConsultantProfileAsync();
-				if (consultantData == null)
-				{
-					return Json(new { success = false, message = "Không tìm thấy thông tin tư vấn viên" });
-				}
 
 				var patchUrl = $"{_apiBaseUrl}/odata/Consultants({consultantData.ConsultantId})";
 				var patchData = new
@@ -79,6 +75,7 @@ namespace DUPSWebApp.Controllers
 				};
 
 				var json = JsonSerializer.Serialize(patchData);
+				// Sửa Content-Type cho OData PATCH
 				var content = new StringContent(json, Encoding.UTF8, "application/json");
 
 				SetAuthorizationHeader();
@@ -88,6 +85,9 @@ namespace DUPSWebApp.Controllers
 					Content = content
 				};
 
+				// Thêm header cần thiết cho OData PATCH
+				patchRequest.Headers.Add("Accept", "application/json");
+
 				var patchResponse = await _httpClient.SendAsync(patchRequest);
 
 				if (patchResponse.IsSuccessStatusCode)
@@ -96,12 +96,18 @@ namespace DUPSWebApp.Controllers
 				}
 				else
 				{
-					return Json(new { success = false, message = "Không thể cập nhật hồ sơ" });
+					// Log chi tiết lỗi để debug
+					var errorContent = await patchResponse.Content.ReadAsStringAsync();
+					return Json(new
+					{
+						success = false,
+						message = $"Không thể cập nhật hồ sơ. Status: {patchResponse.StatusCode}, Error: {errorContent}"
+					});
 				}
 			}
 			catch (Exception ex)
 			{
-				return Json(new { success = false, message = "Đã xảy ra lỗi khi cập nhật hồ sơ" });
+				return Json(new { success = false, message = $"Đã xảy ra lỗi: {ex.Message}" });
 			}
 		}
 
@@ -146,17 +152,20 @@ namespace DUPSWebApp.Controllers
 								}
 							}
 
-							bool isAlreadyConsultant = await IsUserAlreadyConsultant(userId);
-
-							if (isActive && !isAlreadyConsultant)
+							if (hasConsultantRole && isActive)
 							{
-								availableUsers.Add(new
+								bool isAlreadyConsultant = await IsUserAlreadyConsultant(userId);
+
+								if (!isAlreadyConsultant)
 								{
-									UserId = userId,
-									FullName = fullName,
-									Email = email,
-									HasConsultantRole = hasConsultantRole
-								});
+									availableUsers.Add(new
+									{
+										UserId = userId,
+										FullName = fullName,
+										Email = email,
+										HasConsultantRole = hasConsultantRole
+									});
+								}
 							}
 						}
 
@@ -384,7 +393,7 @@ namespace DUPSWebApp.Controllers
 			}
 		}
 
-		private async Task<dynamic?> GetMyConsultantProfileAsync()
+		private async Task<ConsultantProfile> GetMyConsultantProfileAsync()
 		{
 			try
 			{
@@ -397,19 +406,34 @@ namespace DUPSWebApp.Controllers
 				if (response.IsSuccessStatusCode)
 				{
 					var responseContent = await response.Content.ReadAsStringAsync();
-					var odataResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+					var jsonDoc = JsonDocument.Parse(responseContent);
 
-					if (odataResponse.TryGetProperty("value", out var valueArray) && valueArray.GetArrayLength() > 0)
+					// Lấy array value từ OData response
+					if (jsonDoc.RootElement.TryGetProperty("value", out var valueArray) &&
+						valueArray.GetArrayLength() > 0)
 					{
-						return valueArray[0];
+						var consultantElement = valueArray[0];
+
+						var consultant = new ConsultantProfile
+						{
+							ConsultantId = consultantElement.GetProperty("ConsultantId").GetInt32(),
+							UserId = consultantElement.GetProperty("UserId").GetInt32(),
+							Qualification = consultantElement.TryGetProperty("Qualification", out var qual) ? qual.GetString() : "",
+							Expertise = consultantElement.TryGetProperty("Expertise", out var exp) ? exp.GetString() : "",
+							WorkSchedule = consultantElement.TryGetProperty("WorkSchedule", out var work) ? work.GetString() : "",
+							Bio = consultantElement.TryGetProperty("Bio", out var bio) ? bio.GetString() : "",
+							User = JsonSerializer.Deserialize<UserProfile>(consultantElement.GetProperty("User").GetRawText())
+						};
+
+						return consultant;
 					}
 				}
 
 				return null;
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				return null;
+				throw new Exception($"Không thể lấy thông tin consultant: {ex.Message}");
 			}
 		}
 

@@ -477,11 +477,6 @@ const MyAppointment = {
             personInfo = `
                 <td>
                     <div class="d-flex align-items-center">
-                        <img src="${appointment.User?.AvatarUrl || '/images/default-avatar.png'}" 
-                             alt="Avatar" 
-                             class="rounded-circle me-2" 
-                             style="width: 40px; height: 40px; object-fit: cover;"
-                             onerror="this.src='/images/default-avatar.png'">
                         <div>
                             <div class="fw-bold">${appointment.User?.FullName || 'Không xác định'}</div>
                         </div>
@@ -492,8 +487,7 @@ const MyAppointment = {
 
             actionButtons = this.getConsultantActionButtons(appointment);
         }
-
-        // Generate time slot display from duration for backward compatibility
+ 
         const timeSlotDisplay = appointment.DurationMinutes
             ? `${appointment.DurationMinutes} phút`
             : 'Chưa xác định';

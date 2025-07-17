@@ -471,31 +471,35 @@
                 updateData.CompletedAt = new Date().toISOString();
             }
 
-            const response = await fetch(this.userCoursesApiUrl + '(' + this.currentUserCourseId + ')', {
+            const response = await fetch(`${this.userCoursesApiUrl}(${this.currentUserCourseId})`, {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': 'Bearer ' + this.authToken,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(updateData)
             });
 
             if (!response.ok) {
-                throw new Error('Không thể cập nhật trạng thái');
+                const errorText = await response.text();
+                let errorMessage = 'Cập nhật trạng thái thất bại';
+
+                try {
+                    const errorData = JSON.parse(errorText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    errorMessage = errorText || errorMessage;
+                }
+
+                throw new Error(errorMessage);
             }
 
-            const statusText = this.getStatusInfo(newStatus).text;
-            this.showAlert('Đã cập nhật trạng thái thành: ' + statusText, 'success');
-
-            this.loadStats();
-            this.loadMyCourses();
-
-            const detailModal = bootstrap.Modal.getInstance(document.getElementById('courseDetailModal'));
-            if (detailModal) detailModal.hide();
-
+            this.showAlert('Cập nhật trạng thái thành công', 'success');
+            this.loadCourses();
         } catch (error) {
             console.error('Error updating course status:', error);
-            this.showAlert('Có lỗi xảy ra khi cập nhật trạng thái', 'danger');
+            this.showAlert(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái', 'danger');
         }
     }
 
