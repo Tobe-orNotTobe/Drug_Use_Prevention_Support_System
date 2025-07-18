@@ -1,4 +1,4 @@
-﻿// survey-details.js - Chi tiết khảo sát
+﻿// survey-details.js - Chi tiết khảo sát (Fixed)
 const API_BASE_URL = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content') || 'https://localhost:7008';
 
 function getAuthToken() {
@@ -40,7 +40,7 @@ function showAlert(message, type = 'info') {
 }
 
 function loadSurveyDetails(surveyId) {
-    fetch(`${API_BASE_URL}/odata/Surveys(${surveyId})?$expand=Questions($expand=Options)`, {
+    fetch(`${API_BASE_URL}/odata/Surveys(${surveyId})?$expand=SurveyQuestions($expand=SurveyOptions)`, {
         method: 'GET',
         headers: getApiHeaders()
     })
@@ -62,19 +62,10 @@ function loadSurveyDetails(surveyId) {
 function displaySurveyDetails(survey) {
     document.getElementById('surveyName').textContent = survey.Name;
     document.getElementById('surveyDescription').textContent = survey.Description || 'Không có mô tả';
-    document.getElementById('targetAudiences').textContent = survey.TargetAudiences;
 
-    const statusClass = survey.Status === 'Active' ? 'bg-success' : 'bg-secondary';
-    const statusText = survey.Status === 'Active' ? 'Hoạt động' : 'Không hoạt động';
-    const statusBadge = document.getElementById('surveyStatus');
-    statusBadge.className = `badge ${statusClass}`;
-    statusBadge.textContent = statusText;
+    document.getElementById('questionCount').textContent = `${survey.SurveyQuestions?.length || 0} câu hỏi`;
 
-    document.getElementById('CreatedAt').textContent = formatDate(survey.CreatedAt);
-
-    document.getElementById('questionCount').textContent = `${survey.Questions?.length || 0} câu hỏi`;
-
-    displayQuestions(survey.Questions || []);
+    displayQuestions(survey.SurveyQuestions || []);
 
     // Load statistics if user is Staff/Admin
     const userRole = document.body.dataset.userRole;
@@ -120,20 +111,21 @@ function createQuestionPreview(question, questionNumber) {
     };
 
     let optionsHtml = '';
-    if (question.Type !== 'Text' && question.Options && question.Options.length > 0) {
-        const optionsList = question.Options.map((option, index) => {
-            const inputType = question.Type === 'SingleChoice' ? 'radio' : 'checkbox';
+    // Fixed: Use QuestionType instead of Type, and SurveyOptions instead of Options
+    if (question.QuestionType !== 'Text' && question.SurveyOptions && question.SurveyOptions.length > 0) {
+        const optionsList = question.SurveyOptions.map((option, index) => {
+            const inputType = question.QuestionType === 'SingleChoice' ? 'radio' : 'checkbox';
             return `
                 <div class="form-check">
                     <input class="form-check-input" type="${inputType}" disabled>
                     <label class="form-check-label text-muted">
-                        ${option.Content}
+                        ${option.OptionText}
                     </label>
                 </div>
             `;
         }).join('');
         optionsHtml = `<div class="mt-3">${optionsList}</div>`;
-    } else if (question.Type === 'Text') {
+    } else if (question.QuestionType === 'Text') {
         optionsHtml = `
             <div class="mt-3">
                 <textarea class="form-control" placeholder="Người dùng sẽ nhập câu trả lời ở đây..." disabled rows="3"></textarea>
@@ -147,11 +139,11 @@ function createQuestionPreview(question, questionNumber) {
                 <div class="d-flex justify-content-between align-items-center">
                     <span class="fw-bold">
                         <span class="badge bg-primary me-2">${questionNumber}</span>
-                        ${question.Content}
+                        ${question.QuestionText}
                     </span>
                     <span class="badge bg-secondary">
-                        <i class="${typeIcon[question.Type]}"></i>
-                        ${typeText[question.Type]}
+                        <i class="${typeIcon[question.QuestionType]}"></i>
+                        ${typeText[question.QuestionType]}
                     </span>
                 </div>
             </div>

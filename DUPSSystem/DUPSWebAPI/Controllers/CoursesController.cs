@@ -56,6 +56,43 @@ namespace DUPSWebAPI.Controllers
 		}
 
 		[Authorize(Roles = Roles.ManagementRoles)]
+		public IActionResult Put([FromODataUri] int key, [FromBody] Course course)
+		{
+			try
+			{
+				if (!User.CanManageCourses())
+				{
+					return StatusCode(403, new { success = false, message = "Bạn không có quyền sửa khóa học" });
+				}
+
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
+				}
+
+				if (key != course.CourseId)
+				{
+					return BadRequest(new { success = false, message = "Key mismatch" });
+				}
+
+				var existingCourse = _courseService.GetCourseById(key);
+				if (existingCourse == null)
+				{
+					return NotFound(new { success = false, message = "Không tìm thấy khóa học" });
+				}
+
+				course.CreatedAt = existingCourse.CreatedAt;
+
+				_courseService.UpdateCourse(course);
+				return Updated(course);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
+			}
+		}
+
+		[Authorize(Roles = Roles.ManagementRoles)]
 		public IActionResult Post([FromBody] Course course)
 		{
 			try

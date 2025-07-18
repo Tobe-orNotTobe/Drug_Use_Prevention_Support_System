@@ -90,7 +90,16 @@ namespace DUPSWebAPI.Controllers
 				}
 
 				var result = _userCourseService.RegisterUserForCourse(request);
-				return Created(result);
+				if (result.Success)
+				{
+					var userCourse = _userCourseService.GetUserCourseById(result.UserCourseId.Value);
+
+					return Created(userCourse);
+				}
+				else
+				{
+					return BadRequest(result); 
+				}
 			}
 			catch (Exception ex)
 			{

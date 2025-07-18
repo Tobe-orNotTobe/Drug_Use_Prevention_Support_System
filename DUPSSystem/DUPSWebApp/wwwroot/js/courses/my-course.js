@@ -263,10 +263,7 @@
             '<div class="d-flex gap-2">' +
             '<button class="btn btn-sm btn-outline-primary flex-fill" onclick="myCourse.viewCourseDetail(' + userCourse.UserCourseId + ')">' +
             '<i class="fas fa-eye"></i> Chi tiết' +
-            '</button>' +
-            '<button class="btn btn-sm btn-outline-warning" onclick="myCourse.showProgressModal(' + userCourse.UserCourseId + ', \'' + userCourse.CompletionStatus + '\')">' +
-            '<i class="fas fa-edit"></i> Cập nhật' +
-            '</button>' +
+            '</button>'  +
             '</div>' +
             '</div>' +
             '</div>' +
@@ -436,71 +433,6 @@
 
         const modal = new bootstrap.Modal(document.getElementById('progressModal'));
         modal.show();
-    }
-
-    async startCourse() {
-        await this.updateCourseStatus('InProgress');
-    }
-
-    async markCompleted() {
-        await this.updateCourseStatus('Completed');
-    }
-
-    async updateProgress() {
-        const checkedRadio = document.querySelector('input[name="progressStatus"]:checked');
-        if (!checkedRadio) {
-            this.showAlert('Vui lòng chọn trạng thái', 'warning');
-            return;
-        }
-
-        await this.updateCourseStatus(checkedRadio.value);
-
-        const modal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
-        if (modal) modal.hide();
-    }
-
-    async updateCourseStatus(newStatus) {
-        if (!this.currentUserCourseId) return;
-
-        try {
-            const updateData = {
-                CompletionStatus: newStatus
-            };
-
-            if (newStatus === 'Completed') {
-                updateData.CompletedAt = new Date().toISOString();
-            }
-
-            const response = await fetch(`${this.userCoursesApiUrl}(${this.currentUserCourseId})`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${this.authToken}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                let errorMessage = 'Cập nhật trạng thái thất bại';
-
-                try {
-                    const errorData = JSON.parse(errorText);
-                    errorMessage = errorData.message || errorMessage;
-                } catch {
-                    errorMessage = errorText || errorMessage;
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            this.showAlert('Cập nhật trạng thái thành công', 'success');
-            this.loadCourses();
-        } catch (error) {
-            console.error('Error updating course status:', error);
-            this.showAlert(error.message || 'Có lỗi xảy ra khi cập nhật trạng thái', 'danger');
-        }
     }
 
     showAlert(message, type) {

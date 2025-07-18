@@ -32,8 +32,8 @@
                         <div class="col-md-3">
                             <div class="small-box bg-primary">
                                 <div class="inner">
-                                    <h3 id="totalRegistered">-</h3>
-                                    <p>Tổng đã đăng ký</p>
+                                    <h3 id="totalRegistered" class="text-dark">-</h3>
+                                    <p class="text-dark">Tổng đã đăng ký</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-book"></i>
@@ -43,8 +43,8 @@
                         <div class="col-md-3">
                             <div class="small-box bg-success">
                                 <div class="inner">
-                                    <h3 id="totalCompleted">-</h3>
-                                    <p>Đã hoàn thành</p>
+                                    <h3 id="totalCompleted" class="text-dark">-</h3>
+                                    <p class="text-dark">Đã hoàn thành</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-check-circle"></i>
@@ -54,8 +54,8 @@
                         <div class="col-md-3">
                             <div class="small-box bg-warning">
                                 <div class="inner">
-                                    <h3 id="totalInProgress">-</h3>
-                                    <p>Đang học</p>
+                                    <h3 id="totalInProgress" class="text-dark">-</h3>
+                                    <p class="text-dark">Đang học</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-clock"></i>
@@ -65,8 +65,8 @@
                         <div class="col-md-3">
                             <div class="small-box bg-info">
                                 <div class="inner">
-                                    <h3 id="totalNotStarted">-</h3>
-                                    <p>Chưa bắt đầu</p>
+                                    <h3 id="totalNotStarted" class="text-dark">-</h3>
+                                    <p class="text-dark">Chưa bắt đầu</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-play-circle"></i>
@@ -143,48 +143,6 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 <button type="button" class="btn btn-primary" id="btnStartCourse" style="display: none;">
                     <i class="fas fa-play"></i> Bắt đầu học
-                </button>
-                <button type="button" class="btn btn-success" id="btnMarkCompleted" style="display: none;">
-                    <i class="fas fa-check"></i> Đánh dấu hoàn thành
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Progress Update Modal -->
-<div class="modal fade" id="progressModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cập nhật tiến độ</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Bạn có muốn cập nhật trạng thái học tập của khóa học này?</p>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="progressStatus" id="statusNotStarted" value="NotStarted">
-                    <label class="form-check-label" for="statusNotStarted">
-                        Chưa bắt đầu
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="progressStatus" id="statusInProgress" value="InProgress">
-                    <label class="form-check-label" for="statusInProgress">
-                        Đang học
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="progressStatus" id="statusCompleted" value="Completed">
-                    <label class="form-check-label" for="statusCompleted">
-                        Đã hoàn thành
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" id="btnUpdateProgress">
-                    <i class="fas fa-save"></i> Cập nhật
                 </button>
             </div>
         </div>

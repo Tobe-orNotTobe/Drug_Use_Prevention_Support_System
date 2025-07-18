@@ -253,9 +253,43 @@
                 body: JSON.stringify(courseData)
             });
 
+            // Cải thiện xử lý response
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Khong the cap nhat khoa hoc');
+                let errorMessage = 'Khong the cap nhat khoa hoc';
+
+                // Kiểm tra content-type trước khi parse JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (jsonError) {
+                        console.error('Error parsing JSON response:', jsonError);
+                    }
+                } else {
+                    // Nếu không phải JSON, lấy text response
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = `Loi server (${response.status}): ${errorText}`;
+                        }
+                    } catch (textError) {
+                        errorMessage = `Loi server (${response.status})`;
+                    }
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            // Parse response data nếu thành công
+            let result = null;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.log('Response is not JSON, but request was successful');
+                }
             }
 
             this.showAlert('Cap nhat khoa hoc thanh cong!', 'success');
@@ -274,7 +308,6 @@
             }
         }
     }
-
     getFormData() {
         const form = document.getElementById('editCourseForm');
         if (!form) return {};

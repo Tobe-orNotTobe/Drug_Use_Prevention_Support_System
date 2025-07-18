@@ -64,17 +64,26 @@ namespace DUPSWebAPI.Controllers
 					return StatusCode(403, new { success = false, message = "Bạn không có quyền tạo khảo sát" });
 				}
 
-				if (!ModelState.IsValid)
-				{
-					return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ", errors = ModelState });
-				}
 
 				_surveyService.SaveSurvey(survey);
-				return Created(survey);
+
+				var createdSurvey = _surveyService.GetSurveyById(survey.SurveyId);
+
+				return Created($"/odata/Surveys({survey.SurveyId})", new
+				{
+					success = true,
+					message = "Tạo khảo sát thành công",
+					data = createdSurvey,
+					surveyId = survey.SurveyId
+				});
+			}
+			catch (ArgumentException ex)
+			{
+				return BadRequest(new { success = false, message = ex.Message });
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new { success = false, message = ex.Message });
+				return StatusCode(500, new { success = false, message = "Có lỗi xảy ra khi tạo khảo sát" });
 			}
 		}
 

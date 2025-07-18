@@ -1,5 +1,4 @@
-﻿// survey-create.js - Tạo khảo sát mới
-const API_BASE_URL = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content') || 'https://localhost:7008';
+﻿const API_BASE_URL = document.querySelector('meta[name="api-base-url"]')?.getAttribute('content') || 'https://localhost:7008';
 
 let questionCounter = 0;
 let editingQuestionIndex = -1;
@@ -226,9 +225,7 @@ function createSurvey() {
     const surveyData = {
         Name: document.getElementById('surveyName').value.trim(),
         Description: document.getElementById('description').value.trim(),
-        TargetAudiences: document.getElementById('targetAudiences').value,
-        Status: document.getElementById('status').value,
-        Questions: []
+        SurveyQuestions: []
     };
 
     if (!surveyData.Name) {
@@ -236,29 +233,24 @@ function createSurvey() {
         return;
     }
 
-    if (!surveyData.TargetAudiences) {
-        alert('Vui lòng chọn đối tượng');
-        return;
-    }
-
     const questionCards = document.querySelectorAll('.question-card');
     questionCards.forEach(card => {
         const questionData = {
-            Content: card.querySelector('.question-content').textContent,
-            Type: card.dataset.type,
-            Options: []
+            QuestionText: card.querySelector('.question-content').textContent,
+            QuestionType: card.dataset.type,
+            SurveyOptions: []
         };
 
         card.querySelectorAll('.option-item').forEach(option => {
-            questionData.Options.push({
-                Content: option.textContent
+            questionData.SurveyOptions.push({
+                OptionText: option.textContent
             });
         });
 
-        surveyData.Questions.push(questionData);
+        surveyData.SurveyQuestions.push(questionData);
     });
 
-    if (surveyData.Questions.length === 0) {
+    if (surveyData.SurveyQuestions.length === 0) {
         alert('Vui lòng thêm ít nhất một câu hỏi');
         return;
     }
@@ -290,33 +282,22 @@ function submitCreateSurvey(surveyData) {
         });
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', function () {
-    // Form submit
     document.getElementById('createSurveyForm').addEventListener('submit', function (e) {
         e.preventDefault();
         createSurvey();
     });
 
-    // Add question button
     document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
-
-    // Save question button
     document.getElementById('saveQuestionBtn').addEventListener('click', saveQuestion);
-
-    // Add option button
     document.getElementById('addOptionBtn').addEventListener('click', () => addOption());
-
-    // Question type change
     document.getElementById('questionType').addEventListener('change', toggleOptionsSection);
 
-    // Cancel button
     document.getElementById('cancelBtn').addEventListener('click', function () {
         if (confirm('Bạn có chắc chắn muốn hủy? Dữ liệu chưa lưu sẽ bị mất.')) {
             window.location.href = '/Surveys';
         }
     });
 
-    // Initialize options section
     toggleOptionsSection();
 });
